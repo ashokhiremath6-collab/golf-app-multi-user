@@ -147,37 +147,52 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* Course Selection */}
-        <Card className="mb-6" data-testid="card-course-selection">
+        {/* Recent Rounds */}
+        <Card className="mb-6" data-testid="card-recent-rounds">
           <CardContent className="pt-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4" data-testid="text-select-course">
-              Select Course
+            <h2 className="text-lg font-semibold text-gray-900 mb-4" data-testid="text-recent-rounds">
+              Last 5 Rounds
             </h2>
             <div className="space-y-3">
-              {courses?.map((course: any, index: number) => (
-                <button
-                  key={course.id}
-                  className={`w-full p-4 border-2 rounded-lg text-left hover:bg-opacity-10 transition-colors ${
-                    index === 0 
-                      ? 'border-golf-green bg-golf-green bg-opacity-5 hover:bg-golf-green' 
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setLocation(`/rounds/new?course=${course.id}`)}
-                  data-testid={`button-select-course-${course.id}`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium text-gray-900" data-testid={`text-course-name-${course.id}`}>
-                        {course.name}
-                      </h3>
-                      <p className="text-sm text-gray-600" data-testid={`text-course-details-${course.id}`}>
-                        {course.tees} Tees • Par {course.parTotal}
-                      </p>
+              {recentRounds && (recentRounds as any[]).slice(0, 5).length > 0 ? (
+                (recentRounds as any[]).slice(0, 5).map((round: any, index: number) => (
+                  <div
+                    key={round.id}
+                    className="w-full p-4 border border-gray-200 rounded-lg bg-gray-50"
+                    data-testid={`card-round-${round.id}`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium text-gray-900" data-testid={`text-round-course-${round.id}`}>
+                          {round.courseName || 'Course'}
+                        </h3>
+                        <p className="text-sm text-gray-600" data-testid={`text-round-date-${round.id}`}>
+                          {new Date(round.playedOn).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex space-x-4 text-sm">
+                          <span className="font-medium" data-testid={`text-round-gross-${round.id}`}>
+                            Gross: {round.grossCapped}
+                          </span>
+                          <span className="font-medium text-golf-blue" data-testid={`text-round-net-${round.id}`}>
+                            Net: {round.net}
+                          </span>
+                          <span className="font-medium text-golf-gold" data-testid={`text-round-over-par-${round.id}`}>
+                            +{parseFloat(round.overPar).toFixed(0)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <i className={`fas fa-chevron-right ${index === 0 ? 'text-golf-green' : 'text-gray-400'}`}></i>
                   </div>
-                </button>
-              ))}
+                ))
+              ) : (
+                <div className="text-center py-8" data-testid="empty-state-rounds">
+                  <i className="fas fa-golf-ball text-4xl text-gray-300 mb-3"></i>
+                  <p className="text-gray-500">No rounds played yet</p>
+                  <p className="text-sm text-gray-400">Start your first round below!</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -189,7 +204,7 @@ export default function Home() {
             className="bg-golf-green text-white px-6 py-4 text-lg hover:bg-green-700"
             data-testid="button-start-round"
           >
-            <i className="fas fa-golf-ball mr-2"></i>Start New Round
+            <i className="fas fa-golf-ball mr-2"></i>New Round
           </Button>
           <Button
             variant="outline"
