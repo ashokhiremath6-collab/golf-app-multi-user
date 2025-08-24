@@ -197,19 +197,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/rounds', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
-      
-      if (!player) {
-        return res.status(404).json({ message: "Player not found" });
-      }
-
       const validatedData = createRoundSchema.parse(req.body);
       
-      // Ensure player can only create rounds for themselves (unless admin)
-      if (validatedData.playerId !== player.id && !player.isAdmin) {
-        return res.status(403).json({ message: "Can only create rounds for yourself" });
+      // Verify the player exists
+      const player = await storage.getPlayer(validatedData.playerId);
+      if (!player) {
+        return res.status(404).json({ message: "Player not found" });
       }
 
       // Get course and holes for calculations
