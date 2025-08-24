@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/handicaps/apply?window=prev",
-      "schedule": "0 0 1 * *"
+      "path": "/api/handicaps/apply?window=previous",
+      "schedule": "30 21 1 * *"
     }
   ],
   "functions": {

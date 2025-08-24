@@ -437,7 +437,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Handicap recalculation routes
-  app.post('/api/handicaps/apply', isAuthenticated, async (req: any, res) => {
+  // Handicap recalculation endpoint (supports both GET for cron and POST for manual)
+  const handleHandicapRecalculation = async (req: any, res: any) => {
     try {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
@@ -464,6 +465,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to run handicap recalculation" });
+    }
+  };
+
+  // POST endpoint for manual recalculation (requires auth)
+  app.post('/api/handicaps/apply', isAuthenticated, handleHandicapRecalculation);
+  
+  // GET endpoint for automated cron job (no auth required for cron)
+  app.get('/api/handicaps/apply', async (req, res) => {
+    try {
+      const window = req.query.window as string || 'previous';
+      const month = req.query.month as string;
+      
+      let targetMonth: string | undefined;
+      if (window === 'previous') {
+        targetMonth = undefined; // Use previous month
+      } else if (window === 'specific' && month) {
+        targetMonth = month;
+      }
+
+      const result = await handicapService.runMonthlyRecalculation(targetMonth);
+      
+      // Log the automated recalculation for monitoring
+      console.log(`[CRON] Automated handicap recalculation completed for ${result.month}. ${result.playersUpdated} players updated.`);
+      
+      res.json({
+        success: true,
+        automated: true,
+        ...result
+      });
+    } catch (error) {
+      console.error('[CRON] Automated handicap recalculation failed:', error);
+      res.status(500).json({ 
+        success: false,
+        automated: true,
+        message: "Failed to run automated handicap recalculation" 
+      });
     }
   });
 

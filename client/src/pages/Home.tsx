@@ -49,6 +49,11 @@ export default function Home() {
     retry: false,
   });
 
+  const { data: handicapSnapshots } = useQuery({
+    queryKey: ["/api/handicaps/snapshots"],
+    retry: false,
+  });
+
   if (isLoading || playersLoading || coursesLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -65,6 +70,11 @@ export default function Home() {
 
   const currentPlayer = players?.[0]; // In real app, get by current user
   const lastRound = recentRounds?.[0];
+  
+  // Get the latest handicap snapshot for current player to show previous handicap
+  const latestSnapshot = (handicapSnapshots as any[])?.find(
+    (snapshot: any) => snapshot.playerName === currentPlayer?.name
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -85,16 +95,16 @@ export default function Home() {
             
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="text-center">
+                <div className="text-2xl font-bold text-gray-500" data-testid="text-previous-handicap">
+                  {latestSnapshot?.prevHandicap || currentPlayer?.currentHandicap || 0}
+                </div>
+                <div className="text-sm text-gray-600">Previous Handicap</div>
+              </div>
+              <div className="text-center">
                 <div className="text-2xl font-bold text-golf-green" data-testid="text-current-handicap">
                   {currentPlayer?.currentHandicap || 0}
                 </div>
-                <div className="text-sm text-gray-600">Current Handicap</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-golf-blue" data-testid="text-avg-over-par">
-                  {leaderboard?.[0]?.avgOverPar ? `+${parseFloat(leaderboard[0].avgOverPar).toFixed(1)}` : 'N/A'}
-                </div>
-                <div className="text-sm text-gray-600">Avg Over Par</div>
+                <div className="text-sm text-gray-600">New/Current Handicap</div>
               </div>
             </div>
 
