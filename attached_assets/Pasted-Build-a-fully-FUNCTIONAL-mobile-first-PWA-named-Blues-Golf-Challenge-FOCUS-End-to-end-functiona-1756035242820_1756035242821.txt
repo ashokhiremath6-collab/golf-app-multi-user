@@ -1,0 +1,111 @@
+Build a fully FUNCTIONAL, mobile-first PWA named “Blues Golf Challenge”.
+FOCUS: End-to-end functionality over design. If a tradeoff arises, choose working code, tests, and data integrity over UI polish.
+
+STACK
+- Next.js 14 (App Router, TypeScript)
+- Supabase (Postgres + Auth + RLS)
+- Tailwind + shadcn/ui (minimal styling)
+- Vercel deploy + Vercel Cron (for monthly job)
+- Playwright for e2e tests + Vitest for unit tests
+
+CORE REQUIREMENTS (must work)
+1) Players can enter a completed 18-hole round for a selected course.
+2) App computes, stores, and displays: per-hole caps, GROSS (capped), NET, and **OVER PAR** (Gross capped – Course Par Total).
+3) Live Leaderboard ranks by **lowest Average Over Par** for the season.
+4) Admin can:
+   - Add/edit/delete PLAYERS and COURSES (incl. holes).
+   - Import historical ROUNDS (CSV or line-per-round text).
+   - Trigger a **Monthly Handicap Recalculation** for selected month(s) or “previous month”.
+5) Automatic cron runs on the 1st of each month at 00:00, recalculates handicaps, persists snapshots, and surfaces a monthly table in-app.
+6) Users can view Score History (own and others) and the Leaderboard. Admin can export CSVs. Monthly summary can be copied/shared (WhatsApp URL scheme or Web Share API).
+
+RULES & CALCULATIONS (implement exactly, no placeholders)
+- Per hole double-bogey cap: `capped_score = min(raw_score, par + 2)`
+- Gross (capped): `sum(capped_scores)`
+- Net: `Gross (capped) − CourseHandicap`
+- **Over Par (individual):** `Gross (capped) − CourseParTotal`
+- Monthly Handicap Update (run on 1st):
+  - If player has ≥1 round in prior month, compute `avg_monthly_over_par`
+  - `new_handicap_unclamped = 0.5 * avg_monthly_over_par + 0.5 * previous_handicap`
+  - Limit change to ±2, floor at 0, then **round to nearest integer**
+  - If no rounds in month, carry forward previous handicap
+- Leaderboard: rank by **lowest Avg Over Par** across the season; tie-breakers: (1) most recent better Over Par, (2) more rounds
+- Season end configurable (default 2026-03-31)
+
+DATA MODEL (Supabase / Postgres)
+- players(id uuid, name text, phone text, email text unique, current_handicap int, is_admin bool default false, created_at timestamptz)
+- courses(id uuid, name text unique, tees text default 'Blue', par_total int, rating numeric null, slope numeric null)
+- holes(id uuid, course_id uuid fk, number int check 1..18, par int, distance int)
+- rounds(id uuid, player_id fk, course_id fk, played_on date, raw_scores int[18], capped_scores int[18],
+         gross_capped int, course_handicap int, net int, over_par numeric,
+         source text check in ('app','admin','import','whatsapp'), status text check in ('ok','needs_review'),
+         created_at timestamptz default now())
+- handicap_snapshots(id uuid, player_id fk, month text 'YYYY-MM', prev_handicap int, rounds_count int,
+                     avg_monthly_over_par numeric, delta numeric, new_handicap int, created_at timestamptz default now())
+- season_settings(singleton: season_end date default '2026-03-31', leaderboard_metric text default 'avg_over_par',
+                  k_factor numeric default 0.5, change_cap numeric default 2.0)
+
+RLS & AUTH
+- Supabase Auth: email magic link; restrict signups to a whitelist (env var list).
+- RLS: players can read all `players`, `courses`, `holes`, `rounds`, `leaderboard` views; can INSERT rounds only for self; only admins can upsert players/courses/holes/imports/recalc.
+- Provide SQL policies and helpful comments.
+
+PAGES (minimal but working)
+- `/` Home: last round card (course/date, Gross, Net, Over Par), current handicap chip, course selector, CTA buttons: Start Round / Score History / Leaderboard
+- `/rounds/new?course=<slug>`: 18-hole entry grid (par + distance shown), client-side cap preview; on Save, server computes & persists (trust server)
+- `/players/[id]/rounds`: list + month filter; expandable row shows per-hole raw vs capped
+- `/leaderboard`: table => Player | Rounds | Avg Over Par | Current Hcp; sortable by Avg Over Par
+- `/admin` (guarded): CRUD Players/Courses/Holes; **Import History** (CSV or textarea); **Recalculate** (month picker + “previous month”); CSV exports
+
+IMPORT HISTORY (must work)
+- Accept CSV columns: player_name, course_name, played_on(YYYY-MM-DD), scores_1..scores_18, course_handicap
+- Map/validate players & courses by name; create if missing (toggle to allow auto-create)
+- Bulk insert with transaction; return summary (inserted, skipped, errors)
+- Mark imported rounds source='import'; status 'ok' on success, else 'needs_review'
+
+API ENDPOINTS / SERVER ACTIONS
+- `POST /api/rounds` → validate, cap per hole, compute gross_capped/net/over_par, save
+- `GET  /api/leaderboard?season=2025` → aggregated avg over_par + current_handicap
+- `POST /api/handicaps/apply?window=prev` → apply the monthly job; idempotent
+- `POST /api/import/rounds` (admin) → process CSV/text; respond with summary
+- Provide zod schemas and error handling (400 validation, 403 auth, 500 server)
+
+CRON & NOTIFICATIONS
+- `vercel.json` cron: call `/api/handicaps/apply?window=prev` at 00:00 on the 1st monthly
+- After run: write `handicap_snapshots`, update `players.current_handicap`, and render an in-app **Monthly Update** table (player, prev hcp, rounds, avg Over Par, new hcp)
+- Provide button on admin page: “Copy WhatsApp Summary” (URL-encoded text) + CSV download
+
+SEED DATA
+- Players: Ashok Hiremath(HI 16), Debashish Das(HI 14), Dev Bhattacharya(HI 13)
+- Courses (Blue tees):
+  - Willingdon (Par 65); hole pars: [4,3,4,4,4,3,5,3,4,3,4,3,3,3,4,3,5,3]
+  - BPGC (Par 70); placeholder pars/distances (editable)
+
+TESTS (must pass in CI)
+- UNIT (Vitest): functions for capPerHole, computeGrossCapped, computeNet, computeOverPar, monthlyHandicapUpdate (incl. ±2 clamp, floor 0, rounding)
+- E2E (Playwright):
+  1) Create a round → verify leaderboard avg over_par updates
+  2) Import CSV with two months of rounds → trigger recalc for a month → verify snapshots & current_handicap updated correctly
+  3) Add new player/course via Admin → immediately selectable in Start Round
+- Include a sample CSV and cURL/HTTP examples in README
+
+DEVEX / DELIVERABLES
+- Provide SQL migrations + seed; `.env.example` with:
+  - NEXT_PUBLIC_SUPABASE_URL
+  - NEXT_PUBLIC_SUPABASE_ANON_KEY
+  - SUPABASE_SERVICE_ROLE_KEY (server-only)
+  - AUTH_WHITELIST (comma-separated emails)
+- File structure with clear `lib/supabaseClient` (browser) and `lib/supabaseServer` (server) usage
+- Scripts: `dev`, `build`, `start`, `test`, `test:e2e`, `seed`
+- README: setup (Supabase + env), local run, deploy, running cron locally, how to import history, how to run recalc, and troubleshooting
+
+NON-GOALS (intentionally skipped unless trivial)
+- Animation, advanced theming, complex analytics, dark mode (optional)
+- Any placeholder logic — all calculations must be real and tested
+
+DEFINITION OF DONE
+- All tests pass; entering a round updates history + leaderboard
+- Admin import works and monthly recalc updates snapshots + players
+- Cron executable and idempotent
+- RLS policies enforced; non-admin cannot modify others’ data
+- README enables a fresh user to go from zero → working app
