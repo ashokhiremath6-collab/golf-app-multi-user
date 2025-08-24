@@ -1,0 +1,23 @@
+{
+  "crons": [
+    {
+      "path": "/api/handicaps/apply?window=prev",
+      "schedule": "0 0 1 * *"
+    }
+  ],
+  "functions": {
+    "dist/index.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}
