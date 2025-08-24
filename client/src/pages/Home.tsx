@@ -197,24 +197,6 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Button
-            onClick={() => setLocation('/rounds/new')}
-            className="bg-golf-green text-white px-6 py-4 text-lg hover:bg-green-700"
-            data-testid="button-start-round"
-          >
-            <i className="fas fa-golf-ball mr-2"></i>New Round
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setLocation('/history')}
-            className="border-2 border-golf-blue text-golf-blue px-6 py-4 text-lg hover:bg-golf-blue hover:text-white"
-            data-testid="button-view-history"
-          >
-            <i className="fas fa-chart-line mr-2"></i>View Score History
-          </Button>
-        </div>
       </main>
     </div>
   );

@@ -94,12 +94,12 @@ export default function Navigation() {
               key={item.path}
               onClick={() => setLocation(item.path)}
               className={`flex flex-col items-center py-2 px-4 ${
-                location === item.path ? 'text-golf-green' : 'text-gray-400'
+                location === item.path ? 'text-golf-green font-bold' : 'text-gray-700 font-semibold'
               }`}
               data-testid={`nav-mobile-${item.path.replace('/', '') || 'home'}`}
             >
               <i className={`${item.icon} text-lg mb-1`}></i>
-              <span className="text-xs">{item.label.split(' ')[0]}</span>
+              <span className="text-xs font-bold text-gray-800">{item.path === '/rounds/new' ? 'New Round' : item.label.split(' ')[0]}</span>
             </button>
           ))}
         </div>

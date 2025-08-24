@@ -17,6 +17,7 @@ export default function NewRound() {
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
+  const [roundSubmitted, setRoundSubmitted] = useState<boolean>(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -51,11 +52,14 @@ export default function NewRound() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rounds"] });
       queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      setRoundSubmitted(true);
       toast({
         title: "Success",
         description: "Round saved successfully!",
       });
-      setLocation("/");
+      setTimeout(() => {
+        setLocation("/");
+      }, 3000);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -248,38 +252,40 @@ export default function NewRound() {
                   />
                 )}
 
-                {/* Round Summary */}
-                <div className="bg-golf-green bg-opacity-5 border border-golf-green rounded-lg p-4 mt-6" data-testid="card-round-summary">
-                  <h3 className="font-medium text-gray-900 mb-3" data-testid="text-summary-title">
-                    Round Summary
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-black text-gray-900" data-testid="text-summary-gross">
-                        {totals.gross}
+                {/* Round Summary - Only show after submission */}
+                {roundSubmitted && (
+                  <div className="bg-golf-green bg-opacity-5 border border-golf-green rounded-lg p-4 mt-6" data-testid="card-round-summary">
+                    <h3 className="font-medium text-gray-900 mb-3" data-testid="text-summary-title">
+                      Round Summary
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-black text-gray-900" data-testid="text-summary-gross">
+                          {totals.gross}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Gross Total</div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-700">Gross Total</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-golf-green" data-testid="text-summary-capped">
-                        {totals.capped}
+                      <div>
+                        <div className="text-2xl font-black text-golf-green" data-testid="text-summary-capped">
+                          {totals.capped}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Gross Capped</div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-700">Gross Capped</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-net">
-                        {totals.net}
+                      <div>
+                        <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-net">
+                          {totals.net}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Net Score</div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-700">Net Score</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-over-par">
-                        {totals.overPar > 0 ? '+' : ''}{totals.overPar}
+                      <div>
+                        <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-over-par">
+                          {totals.overPar > 0 ? '+' : ''}{totals.overPar}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Over Par</div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-700">Over Par</div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex space-x-4 mt-6">
@@ -297,7 +303,7 @@ export default function NewRound() {
                     className="flex-1 bg-golf-green hover:bg-green-700"
                     data-testid="button-submit-round"
                   >
-                    {createRoundMutation.isPending ? "Saving..." : "Submit Round"}
+                    {createRoundMutation.isPending ? "Saving..." : "Submit Score"}
                   </Button>
                 </div>
               </>
