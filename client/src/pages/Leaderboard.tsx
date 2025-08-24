@@ -96,7 +96,7 @@ export default function Leaderboard() {
                       Rounds
                     </th>
                     <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 w-24">
-                      Avg Over
+                      Avg Net
                     </th>
                     <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
                       HCP
@@ -165,27 +165,6 @@ export default function Leaderboard() {
               </table>
             </div>
 
-            {/* Stats Summary */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4 text-center" data-testid="stat-active-players">
-                <div className="text-3xl font-black text-golf-green" data-testid="text-active-players">
-                  {leaderboard?.length || 0}
-                </div>
-                <div className="text-sm font-semibold text-gray-700">Active Players</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 text-center" data-testid="stat-total-rounds">
-                <div className="text-3xl font-black text-golf-blue" data-testid="text-total-rounds">
-                  {totalRounds}
-                </div>
-                <div className="text-sm font-semibold text-gray-700">Total Rounds</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 text-center" data-testid="stat-avg-over-par">
-                <div className="text-3xl font-black text-golf-gold" data-testid="text-avg-over-par-all">
-                  +{avgOverParAll}
-                </div>
-                <div className="text-sm font-semibold text-gray-700">Avg Over Par</div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </main>
