@@ -192,33 +192,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRoundsByPlayer(playerId: string, month?: string): Promise<Round[]> {
-    let query = db
-      .select()
-      .from(rounds)
-      .where(eq(rounds.playerId, playerId));
-
     if (month) {
-      query = query.where(
-        and(
-          eq(rounds.playerId, playerId),
-          sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
+      return await db
+        .select()
+        .from(rounds)
+        .where(
+          and(
+            eq(rounds.playerId, playerId),
+            sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
+          )
         )
-      );
+        .orderBy(desc(rounds.playedOn));
     }
 
-    return await query.orderBy(desc(rounds.playedOn));
+    return await db
+      .select()
+      .from(rounds)
+      .where(eq(rounds.playerId, playerId))
+      .orderBy(desc(rounds.playedOn));
   }
 
   async getAllRounds(month?: string): Promise<Round[]> {
-    let query = db.select().from(rounds);
-
     if (month) {
-      query = query.where(
-        sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
-      );
+      return await db
+        .select()
+        .from(rounds)
+        .where(
+          sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
+        )
+        .orderBy(desc(rounds.playedOn));
     }
 
-    return await query.orderBy(desc(rounds.playedOn));
+    return await db
+      .select()
+      .from(rounds)
+      .orderBy(desc(rounds.playedOn));
   }
 
   async createRound(round: InsertRound): Promise<Round> {
