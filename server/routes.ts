@@ -174,6 +174,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update course (admin only)
+  app.put('/api/courses/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const courseId = req.params.id;
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      const validatedData = insertCourseSchema.parse(req.body);
+      const updatedCourse = await storage.updateCourse(courseId, validatedData);
+      res.json(updatedCourse);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error('Error updating course:', error);
+      res.status(500).json({ message: "Failed to update course" });
+    }
+  });
+
+  // Delete course (admin only)
+  app.delete('/api/courses/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const courseId = req.params.id;
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // Check if course has any rounds
+      const courseRounds = await storage.getAllRounds();
+      const hasRounds = courseRounds.some((round: any) => round.courseId === courseId);
+      
+      if (hasRounds) {
+        return res.status(400).json({ 
+          message: "Cannot delete course with existing rounds. Delete all rounds first." 
+        });
+      }
+
+      await storage.deleteCourse(courseId);
+      res.json({ message: "Course deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      res.status(500).json({ message: "Failed to delete course" });
+    }
+  });
+
+  // Update hole (admin only)
+  app.put('/api/holes/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { par, distance } = req.body;
+      if (par && (par < 3 || par > 5)) {
+        return res.status(400).json({ message: "Par must be between 3 and 5" });
+      }
+      
+      if (distance && (distance < 50 || distance > 700)) {
+        return res.status(400).json({ message: "Distance must be between 50 and 700 yards" });
+      }
+
+      const updatedHole = await storage.updateHole(req.params.id, { par, distance });
+      res.json(updatedHole);
+    } catch (error) {
+      console.error('Error updating hole:', error);
+      res.status(500).json({ message: "Failed to update hole" });
+    }
+  });
+
   // Round routes
   app.get('/api/rounds', async (req, res) => {
     try {
@@ -300,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         grossCapped: scoreCalculation.grossCapped,
         net: scoreCalculation.net,
         overPar: scoreCalculation.overPar.toString(),
-      });
+      } as any);
 
       res.json(updatedRound);
     } catch (error) {
