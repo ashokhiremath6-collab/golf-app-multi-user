@@ -148,9 +148,9 @@ export default function Leaderboard() {
                               rank === 2 ? 'text-golf-blue' : 
                               rank === 3 ? 'text-golf-gold' : 'text-gray-600'
                             }`}
-                            data-testid={`text-avg-over-par-${player.playerId}`}
+                            data-testid={`text-avg-net-${player.playerId}`}
                           >
-                            {player.avgOverPar ? `+${parseFloat(player.avgOverPar).toFixed(1)}` : 'N/A'}
+                            {player.avgNet ? parseFloat(player.avgNet).toFixed(1) : 'N/A'}
                           </span>
                         </td>
                         <td className="px-2 py-4 text-center">

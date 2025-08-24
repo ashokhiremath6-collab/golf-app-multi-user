@@ -304,13 +304,13 @@ export class DatabaseStorage implements IStorage {
         playerName: players.name,
         currentHandicap: players.currentHandicap,
         roundsCount: count(rounds.id),
-        avgOverPar: avg(rounds.overPar),
+        avgNet: avg(rounds.net),
         lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
       })
       .from(players)
       .leftJoin(rounds, eq(players.id, rounds.playerId))
       .groupBy(players.id, players.name, players.currentHandicap)
-      .orderBy(asc(avg(rounds.overPar)));
+      .orderBy(asc(avg(rounds.net)));
 
     return result;
   }
