@@ -26,6 +26,7 @@ export default function Navigation() {
     { path: '/rounds/new', label: 'New Round', icon: 'fas fa-plus' },
     { path: '/leaderboard', label: 'Leaderboard', icon: 'fas fa-trophy' },
     { path: '/history', label: 'History', icon: 'fas fa-history' },
+    { path: '/handicaps', label: 'Handicaps', icon: 'fas fa-users' },
     ...(currentPlayer?.isAdmin ? [{ path: '/admin', label: 'Admin', icon: 'fas fa-cog' }] : []),
   ];
 

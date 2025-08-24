@@ -10,6 +10,7 @@ import Home from "@/pages/Home";
 import NewRound from "@/pages/NewRound";
 import Leaderboard from "@/pages/Leaderboard";
 import History from "@/pages/History";
+import Handicaps from "@/pages/Handicaps";
 import Admin from "@/pages/Admin";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
           <Route path="/rounds/new" component={NewRound} />
           <Route path="/leaderboard" component={Leaderboard} />
           <Route path="/history" component={History} />
+          <Route path="/handicaps" component={Handicaps} />
           <Route path="/players/:id/rounds" component={History} />
           <Route path="/admin" component={Admin} />
         </>
