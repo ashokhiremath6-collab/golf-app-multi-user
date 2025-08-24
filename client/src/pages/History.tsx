@@ -35,6 +35,7 @@ export default function History() {
     retry: false,
   });
 
+
   // Construct proper query parameters for rounds API
   const roundsPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
   const roundsMonth = selectedMonth === "all" ? undefined : selectedMonth;
@@ -66,7 +67,7 @@ export default function History() {
   }
 
   const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
-  const displayPlayer = selectedPlayerId === "self" ? currentPlayer : players?.find((p: any) => p.id === selectedPlayerId);
+  const displayPlayer = selectedPlayerId === "self" ? currentPlayer : (players as any[])?.find((p: any) => p.id === selectedPlayerId);
 
   // Generate month options for the last 12 months
   const generateMonthOptions = () => {
@@ -141,7 +142,7 @@ export default function History() {
               >
                 Your Rounds
               </Button>
-              {players?.filter((p: any) => p.id !== currentPlayer?.id).map((player: any) => (
+              {(players as any[])?.filter((p: any) => p.id !== currentPlayer?.id).map((player: any) => (
                 <Button
                   key={player.id}
                   variant={selectedPlayerId === player.id ? "default" : "outline"}

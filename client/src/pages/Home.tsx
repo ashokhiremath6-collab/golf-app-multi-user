@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
@@ -11,7 +11,7 @@ import { useLocation } from "wouter";
 
 export default function Home() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [, setLocation] = useLocation();
 
   // Redirect to login if not authenticated
@@ -68,8 +68,8 @@ export default function Home() {
     );
   }
 
-  const currentPlayer = players?.[0]; // In real app, get by current user
-  const lastRound = recentRounds?.[0];
+  // currentPlayer is now from useCurrentPlayer hook - no need to get from players array
+  const lastRound = (recentRounds as any[])?.[0];
   
   // Get the latest handicap snapshot for current player to show previous handicap
   const latestSnapshot = (handicapSnapshots as any[])?.find(
