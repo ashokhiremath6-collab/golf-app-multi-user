@@ -20,7 +20,7 @@ const importRoundsSchema = z.object({
 });
 
 const handicapRecalcSchema = z.object({
-  window: z.string().optional(),
+  window: z.enum(['previous', 'current', 'specific']),
   month: z.string().optional(),
 });
 
@@ -450,10 +450,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { window, month } = handicapRecalcSchema.parse(req.body);
       
       let targetMonth: string | undefined;
-      if (window === 'prev') {
+      if (window === 'previous') {
         // Use previous month
         targetMonth = undefined;
-      } else if (month) {
+      } else if (window === 'specific' && month) {
         targetMonth = month;
       }
 
@@ -473,6 +473,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(summary);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch handicap summary" });
+    }
+  });
+
+  // Get all handicap snapshots
+  app.get('/api/handicaps/snapshots', async (req, res) => {
+    try {
+      const snapshots = await storage.getAllHandicapSnapshots();
+      res.json(snapshots);
+    } catch (error) {
+      console.error('Error fetching handicap snapshots:', error);
+      res.status(500).json({ message: "Failed to fetch handicap snapshots" });
+    }
+  });
+
+  // Export handicap data as CSV
+  app.get('/api/handicaps/export', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const snapshots = await storage.getAllHandicapSnapshots();
+      
+      // Create CSV content
+      const csvHeader = 'Player,Month,Previous Handicap,Rounds Count,Avg Monthly Over Par,Change,New Handicap,Date\n';
+      const csvRows = snapshots.map(snapshot => {
+        const avgOverPar = snapshot.avgMonthlyOverPar ? parseFloat(snapshot.avgMonthlyOverPar.toString()).toFixed(1) : 'N/A';
+        const delta = parseFloat(snapshot.delta.toString()).toFixed(0);
+        const date = new Date(snapshot.createdAt).toLocaleDateString();
+        
+        return `"${snapshot.playerName}","${snapshot.month}",${snapshot.prevHandicap},${snapshot.roundsCount},"${avgOverPar}","${delta}",${snapshot.newHandicap},"${date}"`;
+      }).join('\n');
+      
+      const csvContent = csvHeader + csvRows;
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="handicap-snapshots-${new Date().toISOString().slice(0, 7)}.csv"`);
+      res.send(csvContent);
+    } catch (error) {
+      console.error('Error exporting handicap data:', error);
+      res.status(500).json({ message: "Failed to export handicap data" });
     }
   });
 

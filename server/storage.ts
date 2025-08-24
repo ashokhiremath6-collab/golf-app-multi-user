@@ -61,6 +61,7 @@ export interface IStorage {
   // Handicap snapshot operations
   getHandicapSnapshots(playerId: string): Promise<HandicapSnapshot[]>;
   getHandicapSnapshotByMonth(playerId: string, month: string): Promise<HandicapSnapshot | undefined>;
+  getAllHandicapSnapshots(): Promise<any[]>;
   createHandicapSnapshot(snapshot: InsertHandicapSnapshot): Promise<HandicapSnapshot>;
   
   // Leaderboard operations
@@ -272,6 +273,27 @@ export class DatabaseStorage implements IStorage {
   async createHandicapSnapshot(snapshot: InsertHandicapSnapshot): Promise<HandicapSnapshot> {
     const [created] = await db.insert(handicapSnapshots).values(snapshot).returning();
     return created;
+  }
+
+  async getAllHandicapSnapshots(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: handicapSnapshots.id,
+        playerId: handicapSnapshots.playerId,
+        playerName: players.name,
+        month: handicapSnapshots.month,
+        prevHandicap: handicapSnapshots.prevHandicap,
+        roundsCount: handicapSnapshots.roundsCount,
+        avgMonthlyOverPar: handicapSnapshots.avgMonthlyOverPar,
+        delta: handicapSnapshots.delta,
+        newHandicap: handicapSnapshots.newHandicap,
+        createdAt: handicapSnapshots.createdAt,
+      })
+      .from(handicapSnapshots)
+      .leftJoin(players, eq(handicapSnapshots.playerId, players.id))
+      .orderBy(desc(handicapSnapshots.createdAt));
+    
+    return result;
   }
 
   // Leaderboard operations

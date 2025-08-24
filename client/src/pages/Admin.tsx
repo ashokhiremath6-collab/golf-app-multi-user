@@ -8,6 +8,7 @@ import PlayerManagement from "@/components/PlayerManagement";
 import RoundManagement from "@/components/RoundManagement";
 import CourseManagement from "@/components/CourseManagement";
 import ImportHistory from "@/components/ImportHistory";
+import HandicapManagement from "@/components/HandicapManagement";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,36 +132,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="handicaps">
-            <Card data-testid="card-handicap-management">
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4" data-testid="text-handicap-title">
-                  Handicap Recalculation
-                </h3>
-                <div className="space-y-4">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex">
-                      <i className="fas fa-exclamation-triangle text-yellow-400 mr-2 mt-1"></i>
-                      <div className="text-sm text-yellow-800">
-                        <p className="font-medium">Recalculation Process</p>
-                        <p>This will update handicaps for all players based on rounds played in the previous month. Changes are limited to ±2 and floored at 0.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-4">
-                    <Button 
-                      className="bg-purple-600 hover:bg-purple-700"
-                      data-testid="button-run-recalculation"
-                    >
-                      <i className="fas fa-calculator mr-2"></i>Run Recalculation
-                    </Button>
-                    <Button variant="outline" data-testid="button-export-csv">
-                      <i className="fas fa-download mr-2"></i>Export CSV
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <HandicapManagement />
           </TabsContent>
         </Tabs>
       </main>
