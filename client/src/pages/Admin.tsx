@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
 import PlayerManagement from "@/components/PlayerManagement";
+import RoundManagement from "@/components/RoundManagement";
 import CourseManagement from "@/components/CourseManagement";
 import ImportHistory from "@/components/ImportHistory";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Admin() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -30,11 +31,6 @@ export default function Admin() {
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
-
-  const { data: players } = useQuery({
-    queryKey: ["/api/players"],
-    retry: false,
-  });
 
   const { data: courses } = useQuery({
     queryKey: ["/api/courses"],
@@ -53,8 +49,6 @@ export default function Admin() {
       </div>
     );
   }
-
-  const currentPlayer = players?.[0]; // In real app, get by current user
 
   // Check if current user is admin
   if (!currentPlayer?.isAdmin) {
@@ -102,12 +96,15 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="players" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="players" data-testid="tab-players">
               <i className="fas fa-users mr-2"></i>Players
             </TabsTrigger>
+            <TabsTrigger value="rounds" data-testid="tab-rounds">
+              <i className="fas fa-golf-ball mr-2"></i>Rounds
+            </TabsTrigger>
             <TabsTrigger value="courses" data-testid="tab-courses">
-              <i className="fas fa-golf-ball mr-2"></i>Courses
+              <i className="fas fa-flag mr-2"></i>Courses
             </TabsTrigger>
             <TabsTrigger value="import" data-testid="tab-import">
               <i className="fas fa-file-import mr-2"></i>Import
@@ -119,6 +116,10 @@ export default function Admin() {
 
           <TabsContent value="players">
             <PlayerManagement />
+          </TabsContent>
+
+          <TabsContent value="rounds">
+            <RoundManagement />
           </TabsContent>
 
           <TabsContent value="courses">

@@ -13,6 +13,19 @@ export function useAuth() {
   };
 }
 
+interface User {
+  email?: string;
+  [key: string]: any;
+}
+
+interface Player {
+  id: string;
+  email: string | null;
+  name: string;
+  isAdmin: boolean;
+  [key: string]: any;
+}
+
 // Helper hook to get current player by matching email
 export function useCurrentPlayer() {
   const { user, isLoading: userLoading } = useAuth();
@@ -20,10 +33,10 @@ export function useCurrentPlayer() {
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ["/api/players"],
     retry: false,
-    enabled: !!user?.email,
+    enabled: !!(user as User)?.email,
   });
 
-  const currentPlayer = players?.find((p: any) => p.email === user?.email);
+  const currentPlayer = (players as Player[])?.find((p: Player) => p.email === (user as User)?.email);
 
   return {
     currentPlayer,

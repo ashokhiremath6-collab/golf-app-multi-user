@@ -245,6 +245,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update round (admin only)
+  app.put('/api/rounds/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const roundId = req.params.id;
+      const existingRound = await storage.getRound(roundId);
+      if (!existingRound) {
+        return res.status(404).json({ message: "Round not found" });
+      }
+
+      // Validate only rawScores for now (partial update)
+      const { rawScores } = req.body;
+      if (!Array.isArray(rawScores) || rawScores.length !== 18) {
+        return res.status(400).json({ message: "Must provide exactly 18 scores" });
+      }
+
+      if (!rawScores.every(score => Number.isInteger(score) && score >= 1 && score <= 10)) {
+        return res.status(400).json({ message: "All scores must be integers between 1 and 10" });
+      }
+
+      // Get course and holes for recalculation
+      const course = await storage.getCourse(existingRound.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      const holes = await storage.getHolesByCourse(course.id);
+      if (holes.length !== 18) {
+        return res.status(400).json({ message: "Course must have 18 holes configured" });
+      }
+
+      const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
+      
+      // Recalculate round scores with new raw scores
+      const scoreCalculation = calculateRoundScores(
+        rawScores,
+        holePars,
+        existingRound.courseHandicap,
+        course.parTotal
+      );
+
+      // Update round with recalculated values
+      const updatedRound = await storage.updateRound(roundId, {
+        rawScores: rawScores,
+        cappedScores: scoreCalculation.cappedScores,
+        grossCapped: scoreCalculation.grossCapped,
+        net: scoreCalculation.net,
+        overPar: scoreCalculation.overPar.toString(),
+      });
+
+      res.json(updatedRound);
+    } catch (error) {
+      console.error('Error updating round:', error);
+      res.status(500).json({ message: "Failed to update round" });
+    }
+  });
+
+  // Delete round (admin only)
+  app.delete('/api/rounds/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const roundId = req.params.id;
+      const existingRound = await storage.getRound(roundId);
+      if (!existingRound) {
+        return res.status(404).json({ message: "Round not found" });
+      }
+
+      await storage.deleteRound(roundId);
+      res.json({ message: "Round deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting round:', error);
+      res.status(500).json({ message: "Failed to delete round" });
+    }
+  });
+
   // Leaderboard route
   app.get('/api/leaderboard', async (req, res) => {
     try {

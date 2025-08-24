@@ -230,7 +230,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRound(round: InsertRound): Promise<Round> {
-    const [created] = await db.insert(rounds).values(round).returning();
+    const [created] = await db.insert(rounds).values(round as any).returning();
     return created;
   }
 
