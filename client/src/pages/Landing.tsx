@@ -42,7 +42,7 @@ export default function Landing() {
               </Button>
             </div>
 
-            <p className="text-xs text-gray-500" data-testid="text-season-info">
+            <p className="text-sm font-bold text-golf-green" data-testid="text-season-info">
               2024-25 Season • Ends March 31, 2026
             </p>
           </div>

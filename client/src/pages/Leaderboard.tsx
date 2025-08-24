@@ -82,24 +82,24 @@ export default function Leaderboard() {
             </div>
 
             {/* Leaderboard Table */}
-            <div className="overflow-x-auto">
+            <div className="w-full">
               <table className="w-full" data-testid="table-leaderboard">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">
                       Rank
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Player
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
                       Rounds
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
-                      Avg Over Par <i className="fas fa-sort ml-1"></i>
+                    <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 w-24">
+                      Avg Over
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                      Current HCP
+                    <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
+                      HCP
                     </th>
                   </tr>
                 </thead>
@@ -115,33 +115,33 @@ export default function Leaderboard() {
                         className={`hover:bg-gray-50 ${isCurrentPlayer ? 'bg-green-50 border border-golf-green' : ''}`}
                         data-testid={`row-player-${player.playerId}`}
                       >
-                        <td className="px-4 py-4">
-                          <div className="flex items-center">
+                        <td className="px-2 py-4">
+                          <div className="flex items-center justify-center">
                             <span className={`text-lg font-bold ${rankInfo.color || 'text-gray-500'}`} data-testid={`text-rank-${rank}`}>
                               {rank}
                             </span>
                             {rankInfo.icon && (
-                              <i className={`${rankInfo.icon} ${rankInfo.color} ml-2`} data-testid={`icon-rank-${rank}`}></i>
+                              <i className={`${rankInfo.icon} ${rankInfo.color} ml-1 text-sm`} data-testid={`icon-rank-${rank}`}></i>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="font-medium text-gray-900" data-testid={`text-player-name-${player.playerId}`}>
+                        <td className="px-2 py-4">
+                          <div className="font-medium text-gray-900 text-sm" data-testid={`text-player-name-${player.playerId}`}>
                             {player.playerName}
                             {isCurrentPlayer && (
-                              <span className="text-xs text-golf-green ml-2" data-testid="badge-current-player">
+                              <span className="text-xs text-golf-green ml-1" data-testid="badge-current-player">
                                 (You)
                               </span>
                             )}
                           </div>
-                          <div className="text-sm text-gray-500" data-testid={`text-last-round-${player.playerId}`}>
-                            {player.lastRoundDate ? `Last round: ${new Date(player.lastRoundDate).toLocaleDateString()}` : 'No rounds yet'}
+                          <div className="text-xs text-gray-500" data-testid={`text-last-round-${player.playerId}`}>
+                            {player.lastRoundDate ? new Date(player.lastRoundDate).toLocaleDateString() : 'No rounds'}
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-center font-medium" data-testid={`text-rounds-count-${player.playerId}`}>
+                        <td className="px-2 py-4 text-center font-medium" data-testid={`text-rounds-count-${player.playerId}`}>
                           {player.roundsCount || 0}
                         </td>
-                        <td className="px-4 py-4 text-center">
+                        <td className="px-2 py-4 text-center">
                           <span 
                             className={`text-lg font-bold ${
                               rank === 1 ? 'text-golf-green' : 
@@ -153,8 +153,8 @@ export default function Leaderboard() {
                             {player.avgOverPar ? `+${parseFloat(player.avgOverPar).toFixed(1)}` : 'N/A'}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-center">
-                          <Badge variant="outline" data-testid={`badge-handicap-${player.playerId}`}>
+                        <td className="px-2 py-4 text-center">
+                          <Badge variant="outline" className="text-xs" data-testid={`badge-handicap-${player.playerId}`}>
                             {player.currentHandicap}
                           </Badge>
                         </td>
@@ -168,22 +168,22 @@ export default function Leaderboard() {
             {/* Stats Summary */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-lg p-4 text-center" data-testid="stat-active-players">
-                <div className="text-2xl font-bold text-golf-green" data-testid="text-active-players">
+                <div className="text-3xl font-black text-golf-green" data-testid="text-active-players">
                   {leaderboard?.length || 0}
                 </div>
-                <div className="text-sm text-gray-600">Active Players</div>
+                <div className="text-sm font-semibold text-gray-700">Active Players</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 text-center" data-testid="stat-total-rounds">
-                <div className="text-2xl font-bold text-golf-blue" data-testid="text-total-rounds">
+                <div className="text-3xl font-black text-golf-blue" data-testid="text-total-rounds">
                   {totalRounds}
                 </div>
-                <div className="text-sm text-gray-600">Total Rounds</div>
+                <div className="text-sm font-semibold text-gray-700">Total Rounds</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 text-center" data-testid="stat-avg-over-par">
-                <div className="text-2xl font-bold text-golf-gold" data-testid="text-avg-over-par-all">
+                <div className="text-3xl font-black text-golf-gold" data-testid="text-avg-over-par-all">
                   +{avgOverParAll}
                 </div>
-                <div className="text-sm text-gray-600">Avg Over Par</div>
+                <div className="text-sm font-semibold text-gray-700">Avg Over Par</div>
               </div>
             </div>
           </CardContent>

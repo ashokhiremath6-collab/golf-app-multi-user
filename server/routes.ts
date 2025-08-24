@@ -638,10 +638,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const course = await storage.createCourse({
           name: 'BPGC',
           tees: 'Blue',
-          parTotal: 68,
+          parTotal: 70,
         });
 
-        const bpgcPars = [5,3,4,5,4,3,4,3,4,3,4,4,3,4,4,5,3,5];
+        const bpgcPars = [5,3,4,5,4,3,4,3,4,3,4,5,3,4,4,5,3,5];
         const bpgcHoles = bpgcPars.map((par, index) => ({
           courseId: course.id,
           number: index + 1,
@@ -656,10 +656,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const course = await storage.createCourse({
           name: 'US Club',
           tees: 'Blue',
-          parTotal: 68,
+          parTotal: 71,
         });
 
-        const usClubPars = [5,3,3,4,4,4,4,3,4,3,3,5,4,4,4,5,4,5];
+        const usClubPars = [5,3,3,4,4,4,4,3,4,3,4,5,4,4,4,5,4,5];
         const usClubHoles = usClubPars.map((par, index) => ({
           courseId: course.id,
           number: index + 1,
