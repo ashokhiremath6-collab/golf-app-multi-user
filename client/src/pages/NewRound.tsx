@@ -118,8 +118,8 @@ export default function NewRound() {
     });
     
     const capped = cappedScores.reduce((sum, score) => sum + score, 0);
-    const net = capped - courseHandicap;
-    const overPar = capped - selectedCourse.parTotal;
+    const net = gross - courseHandicap;  // Net = Gross - Handicap
+    const overPar = gross - selectedCourse.parTotal;  // Over Par = Gross - Course Par
 
     return { gross, capped, net, overPar };
   };
@@ -213,7 +213,7 @@ export default function NewRound() {
               <>
                 {/* Course Summary */}
                 <div className="bg-gray-50 rounded-lg p-4 mb-6" data-testid="card-course-summary">
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-4 gap-4 text-center">
                     <div>
                       <div className="text-lg font-bold" data-testid="text-course-par">
                         {selectedCourse.parTotal}
@@ -221,16 +221,22 @@ export default function NewRound() {
                       <div className="text-xs text-gray-600">Course Par</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold" data-testid="text-course-handicap">
-                        {courseHandicap}
+                      <div className="text-lg font-bold" data-testid="text-gross-score">
+                        {totals.gross || 0}
                       </div>
-                      <div className="text-xs text-gray-600">Course HCP</div>
+                      <div className="text-xs text-gray-600">Gross Score</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-golf-blue" data-testid="text-target-net">
-                        {selectedCourse.parTotal - courseHandicap}
+                      <div className="text-lg font-bold" data-testid="text-handicap">
+                        {courseHandicap}
                       </div>
-                      <div className="text-xs text-gray-600">Target Net</div>
+                      <div className="text-xs text-gray-600">Handicap</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold text-golf-blue" data-testid="text-net">
+                        {totals.net || 0}
+                      </div>
+                      <div className="text-xs text-gray-600">Net</div>
                     </div>
                   </div>
                 </div>
