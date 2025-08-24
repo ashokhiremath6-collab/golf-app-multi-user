@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function NewRound() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
@@ -41,11 +41,6 @@ export default function NewRound() {
   const { data: holes, isLoading: holesLoading } = useQuery({
     queryKey: ["/api/courses", selectedCourseId, "holes"],
     enabled: !!selectedCourseId,
-    retry: false,
-  });
-
-  const { data: players } = useQuery({
-    queryKey: ["/api/players"],
     retry: false,
   });
 
@@ -96,7 +91,6 @@ export default function NewRound() {
   }
 
   const selectedCourse = courses?.find((c: any) => c.id === selectedCourseId);
-  const currentPlayer = players?.[0]; // In real app, get by current user
   const courseHandicap = currentPlayer?.currentHandicap || 0;
 
   const handleScoreChange = (holeIndex: number, score: number) => {

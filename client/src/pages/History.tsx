@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 export default function History() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("self");
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
@@ -35,9 +35,20 @@ export default function History() {
     retry: false,
   });
 
+  // Construct proper query parameters for rounds API
+  const roundsPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
+  const roundsMonth = selectedMonth === "all" ? undefined : selectedMonth;
+  
   const { data: rounds, isLoading: roundsLoading } = useQuery({
-    queryKey: ["/api/rounds", selectedPlayerId === "self" ? players?.[0]?.id : selectedPlayerId, selectedMonth],
-    enabled: !!(selectedPlayerId !== "self" || players?.[0]?.id),
+    queryKey: ["/api/rounds", { playerId: roundsPlayerId, month: roundsMonth }],
+    queryFn: ({ queryKey }) => {
+      const [, params] = queryKey as [string, { playerId?: string; month?: string }];
+      const searchParams = new URLSearchParams();
+      if (params.playerId) searchParams.set('playerId', params.playerId);
+      if (params.month) searchParams.set('month', params.month);
+      return fetch(`/api/rounds?${searchParams.toString()}`, { credentials: 'include' }).then(res => res.json());
+    },
+    enabled: !!roundsPlayerId,
     retry: false,
   });
 
@@ -54,7 +65,6 @@ export default function History() {
     );
   }
 
-  const currentPlayer = players?.[0]; // In real app, get by current user
   const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
   const displayPlayer = selectedPlayerId === "self" ? currentPlayer : players?.find((p: any) => p.id === selectedPlayerId);
 

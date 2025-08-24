@@ -339,7 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Create seed players
       const seedPlayers = [
-        { name: 'Ashok Hiremath', email: 'ashok@example.com', currentHandicap: 16, isAdmin: true },
+        { name: 'Ashok Hiremath', email: 'ashokhiremath6@gmail.com', currentHandicap: 16, isAdmin: true },
         { name: 'Debashish Das', email: 'debashish@example.com', currentHandicap: 14, isAdmin: false },
         { name: 'Dev Bhattacharya', email: 'dev@example.com', currentHandicap: 13, isAdmin: false },
       ];
