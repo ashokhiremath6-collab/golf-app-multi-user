@@ -22,7 +22,10 @@ export default function ScoreGrid({ holes, scores, onScoreChange }: ScoreGridPro
   };
 
   const calculateNineTotal = (startHole: number) => {
-    return scores.slice(startHole, startHole + 9).reduce((sum, score) => sum + (score || 0), 0);
+    return scores.slice(startHole, startHole + 9).reduce((sum, score, index) => {
+      const actualScore = score || holes[startHole + index]?.par || 0;
+      return sum + actualScore;
+    }, 0);
   };
 
   const renderNineHoles = (startHole: number, title: string) => {
@@ -59,8 +62,8 @@ export default function ScoreGrid({ holes, scores, onScoreChange }: ScoreGridPro
         {/* Nine Summary */}
         <div className="bg-gray-50 px-4 py-3 border-t border-gray-200" data-testid={`summary-${title.toLowerCase().replace(' ', '-')}`}>
           <div className="flex justify-between text-sm">
-            <span>{title}:</span>
-            <span className="font-medium" data-testid={`text-${title.toLowerCase().replace(' ', '-')}-total`}>
+            <span className="font-semibold text-gray-900">{title}:</span>
+            <span className="font-bold text-xl text-golf-green" data-testid={`text-${title.toLowerCase().replace(' ', '-')}-total`}>
               {calculateNineTotal(startHole)}
             </span>
           </div>

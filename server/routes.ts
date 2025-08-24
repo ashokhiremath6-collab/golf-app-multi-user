@@ -638,16 +638,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const course = await storage.createCourse({
           name: 'BPGC',
           tees: 'Blue',
-          parTotal: 70,
+          parTotal: 68,
         });
 
-        const bpgcHoles = Array.from({ length: 18 }, (_, index) => ({
+        const bpgcPars = [5,3,4,5,4,3,4,3,4,3,4,4,3,4,4,5,3,5];
+        const bpgcHoles = bpgcPars.map((par, index) => ({
           courseId: course.id,
           number: index + 1,
-          par: 4,
-          distance: 400,
+          par,
+          distance: par === 3 ? 150 : par === 4 ? 400 : 520,
         }));
         await storage.createHoles(bpgcHoles);
+      }
+
+      const usClubCourse = await storage.getCourseByName('US Club');
+      if (!usClubCourse) {
+        const course = await storage.createCourse({
+          name: 'US Club',
+          tees: 'Blue',
+          parTotal: 68,
+        });
+
+        const usClubPars = [5,3,3,4,4,4,4,3,4,3,3,5,4,4,4,5,4,5];
+        const usClubHoles = usClubPars.map((par, index) => ({
+          courseId: course.id,
+          number: index + 1,
+          par,
+          distance: par === 3 ? 150 : par === 4 ? 400 : 520,
+        }));
+        await storage.createHoles(usClubHoles);
       }
 
       res.json({ message: "Seed data created successfully" });

@@ -102,11 +102,13 @@ export default function NewRound() {
   const calculateTotals = () => {
     if (!holes || !selectedCourse) return { gross: 0, capped: 0, net: 0, overPar: 0 };
 
-    const gross = scores.reduce((sum, score) => sum + (score || 0), 0);
+    // Use par as default if no score entered
+    const finalScores = scores.map((score, index) => score || holes[index]?.par || 0);
+    const gross = finalScores.reduce((sum, score) => sum + score, 0);
     
     // Calculate capped scores (double bogey cap)
-    const cappedScores = scores.map((score, index) => {
-      if (!score || !holes[index]) return 0;
+    const cappedScores = finalScores.map((score, index) => {
+      if (!holes[index]) return 0;
       const par = holes[index].par;
       return Math.min(score, par + 2);
     });
@@ -137,7 +139,9 @@ export default function NewRound() {
       return;
     }
 
-    const validScores = scores.every(score => score > 0 && score <= 10);
+    // Use par as default for empty scores before submission
+    const finalScores = scores.map((score, index) => score || holes[index]?.par || 0);
+    const validScores = finalScores.every(score => score > 0 && score <= 10);
     if (!validScores) {
       toast({
         title: "Error",
@@ -151,7 +155,7 @@ export default function NewRound() {
       playerId: currentPlayer.id,
       courseId: selectedCourseId,
       playedOn: new Date().toISOString().split('T')[0],
-      rawScores: scores,
+      rawScores: finalScores,
       courseHandicap,
       source: 'app',
     };
@@ -251,28 +255,28 @@ export default function NewRound() {
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                     <div>
-                      <div className="text-xl font-bold" data-testid="text-summary-gross">
+                      <div className="text-2xl font-black text-gray-900" data-testid="text-summary-gross">
                         {totals.gross}
                       </div>
-                      <div className="text-xs text-gray-600">Gross Total</div>
+                      <div className="text-sm font-semibold text-gray-700">Gross Total</div>
                     </div>
                     <div>
-                      <div className="text-xl font-bold text-golf-green" data-testid="text-summary-capped">
+                      <div className="text-2xl font-black text-golf-green" data-testid="text-summary-capped">
                         {totals.capped}
                       </div>
-                      <div className="text-xs text-gray-600">Gross Capped</div>
+                      <div className="text-sm font-semibold text-gray-700">Gross Capped</div>
                     </div>
                     <div>
-                      <div className="text-xl font-bold text-golf-blue" data-testid="text-summary-net">
+                      <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-net">
                         {totals.net}
                       </div>
-                      <div className="text-xs text-gray-600">Net Score</div>
+                      <div className="text-sm font-semibold text-gray-700">Net Score</div>
                     </div>
                     <div>
-                      <div className="text-xl font-bold text-golf-gold" data-testid="text-summary-over-par">
+                      <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-over-par">
                         {totals.overPar > 0 ? '+' : ''}{totals.overPar}
                       </div>
-                      <div className="text-xs text-gray-600">Over Par</div>
+                      <div className="text-sm font-semibold text-gray-700">Over Par</div>
                     </div>
                   </div>
                 </div>

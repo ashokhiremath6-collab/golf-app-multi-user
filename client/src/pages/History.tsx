@@ -191,28 +191,28 @@ export default function History() {
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   <div>
-                    <div className="text-lg font-bold" data-testid="text-summary-rounds">
+                    <div className="text-2xl font-black text-gray-900" data-testid="text-summary-rounds">
                       {summary.roundsPlayed}
                     </div>
-                    <div className="text-xs text-gray-600">Rounds Played</div>
+                    <div className="text-sm font-semibold text-gray-700">Rounds Played</div>
                   </div>
                   <div>
-                    <div className="text-lg font-bold text-golf-green" data-testid="text-summary-avg-gross">
+                    <div className="text-2xl font-black text-golf-green" data-testid="text-summary-avg-gross">
                       {summary.avgGross}
                     </div>
-                    <div className="text-xs text-gray-600">Avg Gross</div>
+                    <div className="text-sm font-semibold text-gray-700">Avg Gross</div>
                   </div>
                   <div>
-                    <div className="text-lg font-bold text-golf-blue" data-testid="text-summary-avg-net">
+                    <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-avg-net">
                       {summary.avgNet}
                     </div>
-                    <div className="text-xs text-gray-600">Avg Net</div>
+                    <div className="text-sm font-semibold text-gray-700">Avg Net</div>
                   </div>
                   <div>
-                    <div className="text-lg font-bold text-golf-gold" data-testid="text-summary-avg-over-par">
+                    <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-avg-over-par">
                       +{summary.avgOverPar}
                     </div>
-                    <div className="text-xs text-gray-600">Avg Over Par</div>
+                    <div className="text-sm font-semibold text-gray-700">Avg Over Par</div>
                   </div>
                 </div>
               </div>
