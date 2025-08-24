@@ -1,7 +1,10 @@
+import { useGroupName } from "@/hooks/useGroupName";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function Landing() {
+  const { groupName } = useGroupName();
+  
   const handleLogin = () => {
     window.location.href = '/api/login';
   };
@@ -14,7 +17,7 @@ export default function Landing() {
             <div className="space-y-2">
               <i className="fas fa-golf-ball text-4xl text-golf-green" data-testid="icon-golf-ball"></i>
               <h1 className="text-2xl font-bold text-gray-900" data-testid="text-app-title">
-                Blues Golf Challenge
+                {groupName}
               </h1>
               <p className="text-gray-600" data-testid="text-app-description">
                 Track your golf scores, manage handicaps, and compete with friends

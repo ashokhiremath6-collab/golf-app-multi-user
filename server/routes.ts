@@ -597,6 +597,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Group settings
+  app.get('/api/group/settings', async (req, res) => {
+    try {
+      const settings = await storage.getGroupSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch group settings" });
+    }
+  });
+
+  app.put('/api/group/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { groupName } = req.body;
+      if (!groupName || typeof groupName !== 'string') {
+        return res.status(400).json({ message: "Group name is required" });
+      }
+
+      const updatedSettings = await storage.updateGroupSettings({ groupName });
+      res.json(updatedSettings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update group settings" });
+    }
+  });
+
   // Seed data endpoint (development only)
   app.post('/api/seed', async (req, res) => {
     try {

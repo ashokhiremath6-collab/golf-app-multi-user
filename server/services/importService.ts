@@ -6,24 +6,7 @@ export interface ImportRoundData {
   player_name: string;
   course_name: string;
   played_on: string; // YYYY-MM-DD
-  scores_1: number;
-  scores_2: number;
-  scores_3: number;
-  scores_4: number;
-  scores_5: number;
-  scores_6: number;
-  scores_7: number;
-  scores_8: number;
-  scores_9: number;
-  scores_10: number;
-  scores_11: number;
-  scores_12: number;
-  scores_13: number;
-  scores_14: number;
-  scores_15: number;
-  scores_16: number;
-  scores_17: number;
-  scores_18: number;
+  gross_score: number;
   course_handicap: number;
 }
 
@@ -71,8 +54,8 @@ export class ImportService {
         const rowNumber = i + 1;
 
         // Validate required fields
-        if (!rowData.player_name || !rowData.course_name || !rowData.played_on) {
-          result.errors.push(`Row ${rowNumber}: Missing required fields (player_name, course_name, played_on)`);
+        if (!rowData.player_name || !rowData.course_name || !rowData.played_on || !rowData.gross_score || rowData.course_handicap === undefined) {
+          result.errors.push(`Row ${rowNumber}: Missing required fields (player_name, course_name, played_on, gross_score, course_handicap)`);
           result.skipped++;
           continue;
         }
@@ -84,19 +67,16 @@ export class ImportService {
           continue;
         }
 
-        // Extract scores array
-        const rawScores = [
-          rowData.scores_1, rowData.scores_2, rowData.scores_3, rowData.scores_4,
-          rowData.scores_5, rowData.scores_6, rowData.scores_7, rowData.scores_8,
-          rowData.scores_9, rowData.scores_10, rowData.scores_11, rowData.scores_12,
-          rowData.scores_13, rowData.scores_14, rowData.scores_15, rowData.scores_16,
-          rowData.scores_17, rowData.scores_18,
-        ];
+        // Validate gross score
+        if (rowData.gross_score < 50 || rowData.gross_score > 150) {
+          result.errors.push(`Row ${rowNumber}: Invalid gross score. Must be between 50 and 150`);
+          result.skipped++;
+          continue;
+        }
 
-        // Validate scores
-        const invalidScores = rawScores.some(score => !score || score < 1 || score > 10);
-        if (invalidScores) {
-          result.errors.push(`Row ${rowNumber}: Invalid scores. All scores must be between 1 and 10`);
+        // Validate course handicap
+        if (rowData.course_handicap < 0 || rowData.course_handicap > 54) {
+          result.errors.push(`Row ${rowNumber}: Invalid course handicap. Must be between 0 and 54`);
           result.skipped++;
           continue;
         }
@@ -158,22 +138,21 @@ export class ImportService {
           continue;
         }
 
-        const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
+        // Calculate net score and over par from gross score
+        const net = rowData.gross_score - rowData.course_handicap;
+        const overPar = rowData.gross_score - course.parTotal;
         
-        // Calculate round scores
-        const scoreCalculation = calculateRoundScores(
-          rawScores,
-          holePars,
-          rowData.course_handicap,
-          course.parTotal
-        );
+        // Create dummy raw scores array (we don't have hole-by-hole data)
+        // Use average score per hole based on gross total
+        const avgScorePerHole = Math.round(rowData.gross_score / 18);
+        const rawScores = Array(18).fill(avgScorePerHole);
 
         // Create round
         const roundData: InsertRound = {
           playerId: player.id,
           courseId: course.id,
           playedOn: rowData.played_on,
-          rawScores: scoreCalculation.rawScores,
+          rawScores,
           courseHandicap: rowData.course_handicap,
           source: 'import',
           status: 'ok',
@@ -211,7 +190,7 @@ export class ImportService {
 
       headers.forEach((header, index) => {
         const value = values[index];
-        if (header.startsWith('scores_') || header === 'course_handicap') {
+        if (header === 'gross_score' || header === 'course_handicap') {
           row[header] = parseInt(value, 10);
         } else {
           row[header] = value;
@@ -239,9 +218,10 @@ export class ImportService {
    * Generate sample CSV format
    */
   getSampleCSV(): string {
-    return `player_name,course_name,played_on,scores_1,scores_2,scores_3,scores_4,scores_5,scores_6,scores_7,scores_8,scores_9,scores_10,scores_11,scores_12,scores_13,scores_14,scores_15,scores_16,scores_17,scores_18,course_handicap
-Ashok Hiremath,Willingdon Golf Club,2024-12-28,5,4,6,4,5,4,7,3,4,4,5,3,4,4,5,4,6,4,16
-Dev Bhattacharya,BPGC,2024-12-26,4,3,5,4,4,3,6,3,4,3,4,3,3,3,4,3,5,3,13`;
+    return `player_name,course_name,played_on,gross_score,course_handicap
+Ashok Hiremath,Willingdon Golf Club,2024-12-28,85,16
+Dev Bhattacharya,BPGC,2024-12-26,78,13
+Debashish Das,US Club,2024-12-30,92,14`;
   }
 }
 

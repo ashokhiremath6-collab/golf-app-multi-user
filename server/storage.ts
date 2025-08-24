@@ -334,6 +334,14 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updated;
   }
+
+  async getGroupSettings(): Promise<SeasonSettings> {
+    return this.getSeasonSettings();
+  }
+
+  async updateGroupSettings(settings: { groupName?: string }): Promise<SeasonSettings> {
+    return this.updateSeasonSettings(settings);
+  }
 }
 
 export const storage = new DatabaseStorage();

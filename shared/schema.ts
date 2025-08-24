@@ -105,6 +105,7 @@ export const handicapSnapshots = pgTable("handicap_snapshots", {
 // Season settings table
 export const seasonSettings = pgTable("season_settings", {
   id: integer("id").primaryKey().default(1),
+  groupName: text("group_name").default('Blues Golf Challenge'),
   seasonEnd: date("season_end").default('2026-03-31'),
   leaderboardMetric: text("leaderboard_metric").default('avg_over_par'),
   kFactor: numeric("k_factor").default('0.5'),

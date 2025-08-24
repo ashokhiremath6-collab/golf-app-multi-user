@@ -9,6 +9,7 @@ import RoundManagement from "@/components/RoundManagement";
 import CourseManagement from "@/components/CourseManagement";
 import ImportHistory from "@/components/ImportHistory";
 import HandicapManagement from "@/components/HandicapManagement";
+import GroupSettings from "@/components/GroupSettings";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -90,14 +91,14 @@ export default function Admin() {
               </Badge>
             </div>
             <p className="text-gray-600" data-testid="text-admin-description">
-              Manage players, courses, and system operations for Blues Golf Challenge.
+              Manage players, courses, and system operations for your golf group.
             </p>
           </CardContent>
         </Card>
 
         {/* Admin Tabs */}
         <Tabs defaultValue="players" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="players" data-testid="tab-players">
               <i className="fas fa-users mr-2"></i>Players
             </TabsTrigger>
@@ -112,6 +113,9 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="handicaps" data-testid="tab-handicaps">
               <i className="fas fa-calculator mr-2"></i>Handicaps
+            </TabsTrigger>
+            <TabsTrigger value="settings" data-testid="tab-settings">
+              <i className="fas fa-cog mr-2"></i>Settings
             </TabsTrigger>
           </TabsList>
 
@@ -133,6 +137,10 @@ export default function Admin() {
 
           <TabsContent value="handicaps">
             <HandicapManagement />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <GroupSettings />
           </TabsContent>
         </Tabs>
       </main>

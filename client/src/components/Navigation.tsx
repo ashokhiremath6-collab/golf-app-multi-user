@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useGroupName } from "@/hooks/useGroupName";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -8,14 +9,15 @@ import { useQuery } from "@tanstack/react-query";
 export default function Navigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const { groupName } = useGroupName();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { data: players } = useQuery({
+  const { data: players } = useQuery<any[]>({
     queryKey: ["/api/players"],
     retry: false,
   });
 
-  const currentPlayer = players?.find((p: any) => p.email === user?.email);
+  const currentPlayer = players?.find((p: any) => p.email === (user as any)?.email);
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
@@ -39,7 +41,7 @@ export default function Navigation() {
             <div className="flex items-center">
               <i className="fas fa-golf-ball text-golf-green text-2xl mr-3" data-testid="icon-logo"></i>
               <h1 className="text-xl font-bold text-gray-900" data-testid="text-app-name">
-                Blues Golf Challenge
+                {groupName}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
@@ -52,7 +54,7 @@ export default function Navigation() {
               </button>
               <div className="hidden sm:block">
                 <span className="text-sm text-gray-600" data-testid="text-user-name">
-                  {currentPlayer?.name || user?.firstName || 'User'}
+                  {currentPlayer?.name || (user as any)?.firstName || 'User'}
                 </span>
                 <div className="text-xs text-golf-green font-medium" data-testid="text-user-handicap">
                   HCP: {currentPlayer?.currentHandicap || 0}
