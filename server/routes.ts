@@ -32,8 +32,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email;
+      
+      // Get the auth user
       const user = await storage.getUser(userId);
-      res.json(user);
+      
+      // Try to find matching player profile by email
+      const player = await storage.getPlayerByEmail(userEmail);
+      
+      // Return user data with linked player information
+      const response = {
+        ...user,
+        linkedPlayer: player || null,
+        isLinkedToPlayer: !!player
+      };
+      
+      res.json(response);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -65,9 +79,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/players', isAuthenticated, async (req: any, res) => {
     try {
       // Check if user is admin
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -86,9 +99,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/players/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -107,9 +119,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/players/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -155,9 +166,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/courses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -177,9 +187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update course (admin only)
   app.put('/api/courses/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -206,9 +215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete course (admin only)
   app.delete('/api/courses/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -241,9 +249,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update hole (admin only)
   app.put('/api/holes/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -291,11 +298,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = createRoundSchema.parse(req.body);
       
-      // Verify the player exists
-      const player = await storage.getPlayer(validatedData.playerId);
-      if (!player) {
-        return res.status(404).json({ message: "Player not found" });
+      // Get the authenticated user's linked player
+      const userEmail = req.user.claims.email;
+      const authenticatedPlayer = await storage.getPlayerByEmail(userEmail || '');
+      
+      if (!authenticatedPlayer) {
+        return res.status(404).json({ 
+          message: "Player profile not found. Please contact admin to set up your account." 
+        });
       }
+      
+      // Use the authenticated player's ID (ignore any playerId from request for security)
+      const player = authenticatedPlayer;
 
       // Get course and holes for calculations
       const course = await storage.getCourse(validatedData.courseId);
@@ -318,9 +332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         course.parTotal
       );
 
-      // Create complete round data
+      // Create complete round data using authenticated player
       const roundData = {
         ...validatedData,
+        playerId: player.id, // Always use authenticated player's ID
         cappedScores: scoreCalculation.cappedScores,
         grossCapped: scoreCalculation.grossCapped,
         net: scoreCalculation.net,
@@ -340,9 +355,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update round (admin only)
   app.put('/api/rounds/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -404,9 +418,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete round (admin only)
   app.delete('/api/rounds/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -440,9 +453,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Handicap recalculation endpoint (supports both GET for cron and POST for manual)
   const handleHandicapRecalculation = async (req: any, res: any) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -527,9 +539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export handicap data as CSV
   app.get('/api/handicaps/export', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -561,9 +572,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import routes
   app.post('/api/import/rounds', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -609,9 +619,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/group/settings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      const player = await storage.getPlayerByEmail(currentUser?.email || '');
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
       
       if (!player?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });

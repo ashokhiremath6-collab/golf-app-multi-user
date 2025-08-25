@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function Leaderboard() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -31,10 +31,6 @@ export default function Leaderboard() {
     retry: false,
   });
 
-  const { data: players } = useQuery({
-    queryKey: ["/api/players"],
-    retry: false,
-  });
 
   if (isLoading || leaderboardLoading) {
     return (
@@ -49,7 +45,7 @@ export default function Leaderboard() {
     );
   }
 
-  const currentPlayer = players?.[0]; // In real app, get by current user
+  // currentPlayer is now from useCurrentPlayer hook
   const totalRounds = leaderboard?.reduce((sum: number, player: any) => sum + (player.roundsCount || 0), 0) || 0;
   const avgOverParAll = leaderboard?.length > 0 
     ? (leaderboard.reduce((sum: number, player: any) => sum + parseFloat(player.avgOverPar || 0), 0) / leaderboard.length).toFixed(1)

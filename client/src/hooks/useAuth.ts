@@ -1,15 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 
 export function useAuth() {
-  const { data: user, isLoading } = useQuery({
+  const { data: authResponse, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
 
   return {
-    user,
+    user: authResponse,
+    linkedPlayer: authResponse?.linkedPlayer || null,
+    isLinkedToPlayer: authResponse?.isLinkedToPlayer || false,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!authResponse,
   };
 }
 
@@ -26,26 +28,14 @@ interface Player {
   [key: string]: any;
 }
 
-// Helper hook to get current player by matching email
+// Helper hook to get current player using linked player data
 export function useCurrentPlayer() {
-  const { user, isLoading: userLoading } = useAuth();
-  
-  const { data: players, isLoading: playersLoading } = useQuery({
-    queryKey: ["/api/players"],
-    retry: false,
-    enabled: !!(user as User)?.email,
-  });
-
-  // Handle email mismatch between login and database
-  const userEmail = (user as User)?.email;
-  const currentPlayer = (players as Player[])?.find((p: Player) => 
-    p.email === userEmail || 
-    (userEmail === 'ashokhiremath6@gmail.com' && p.email === 'ashok@example.com')
-  );
+  const { user, linkedPlayer, isLinkedToPlayer, isLoading } = useAuth();
 
   return {
-    currentPlayer,
-    isLoading: userLoading || playersLoading,
+    currentPlayer: linkedPlayer,
+    isLoading,
     isAuthenticated: !!user,
+    isLinkedToPlayer,
   };
 }
