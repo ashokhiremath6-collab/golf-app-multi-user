@@ -75,13 +75,12 @@ export default function Handicaps() {
                     <TableHead className="w-12" data-testid="header-rank">#</TableHead>
                     <TableHead data-testid="header-player">Player</TableHead>
                     <TableHead className="text-center" data-testid="header-handicap">Current Handicap</TableHead>
-                    <TableHead className="text-center" data-testid="header-role">Role</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedPlayers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-gray-500" data-testid="text-no-players">
+                      <TableCell colSpan={3} className="text-center py-8 text-gray-500" data-testid="text-no-players">
                         No players found
                       </TableCell>
                     </TableRow>
@@ -100,14 +99,6 @@ export default function Handicaps() {
                             className="font-mono text-lg px-3 py-1"
                           >
                             {player.currentHandicap}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center" data-testid={`text-role-${player.id}`}>
-                          <Badge 
-                            variant={player.isAdmin ? "default" : "secondary"}
-                            className={player.isAdmin ? "bg-golf-green" : ""}
-                          >
-                            {player.isAdmin ? "Admin" : "Player"}
                           </Badge>
                         </TableCell>
                       </TableRow>
