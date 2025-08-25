@@ -34,6 +34,8 @@ export function useCurrentPlayer() {
     queryKey: ["/api/players"],
     retry: false,
     enabled: !!(user as User)?.email,
+    staleTime: 0, // Force fresh data
+    gcTime: 0, // Don't cache
   });
 
   const currentPlayer = (players as Player[])?.find((p: Player) => p.email === (user as User)?.email);
