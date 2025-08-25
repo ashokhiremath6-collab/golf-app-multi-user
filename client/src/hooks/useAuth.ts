@@ -42,7 +42,7 @@ export function useCurrentPlayer() {
   // Debug: Log user email to help troubleshoot
   if (userEmail && userEmail.includes('shivam')) {
     console.log('Shivam login email:', userEmail);
-    console.log('Available players:', players?.map(p => ({ name: p.name, email: p.email })));
+    console.log('Available players:', (players as Player[])?.map((p: Player) => ({ name: p.name, email: p.email })));
   }
   
   const currentPlayer = (players as Player[])?.find((p: Player) => 
