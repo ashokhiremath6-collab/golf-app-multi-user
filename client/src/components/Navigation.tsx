@@ -55,6 +55,9 @@ export default function Navigation() {
                 <span className="text-sm text-gray-800 font-medium" data-testid="text-user-name">
                   {currentPlayer?.name || (user as any)?.firstName || 'User'}
                 </span>
+                <div className="text-xs text-golf-green font-bold" data-testid="text-user-handicap">
+                  HCP: {currentPlayer?.currentHandicap || 0}
+                </div>
               </div>
             </div>
             

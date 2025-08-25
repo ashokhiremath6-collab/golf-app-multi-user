@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 interface Hole {
   id: string;
@@ -17,29 +16,9 @@ interface ScoreGridProps {
 export default function ScoreGrid({ holes, scores, onScoreChange }: ScoreGridProps) {
   const handleScoreChange = (holeIndex: number, value: string) => {
     const score = parseInt(value) || 0;
-    if (score >= 1 && score <= 10) {
+    if (score >= 0 && score <= 10) {
       onScoreChange(holeIndex, score);
     }
-  };
-
-  const handleIncrement = (holeIndex: number) => {
-    const currentScore = scores[holeIndex] || holes[holeIndex]?.par || 0;
-    const newScore = currentScore + 1;
-    if (newScore <= 10) {
-      onScoreChange(holeIndex, newScore);
-    }
-  };
-
-  const handleDecrement = (holeIndex: number) => {
-    const currentScore = scores[holeIndex] || holes[holeIndex]?.par || 0;
-    const newScore = currentScore - 1;
-    if (newScore >= 1) {
-      onScoreChange(holeIndex, newScore);
-    }
-  };
-
-  const getDisplayScore = (holeIndex: number) => {
-    return scores[holeIndex] || holes[holeIndex]?.par || 0;
   };
 
   const calculateNineTotal = (startHole: number) => {
@@ -64,35 +43,17 @@ export default function ScoreGrid({ holes, scores, onScoreChange }: ScoreGridPro
               <div key={hole.id} className="text-center" data-testid={`hole-${hole.number}`}>
                 <div className="text-xs text-gray-600 mb-1">Hole {hole.number}</div>
                 <div className="text-sm font-medium mb-1">Par {hole.par}</div>
-                <div className="flex items-center space-x-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDecrement(holeIndex)}
-                    className="w-8 h-8 p-0 hover:bg-red-50 hover:border-red-300"
-                    data-testid={`button-decrement-${hole.number}`}
-                  >
-                    −
-                  </Button>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={getDisplayScore(holeIndex)}
-                    onChange={(e) => handleScoreChange(holeIndex, e.target.value)}
-                    className="w-12 px-1 py-1 text-center font-bold text-lg border-2 focus:border-golf-green"
-                    data-testid={`input-score-${hole.number}`}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleIncrement(holeIndex)}
-                    className="w-8 h-8 p-0 hover:bg-green-50 hover:border-green-300"
-                    data-testid={`button-increment-${hole.number}`}
-                  >
-                    +
-                  </Button>
-                </div>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={scores[holeIndex] || ''}
+                  onChange={(e) => handleScoreChange(holeIndex, e.target.value)}
+                  className="w-full px-2 py-2 text-center font-medium text-lg"
+                  placeholder={hole.par.toString()}
+                  data-testid={`input-score-${hole.number}`}
+                />
+                <div className="text-xs text-gray-500 mt-1">{hole.distance}y</div>
               </div>
             );
           })}
