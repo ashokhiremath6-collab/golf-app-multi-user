@@ -5,6 +5,7 @@ import { useGroupName } from "@/hooks/useGroupName";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import augustaBg from "../assets/augusta-national-bg.png";
 
 export default function Navigation() {
   const [location, setLocation] = useLocation();
@@ -35,25 +36,23 @@ export default function Navigation() {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-50" data-testid="nav-desktop">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <i className="fas fa-golf-ball text-golf-green text-2xl mr-3" data-testid="icon-logo"></i>
-              <h1 className="text-xl font-bold text-gray-900" data-testid="text-app-name">
-                {groupName}
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
+      <nav className="relative bg-cover bg-center bg-no-repeat shadow-md border-b border-gray-200 sticky top-0 z-50" 
+           style={{ backgroundImage: `url(${augustaBg})` }}
+           data-testid="nav-desktop">
+        <div className="absolute inset-0 bg-white bg-opacity-85"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            {/* Left spacer for centering */}
+            <div className="flex items-center space-x-4 w-1/3">
               <button 
                 onClick={handleLogout}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-700 hover:text-gray-900"
                 data-testid="button-user-menu"
               >
                 <i className="fas fa-user-circle text-2xl"></i>
               </button>
               <div className="hidden sm:block">
-                <span className="text-sm text-gray-600" data-testid="text-user-name">
+                <span className="text-sm text-gray-700" data-testid="text-user-name">
                   {currentPlayer?.name || (user as any)?.firstName || 'User'}
                 </span>
                 <div className="text-xs text-golf-green font-medium" data-testid="text-user-handicap">
@@ -61,6 +60,17 @@ export default function Navigation() {
                 </div>
               </div>
             </div>
+            
+            {/* Centered title */}
+            <div className="flex items-center justify-center w-1/3">
+              <i className="fas fa-golf-ball text-golf-green text-2xl mr-3" data-testid="icon-logo"></i>
+              <h1 className="text-2xl font-bold text-gray-900 text-center" data-testid="text-app-name">
+                {groupName}
+              </h1>
+            </div>
+            
+            {/* Right spacer */}
+            <div className="w-1/3"></div>
           </div>
         </div>
       </nav>
