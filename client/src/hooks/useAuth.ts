@@ -38,6 +38,13 @@ export function useCurrentPlayer() {
 
   // Handle email mismatch between login and database
   const userEmail = (user as User)?.email;
+  
+  // Debug: Log user email to help troubleshoot
+  if (userEmail && userEmail.includes('shivam')) {
+    console.log('Shivam login email:', userEmail);
+    console.log('Available players:', players?.map(p => ({ name: p.name, email: p.email })));
+  }
+  
   const currentPlayer = (players as Player[])?.find((p: Player) => 
     p.email === userEmail || 
     (userEmail === 'ashokhiremath6@gmail.com' && p.email === 'ashok@example.com')
