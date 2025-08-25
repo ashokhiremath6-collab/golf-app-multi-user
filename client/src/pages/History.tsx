@@ -132,7 +132,7 @@ export default function History() {
               </Select>
             </div>
 
-            {/* Player Selection */}
+            {/* Player Selection - Only show "Your Rounds" for current user, other players separately */}
             <div className="flex space-x-2 mb-6 overflow-x-auto">
               <Button
                 variant={selectedPlayerId === "self" ? "default" : "outline"}

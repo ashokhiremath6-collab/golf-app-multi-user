@@ -94,7 +94,7 @@ export default function NewRound() {
     );
   }
 
-  const selectedCourse = courses?.find((c: any) => c.id === selectedCourseId);
+  const selectedCourse = (courses as any[])?.find((c: any) => c.id === selectedCourseId);
   const courseHandicap = currentPlayer?.currentHandicap || 0;
 
   const handleScoreChange = (holeIndex: number, score: number) => {
@@ -107,13 +107,13 @@ export default function NewRound() {
     if (!holes || !selectedCourse) return { gross: 0, capped: 0, net: 0, overPar: 0 };
 
     // Use par as default if no score entered
-    const finalScores = scores.map((score, index) => score || holes[index]?.par || 0);
+    const finalScores = scores.map((score, index) => score || (holes as any[])[index]?.par || 0);
     const gross = finalScores.reduce((sum, score) => sum + score, 0);
     
     // Calculate capped scores (double bogey cap)
     const cappedScores = finalScores.map((score, index) => {
-      if (!holes[index]) return 0;
-      const par = holes[index].par;
+      if (!(holes as any[])[index]) return 0;
+      const par = (holes as any[])[index].par;
       return Math.min(score, par + 2);
     });
     
@@ -202,7 +202,7 @@ export default function NewRound() {
                   <SelectValue placeholder="Choose a course" />
                 </SelectTrigger>
                 <SelectContent>
-                  {courses?.map((course: any) => (
+                  {(courses as any[])?.map((course: any) => (
                     <SelectItem key={course.id} value={course.id} data-testid={`select-course-${course.id}`}>
                       {course.name} - Par {course.parTotal}
                     </SelectItem>
@@ -246,7 +246,7 @@ export default function NewRound() {
                 {/* Score Entry */}
                 {!holesLoading && holes && (
                   <ScoreGrid
-                    holes={holes}
+                    holes={holes as any[]}
                     scores={scores}
                     onScoreChange={handleScoreChange}
                   />

@@ -73,7 +73,7 @@ export default function Home() {
   
   // Get the latest handicap snapshot for current player to show previous handicap
   const latestSnapshot = (handicapSnapshots as any[])?.find(
-    (snapshot: any) => snapshot.playerName === currentPlayer?.name
+    (snapshot: any) => snapshot.playerId === currentPlayer?.id
   );
 
   return (
