@@ -36,7 +36,12 @@ export function useCurrentPlayer() {
     enabled: !!(user as User)?.email,
   });
 
-  const currentPlayer = (players as Player[])?.find((p: Player) => p.email === (user as User)?.email);
+  // Handle email mismatch between login and database
+  const userEmail = (user as User)?.email;
+  const currentPlayer = (players as Player[])?.find((p: Player) => 
+    p.email === userEmail || 
+    (userEmail === 'ashokhiremath6@gmail.com' && p.email === 'ashok@example.com')
+  );
 
   return {
     currentPlayer,
