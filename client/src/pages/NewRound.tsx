@@ -37,12 +37,16 @@ export default function NewRound() {
   const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ["/api/courses"],
     retry: false,
+    staleTime: 0, // Force refresh of course data
+    gcTime: 0, // Don't cache course data
   });
 
   const { data: holes, isLoading: holesLoading } = useQuery({
     queryKey: ["/api/courses", selectedCourseId, "holes"],
     enabled: !!selectedCourseId,
     retry: false,
+    staleTime: 0, // Force refresh of hole data
+    gcTime: 0, // Don't cache hole data
   });
 
   const createRoundMutation = useMutation({
