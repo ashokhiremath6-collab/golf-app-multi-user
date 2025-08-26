@@ -16,9 +16,21 @@ import Admin from "@/pages/Admin";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-golf-green mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
