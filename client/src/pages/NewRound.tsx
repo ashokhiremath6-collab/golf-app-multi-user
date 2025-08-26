@@ -278,11 +278,14 @@ export default function NewRound() {
                 {/* Score Entry */}
                 <div className="mb-4">
                   {!holesLoading && holes && (
-                    <ScoreGrid
-                      holes={holes}
-                      scores={scores}
-                      onScoreChange={handleScoreChange}
-                    />
+                    <>
+                      {console.log("HOLES DATA:", holes?.slice(0, 3))} {/* DEBUG */}
+                      <ScoreGrid
+                        holes={holes}
+                        scores={scores}
+                        onScoreChange={handleScoreChange}
+                      />
+                    </>
                   )}
                 </div>
 

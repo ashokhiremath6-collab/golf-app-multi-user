@@ -42,7 +42,7 @@ export default function ScoreGrid({ holes, scores, onScoreChange }: ScoreGridPro
             return (
               <div key={hole.id} className="text-center" data-testid={`hole-${hole.number}`}>
                 <div className="text-xs text-gray-600 mb-1">Hole {hole.number}</div>
-                <div className="text-sm font-medium mb-1">Par {hole.par}</div>
+                <div className="text-sm font-medium mb-1">Par {hole.par} {/* DEBUG: {JSON.stringify({id: hole.id, par: hole.par, distance: hole.distance})} */}</div>
                 <Input
                   type="number"
                   min="1"
