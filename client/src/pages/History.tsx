@@ -40,16 +40,9 @@ export default function History() {
   const roundsPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
   const roundsMonth = selectedMonth === "all" ? undefined : selectedMonth;
   
-  const { data: rounds, isLoading: roundsLoading } = useQuery({
-    queryKey: ["/api/rounds", { playerId: roundsPlayerId, month: roundsMonth }],
-    queryFn: ({ queryKey }) => {
-      const [, params] = queryKey as [string, { playerId?: string; month?: string }];
-      const searchParams = new URLSearchParams();
-      if (params.playerId) searchParams.set('playerId', params.playerId);
-      if (params.month) searchParams.set('month', params.month);
-      return fetch(`/api/rounds?${searchParams.toString()}`, { credentials: 'include' }).then(res => res.json());
-    },
-    enabled: !!roundsPlayerId,
+  // Fetch all rounds for all players to show each player's last round
+  const { data: allRounds, isLoading: roundsLoading } = useQuery({
+    queryKey: ["/api/rounds"],
     retry: false,
   });
 
@@ -66,46 +59,64 @@ export default function History() {
     );
   }
 
-  const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
-  const displayPlayer = selectedPlayerId === "self" ? currentPlayer : (players as any[])?.find((p: any) => p.id === selectedPlayerId);
-
-  // Generate month options for the last 12 months
-  const generateMonthOptions = () => {
-    const options = [{ value: "all", label: "All Months" }];
-    const now = new Date();
+  // Get the last round for each player
+  const getLastRoundForEachPlayer = () => {
+    if (!allRounds || !players) return [];
     
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-      options.push({ value, label });
-    }
-    
-    return options;
+    return (players as any[]).map((player: any) => {
+      const playerRounds = (allRounds as any[]).filter((round: any) => round.playerId === player.id);
+      const lastRound = playerRounds.length > 0 ? playerRounds[0] : null; // rounds are already sorted by date desc
+      return {
+        player,
+        lastRound
+      };
+    }).filter(item => item.lastRound); // Only show players who have played rounds
   };
 
-  const monthOptions = generateMonthOptions();
+  const playersWithLastRounds = getLastRoundForEachPlayer();
 
-  // Calculate monthly summary
-  const calculateMonthlySummary = () => {
-    if (!rounds || rounds.length === 0) {
-      return { roundsPlayed: 0, avgGross: 0, avgNet: 0, avgOverPar: 0 };
+  // Render scorecard component similar to Home page
+  const renderScorecard = (round: any) => {
+    if (!round.cappedScores || round.cappedScores.length !== 18) {
+      return (
+        <div className="text-sm text-gray-500 text-center py-4">
+          Scorecard data not available
+        </div>
+      );
     }
 
-    const roundsPlayed = rounds.length;
-    const avgGross = rounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
-    const avgNet = rounds.reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
-    const avgOverPar = rounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
-
-    return {
-      roundsPlayed,
-      avgGross: Math.round(avgGross),
-      avgNet: Math.round(avgNet),
-      avgOverPar: avgOverPar.toFixed(1),
-    };
+    return (
+      <div className="mb-3">
+        <div className="text-xs text-gray-600 mb-2">Scorecard:</div>
+        {/* Front 9 */}
+        <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono mb-1">
+          {round.cappedScores.slice(0, 9).map((score: number, index: number) => (
+            <div key={index} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 1}-score`}>
+              <div className="text-xs text-gray-500">{index + 1}</div>
+              <div className="font-bold">{score}</div>
+            </div>
+          ))}
+          <div className="bg-golf-green text-white rounded px-1 py-1 border font-bold" data-testid="front-nine-total">
+            <div className="text-xs">OUT</div>
+            <div className="font-bold">{round.cappedScores.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
+          </div>
+        </div>
+        {/* Back 9 */}
+        <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono">
+          {round.cappedScores.slice(9, 18).map((score: number, index: number) => (
+            <div key={index + 9} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 10}-score`}>
+              <div className="text-xs text-gray-500">{index + 10}</div>
+              <div className="font-bold">{score}</div>
+            </div>
+          ))}
+          <div className="bg-golf-green text-white rounded px-1 py-1 border font-bold" data-testid="back-nine-total">
+            <div className="text-xs">IN</div>
+            <div className="font-bold">{round.cappedScores.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
+          </div>
+        </div>
+      </div>
+    );
   };
-
-  const summary = calculateMonthlySummary();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -114,107 +125,77 @@ export default function History() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Card data-testid="card-history">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900" data-testid="text-history-title">
-                Score History
-              </h2>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-48" data-testid="select-month">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {monthOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value} data-testid={`select-month-${option.value}`}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6" data-testid="text-history-title">
+              Last Rounds - All Players
+            </h2>
 
-            {/* Player Selection - Only show "Your Rounds" for current user, other players separately */}
-            <div className="flex space-x-2 mb-6 overflow-x-auto">
-              <Button
-                variant={selectedPlayerId === "self" ? "default" : "outline"}
-                onClick={() => setSelectedPlayerId("self")}
-                className={selectedPlayerId === "self" ? "bg-golf-green text-white" : ""}
-                data-testid="button-select-self"
-              >
-                Your Rounds
-              </Button>
-              {(players as any[])?.filter((p: any) => p.id !== currentPlayer?.id).map((player: any) => (
-                <Button
-                  key={player.id}
-                  variant={selectedPlayerId === player.id ? "default" : "outline"}
-                  onClick={() => setSelectedPlayerId(player.id)}
-                  className={`whitespace-nowrap ${selectedPlayerId === player.id ? "bg-golf-green text-white" : ""}`}
-                  data-testid={`button-select-player-${player.id}`}
-                >
-                  {player.name}
-                </Button>
-              ))}
-            </div>
-
-            {/* Rounds List */}
+            {/* Players' Last Rounds */}
             {roundsLoading ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="animate-pulse border border-gray-200 rounded-lg p-4">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                    <div className="h-20 bg-gray-200 rounded"></div>
                   </div>
                 ))}
               </div>
-            ) : rounds && rounds.length > 0 ? (
-              <RoundHistory rounds={rounds} />
+            ) : playersWithLastRounds.length > 0 ? (
+              <div className="space-y-6">
+                {playersWithLastRounds.map(({ player, lastRound }) => (
+                  <Card key={player.id} className="border-2" data-testid={`card-player-${player.id}`}>
+                    <CardContent className="pt-6">
+                      {/* Player Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900" data-testid={`text-player-name-${player.id}`}>
+                            {player.name}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            Current Handicap: <span className="font-medium">{player.currentHandicap}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-600">Last Round</div>
+                          <div className="font-medium">{lastRound.courseName}</div>
+                          <div className="text-sm text-gray-500">{new Date(lastRound.playedOn).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+
+                      {/* Last Round Scorecard */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        {renderScorecard(lastRound)}
+                        
+                        {/* Summary */}
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <div className="font-bold text-lg" data-testid={`text-gross-${player.id}`}>
+                              {lastRound.grossCapped}
+                            </div>
+                            <div className="text-xs text-gray-600">Gross</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-lg text-golf-blue" data-testid={`text-net-${player.id}`}>
+                              {lastRound.net}
+                            </div>
+                            <div className="text-xs text-gray-600">Net</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-lg text-golf-gold" data-testid={`text-over-par-${player.id}`}>
+                              +{parseFloat(lastRound.overPar).toFixed(0)}
+                            </div>
+                            <div className="text-xs text-gray-600">Over Par</div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             ) : (
               <div className="text-center py-8" data-testid="empty-state-rounds">
                 <i className="fas fa-golf-ball text-4xl text-gray-300 mb-4"></i>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No rounds found</h3>
-                <p className="text-gray-500">
-                  {selectedMonth !== "all" 
-                    ? `No rounds found for ${monthOptions.find(m => m.value === selectedMonth)?.label}`
-                    : `${displayPlayer?.name || 'This player'} hasn't played any rounds yet`
-                  }
-                </p>
-              </div>
-            )}
-
-            {/* Monthly Summary */}
-            {rounds && rounds.length > 0 && (
-              <div className="mt-6 bg-gray-50 rounded-lg p-4" data-testid="card-monthly-summary">
-                <h3 className="font-medium text-gray-900 mb-3" data-testid="text-summary-title">
-                  {selectedMonth !== "all" 
-                    ? `${monthOptions.find(m => m.value === selectedMonth)?.label} Summary`
-                    : "Overall Summary"
-                  }
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-black text-gray-900" data-testid="text-summary-rounds">
-                      {summary.roundsPlayed}
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">Rounds Played</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-black text-golf-green" data-testid="text-summary-avg-gross">
-                      {summary.avgGross}
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">Avg Gross</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-avg-net">
-                      {summary.avgNet}
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">Avg Net</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-avg-over-par">
-                      +{summary.avgOverPar}
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">Avg Over Par</div>
-                  </div>
-                </div>
+                <p className="text-gray-500">No players have played any rounds yet</p>
               </div>
             )}
           </CardContent>
