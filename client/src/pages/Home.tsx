@@ -126,21 +126,29 @@ export default function Home() {
                 {/* Full Scorecard - First Line */}
                 <div className="mb-3">
                   <div className="text-xs text-gray-600 mb-1">Scorecard:</div>
-                  <div className="grid grid-cols-9 gap-1 text-center text-sm font-mono">
+                  <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono">
                     {lastRound.cappedScores?.slice(0, 9).map((score: number, index: number) => (
                       <div key={index} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 1}-score`}>
                         <div className="text-xs text-gray-500">{index + 1}</div>
                         <div className="font-bold">{score}</div>
                       </div>
                     ))}
+                    <div className="bg-golf-green text-white rounded px-1 py-1 border font-bold" data-testid="front-nine-total">
+                      <div className="text-xs">OUT</div>
+                      <div className="font-bold">{lastRound.cappedScores?.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-9 gap-1 text-center text-sm font-mono mt-1">
+                  <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono mt-1">
                     {lastRound.cappedScores?.slice(9, 18).map((score: number, index: number) => (
                       <div key={index + 9} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 10}-score`}>
                         <div className="text-xs text-gray-500">{index + 10}</div>
                         <div className="font-bold">{score}</div>
                       </div>
                     ))}
+                    <div className="bg-golf-green text-white rounded px-1 py-1 border font-bold" data-testid="back-nine-total">
+                      <div className="text-xs">IN</div>
+                      <div className="font-bold">{lastRound.cappedScores?.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                    </div>
                   </div>
                 </div>
 
