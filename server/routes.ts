@@ -641,9 +641,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Seed data endpoint (development only)
-  app.post('/api/seed', async (req, res) => {
+  // Seed data endpoint (admin access required)
+  app.post('/api/seed', isAuthenticated, async (req: any, res) => {
     try {
+      // Check if user is admin
+      const userEmail = req.user.claims.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       // Create seed players
       const seedPlayers = [
         { name: 'Ashok Hiremath', email: 'ashokhiremath6@gmail.com', currentHandicap: 16, isAdmin: true },
