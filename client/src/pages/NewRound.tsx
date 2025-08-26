@@ -152,7 +152,7 @@ export default function NewRound() {
     }
 
     // Use par as default for empty scores before submission
-    const finalScores = scores.map((score, index) => score || holes[index]?.par || 0);
+    const finalScores = scores.map((score, index) => score || (holes as any[])[index]?.par || 0);
     const validScores = finalScores.every(score => score > 0 && score <= 10);
     if (!validScores) {
       toast({
