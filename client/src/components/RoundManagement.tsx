@@ -43,18 +43,26 @@ export default function RoundManagement() {
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [editScores, setEditScores] = useState<number[]>([]);
+  const [showTestRoundForm, setShowTestRoundForm] = useState(false);
+  const [testRoundData, setTestRoundData] = useState({
+    playerId: '',
+    courseId: '',
+    playedOn: new Date().toISOString().split('T')[0],
+    courseHandicap: 16,
+    scores: Array(18).fill(4)
+  });
 
-  const { data: rounds, isLoading: roundsLoading } = useQuery({
+  const { data: rounds, isLoading: roundsLoading } = useQuery<Round[]>({
     queryKey: ["/api/rounds"],
     retry: false,
   });
 
-  const { data: players } = useQuery({
+  const { data: players } = useQuery<Player[]>({
     queryKey: ["/api/players"],
     retry: false,
   });
 
-  const { data: courses } = useQuery({
+  const { data: courses } = useQuery<Course[]>({
     queryKey: ["/api/courses"],
     retry: false,
   });
@@ -124,6 +132,49 @@ export default function RoundManagement() {
     },
   });
 
+  const createTestRoundMutation = useMutation({
+    mutationFn: async (roundData: any) => {
+      await apiRequest("POST", "/api/rounds", {
+        ...roundData,
+        rawScores: roundData.scores,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rounds"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      toast({
+        title: "Success",
+        description: "Test round created successfully",
+      });
+      setShowTestRoundForm(false);
+      setTestRoundData({
+        playerId: '',
+        courseId: '',
+        playedOn: new Date().toISOString().split('T')[0],
+        courseHandicap: 16,
+        scores: Array(18).fill(4)
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create test round",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEdit = (round: Round) => {
     setEditingRound(round);
     setEditScores([...round.rawScores]);
@@ -154,15 +205,53 @@ export default function RoundManagement() {
     });
   };
 
+  const handleCreateTestRound = () => {
+    if (!testRoundData.playerId || !testRoundData.courseId) {
+      toast({
+        title: "Error",
+        description: "Please select a player and course",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validScores = testRoundData.scores.every(score => score > 0 && score <= 10);
+    if (!validScores) {
+      toast({
+        title: "Error",
+        description: "Please enter valid scores for all 18 holes (1-10)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createTestRoundMutation.mutate(testRoundData);
+  };
+
+  const handleTestScoreChange = (holeIndex: number, score: string) => {
+    const newScores = [...testRoundData.scores];
+    newScores[holeIndex] = parseInt(score) || 0;
+    setTestRoundData({ ...testRoundData, scores: newScores });
+  };
+
+  const setRandomScores = () => {
+    const randomScores = Array(18).fill(0).map(() => Math.floor(Math.random() * 6) + 3); // Random scores 3-8
+    setTestRoundData({ ...testRoundData, scores: randomScores });
+  };
+
   const getPlayerName = (playerId: string) => {
-    return players?.find((p: Player) => p.id === playerId)?.name || 'Unknown Player';
+    return playersArray.find((p: Player) => p.id === playerId)?.name || 'Unknown Player';
   };
 
   const getCourseName = (courseId: string) => {
-    return courses?.find((c: Course) => c.id === courseId)?.name || 'Unknown Course';
+    return coursesArray.find((c: Course) => c.id === courseId)?.name || 'Unknown Course';
   };
 
-  const filteredRounds = rounds?.filter((round: Round) => 
+  const roundsArray = Array.isArray(rounds) ? rounds : [];
+  const playersArray = Array.isArray(players) ? players : [];
+  const coursesArray = Array.isArray(courses) ? courses : [];
+
+  const filteredRounds = roundsArray.filter((round: Round) => 
     selectedPlayer === "all" || round.playerId === selectedPlayer
   );
 
@@ -190,20 +279,137 @@ export default function RoundManagement() {
           <h3 className="text-lg font-semibold text-gray-900" data-testid="text-round-management-title">
             Manage Rounds
           </h3>
-          <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-            <SelectTrigger className="w-48" data-testid="select-player-filter">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Players</SelectItem>
-              {players?.map((player: Player) => (
-                <SelectItem key={player.id} value={player.id}>
-                  {player.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={() => setShowTestRoundForm(!showTestRoundForm)}
+              className="bg-yellow-600 hover:bg-yellow-700"
+              data-testid="button-toggle-test-round"
+            >
+              {showTestRoundForm ? 'Hide' : 'Add Test Round'}
+            </Button>
+            <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
+              <SelectTrigger className="w-48" data-testid="select-player-filter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Players</SelectItem>
+                {playersArray.map((player: Player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* Test Round Form */}
+        {showTestRoundForm && (
+          <Card className="mb-6 border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <h4 className="text-md font-medium mb-4 text-yellow-800">Create Test Round</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <Label htmlFor="test-player">Player</Label>
+                  <Select value={testRoundData.playerId} onValueChange={(value) => setTestRoundData({ ...testRoundData, playerId: value })}>
+                    <SelectTrigger data-testid="select-test-player">
+                      <SelectValue placeholder="Select player" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {playersArray.map((player: Player) => (
+                        <SelectItem key={player.id} value={player.id}>
+                          {player.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="test-course">Course</Label>
+                  <Select value={testRoundData.courseId} onValueChange={(value) => setTestRoundData({ ...testRoundData, courseId: value })}>
+                    <SelectTrigger data-testid="select-test-course">
+                      <SelectValue placeholder="Select course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {coursesArray.map((course: Course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          {course.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="test-date">Date</Label>
+                  <Input
+                    id="test-date"
+                    type="date"
+                    value={testRoundData.playedOn}
+                    onChange={(e) => setTestRoundData({ ...testRoundData, playedOn: e.target.value })}
+                    data-testid="input-test-date"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="test-handicap">Course Handicap</Label>
+                  <Input
+                    id="test-handicap"
+                    type="number"
+                    min="0"
+                    max="54"
+                    value={testRoundData.courseHandicap}
+                    onChange={(e) => setTestRoundData({ ...testRoundData, courseHandicap: parseInt(e.target.value) || 16 })}
+                    data-testid="input-test-handicap"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Scores (1-18):</Label>
+                  <Button type="button" variant="outline" onClick={setRandomScores} data-testid="button-random-scores">
+                    Random Scores
+                  </Button>
+                </div>
+                <div className="grid grid-cols-9 gap-2">
+                  {testRoundData.scores.map((score, index) => (
+                    <div key={index} className="text-center">
+                      <Label className="text-xs text-gray-600 mb-1 block">
+                        {index + 1}
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={score}
+                        onChange={(e) => handleTestScoreChange(index, e.target.value)}
+                        className="text-center text-xs"
+                        data-testid={`input-test-score-${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex space-x-2 mt-6">
+                <Button 
+                  onClick={handleCreateTestRound}
+                  disabled={createTestRoundMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                  data-testid="button-create-test-round"
+                >
+                  {createTestRoundMutation.isPending ? "Creating..." : "Create Test Round"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowTestRoundForm(false)}
+                  data-testid="button-cancel-test-round"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Edit Round Dialog */}
         <Dialog open={!!editingRound} onOpenChange={() => setEditingRound(null)}>
@@ -305,7 +511,7 @@ export default function RoundManagement() {
                     {round.net}
                   </td>
                   <td className="px-4 py-4 text-center text-golf-gold font-medium" data-testid={`text-round-over-par-${round.id}`}>
-                    {round.overPar > 0 ? '+' : ''}{round.overPar}
+                    {parseInt(round.overPar) > 0 ? '+' : ''}{round.overPar}
                   </td>
                   <td className="px-4 py-4 text-center">
                     <Badge 
@@ -324,7 +530,7 @@ export default function RoundManagement() {
                         className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         data-testid={`button-edit-round-${round.id}`}
                       >
-                        <span className="text-base">✏️</span>
+                        <span className="text-sm font-semibold">EDIT</span>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -334,7 +540,7 @@ export default function RoundManagement() {
                             className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             data-testid={`button-delete-round-${round.id}`}
                           >
-                            <span className="text-base">🗑️</span>
+                            <span className="text-sm font-semibold">DEL</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent data-testid={`dialog-delete-round-${round.id}`}>
