@@ -43,7 +43,7 @@ export default function NewRound() {
     refetchOnWindowFocus: true, // Refetch when window gets focus
   });
 
-  const { data: holes, isLoading: holesLoading } = useQuery({
+  const { data: holes, isLoading: holesLoading } = useQuery<Hole[]>({
     queryKey: ["/api/courses", selectedCourseId, "holes"],
     enabled: !!selectedCourseId,
     retry: false,
@@ -115,13 +115,13 @@ export default function NewRound() {
     if (!holes || !selectedCourse) return { gross: 0, capped: 0, net: 0, overPar: 0 };
 
     // Use par as default if no score entered
-    const finalScores = scores.map((score, index) => score || (holes as any[])[index]?.par || 0);
+    const finalScores = scores.map((score, index) => score || holes[index]?.par || 0);
     const gross = finalScores.reduce((sum, score) => sum + score, 0);
     
     // Calculate capped scores (double bogey cap)
     const cappedScores = finalScores.map((score, index) => {
-      if (!(holes as any[])[index]) return 0;
-      const par = (holes as any[])[index].par;
+      if (!holes[index]) return 0;
+      const par = holes[index].par;
       return Math.min(score, par + 2);
     });
     
@@ -152,7 +152,7 @@ export default function NewRound() {
     }
 
     // Use par as default for empty scores before submission
-    const finalScores = scores.map((score, index) => score || (holes as any[])[index]?.par || 0);
+    const finalScores = scores.map((score, index) => score || holes[index]?.par || 0);
     const validScores = finalScores.every(score => score > 0 && score <= 10);
     if (!validScores) {
       toast({
@@ -255,7 +255,7 @@ export default function NewRound() {
                 <div className="mb-4">
                   {!holesLoading && holes && (
                     <ScoreGrid
-                      holes={holes as any[]}
+                      holes={holes}
                       scores={scores}
                       onScoreChange={handleScoreChange}
                     />
