@@ -111,10 +111,10 @@ export default function Home() {
             {/* Last Round Summary */}
             {lastRound && (
               <div className="bg-gray-50 rounded-lg p-4" data-testid="card-last-round">
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-3">
                   <div>
                     <h3 className="font-medium text-gray-900" data-testid="text-last-course">
-                      {lastRound.courseName || 'Recent Round'}
+                      {lastRound.courseName || 'Last Round'}
                     </h3>
                     <p className="text-sm text-gray-600" data-testid="text-last-date">
                       {new Date(lastRound.playedOn).toLocaleDateString()}
@@ -122,6 +122,29 @@ export default function Home() {
                   </div>
                   <Badge variant="outline" data-testid="badge-tees">Blue Tees</Badge>
                 </div>
+                
+                {/* Full Scorecard - First Line */}
+                <div className="mb-3">
+                  <div className="text-xs text-gray-600 mb-1">Scorecard:</div>
+                  <div className="grid grid-cols-9 gap-1 text-center text-sm font-mono">
+                    {lastRound.cappedScores?.slice(0, 9).map((score: number, index: number) => (
+                      <div key={index} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 1}-score`}>
+                        <div className="text-xs text-gray-500">{index + 1}</div>
+                        <div className="font-bold">{score}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-9 gap-1 text-center text-sm font-mono mt-1">
+                    {lastRound.cappedScores?.slice(9, 18).map((score: number, index: number) => (
+                      <div key={index + 9} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 10}-score`}>
+                        <div className="text-xs text-gray-500">{index + 10}</div>
+                        <div className="font-bold">{score}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary - Second Line */}
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <div className="font-bold text-lg" data-testid="text-last-gross">
