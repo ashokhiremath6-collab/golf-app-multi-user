@@ -392,7 +392,7 @@ export default function PlayerManagement() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(player)}
-                        className="text-golf-blue hover:text-blue-700"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         data-testid={`button-edit-player-${player.id}`}
                       >
                         <i className="fas fa-edit"></i>
@@ -402,7 +402,7 @@ export default function PlayerManagement() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             data-testid={`button-delete-player-${player.id}`}
                           >
                             <i className="fas fa-trash"></i>
