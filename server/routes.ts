@@ -157,9 +157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/courses/:id/holes', async (req, res) => {
     try {
+      console.log("🏌️ SERVER DEBUG - Course ID:", req.params.id);
       const holes = await storage.getHolesByCourse(req.params.id);
+      console.log("🏌️ SERVER DEBUG - Holes from DB:", holes.slice(0, 5).map(h => ({hole: h.number, par: h.par})));
       res.json(holes);
     } catch (error) {
+      console.error("🏌️ SERVER ERROR:", error);
       res.status(500).json({ message: "Failed to fetch holes" });
     }
   });
