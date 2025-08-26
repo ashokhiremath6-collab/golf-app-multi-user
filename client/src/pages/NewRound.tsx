@@ -173,9 +173,9 @@ export default function NewRound() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-3 min-h-[calc(100vh-80px)] flex flex-col">
-        <Card data-testid="card-new-round" className="flex-1 flex flex-col">
-          <CardContent className="pt-4 flex-1 flex flex-col">
+      <main className="max-w-7xl mx-auto px-4 py-3 pb-20 min-h-[calc(100vh-80px)]">
+        <Card data-testid="card-new-round">
+          <CardContent className="pt-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900" data-testid="text-new-round-title">
                 New Round
@@ -243,8 +243,8 @@ export default function NewRound() {
                   </div>
                 </div>
 
-                {/* Score Entry - Flexible */}
-                <div className="flex-1 mb-4">
+                {/* Score Entry */}
+                <div className="mb-6">
                   {!holesLoading && holes && (
                     <ScoreGrid
                       holes={holes as any[]}
@@ -256,7 +256,7 @@ export default function NewRound() {
 
                 {/* Round Summary - Only show after submission */}
                 {roundSubmitted && (
-                  <div className="bg-golf-green bg-opacity-5 border border-golf-green rounded-lg p-3 mb-4" data-testid="card-round-summary">
+                  <div className="bg-golf-green bg-opacity-5 border border-golf-green rounded-lg p-3 mb-6" data-testid="card-round-summary">
                     <h3 className="font-medium text-gray-900 mb-2" data-testid="text-summary-title">
                       Round Summary
                     </h3>
@@ -288,30 +288,34 @@ export default function NewRound() {
                     </div>
                   </div>
                 )}
-
-                {/* Action Buttons - Always Visible */}
-                <div className="flex space-x-4 mt-auto pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => setLocation('/')}
-                    className="flex-1"
-                    data-testid="button-cancel"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={createRoundMutation.isPending}
-                    className="flex-1 bg-golf-green hover:bg-green-700"
-                    data-testid="button-submit-round"
-                  >
-                    {createRoundMutation.isPending ? "Saving..." : "Submit Score"}
-                  </Button>
-                </div>
               </>
             )}
           </CardContent>
         </Card>
+
+        {/* Fixed Action Buttons - Always Visible with 1.5cm spacing */}
+        {selectedCourse && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+            <div className="max-w-7xl mx-auto flex space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/')}
+                className="flex-1"
+                data-testid="button-cancel"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={createRoundMutation.isPending}
+                className="flex-1 bg-golf-green hover:bg-green-700"
+                data-testid="button-submit-round"
+              >
+                {createRoundMutation.isPending ? "Saving..." : "Submit Score"}
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
