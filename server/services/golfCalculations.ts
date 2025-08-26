@@ -75,7 +75,7 @@ export function calculateRoundScores(
 export function monthlyHandicapUpdate(
   avgMonthlyOverPar: number,
   previousHandicap: number,
-  kFactor: number = 0.5,
+  kFactor: number = 0.3,
   changeCap: number = 2.0
 ): number {
   // Calculate new handicap using weighted average

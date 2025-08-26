@@ -181,7 +181,7 @@ export default function HandicapManagement() {
                 <i className="fas fa-exclamation-triangle text-yellow-400 mr-2 mt-1"></i>
                 <div className="text-sm text-yellow-800">
                   <p className="font-medium">Recalculation Process</p>
-                  <p>Updates player handicaps using: 50% monthly average + 50% previous handicap. Changes are limited to ±2 and floored at 0.</p>
+                  <p>Updates player handicaps using: 30% monthly average + 70% previous handicap. Changes are limited to ±2 and floored at 0.</p>
                 </div>
               </div>
             </div>
@@ -221,7 +221,7 @@ export default function HandicapManagement() {
                 <div className="text-sm text-gray-600">
                   <p><strong>Active Players:</strong> {playersArray.filter(p => !p.isAdmin).length}</p>
                   <p><strong>Current Season:</strong> 2024-2025</p>
-                  <p><strong>K-Factor:</strong> 0.5 (50% weighting)</p>
+                  <p><strong>K-Factor:</strong> 0.3 (30% weighting)</p>
                   <p><strong>Change Cap:</strong> ±2 strokes</p>
                 </div>
               </div>
