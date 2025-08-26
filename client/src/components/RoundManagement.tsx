@@ -321,20 +321,20 @@ export default function RoundManagement() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(round)}
-                        className="text-golf-blue hover:text-blue-700"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         data-testid={`button-edit-round-${round.id}`}
                       >
-                        <i className="fas fa-edit"></i>
+                        <span className="text-base">✏️</span>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             data-testid={`button-delete-round-${round.id}`}
                           >
-                            <i className="fas fa-trash"></i>
+                            <span className="text-base">🗑️</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent data-testid={`dialog-delete-round-${round.id}`}>
