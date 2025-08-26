@@ -86,18 +86,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      console.log('Request body for player creation:', req.body);
       const validatedData = insertPlayerSchema.parse(req.body);
-      console.log('Validated data:', validatedData);
-      
       const newPlayer = await storage.createPlayer(validatedData);
       res.status(201).json(newPlayer);
     } catch (error) {
-      console.error('Player creation error:', error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create player", error: (error as Error).message });
+      res.status(500).json({ message: "Failed to create player" });
     }
   });
 
@@ -110,18 +106,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      console.log('Update request body for player:', req.params.id, req.body);
       const validatedData = insertPlayerSchema.partial().parse(req.body);
-      console.log('Validated update data:', validatedData);
-      
       const updatedPlayer = await storage.updatePlayer(req.params.id, validatedData);
       res.json(updatedPlayer);
     } catch (error) {
-      console.error('Player update error:', error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to update player", error: (error as Error).message });
+      res.status(500).json({ message: "Failed to update player" });
     }
   });
 
