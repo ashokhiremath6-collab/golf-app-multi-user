@@ -313,7 +313,9 @@ export default function RoundManagement() {
                   <Label htmlFor="test-player">Player</Label>
                   <Select value={testRoundData.playerId} onValueChange={(value) => setTestRoundData({ ...testRoundData, playerId: value })}>
                     <SelectTrigger data-testid="select-test-player">
-                      <SelectValue placeholder="Select player" />
+                      <SelectValue placeholder="Select player">
+                        {testRoundData.playerId ? getPlayerName(testRoundData.playerId) : "Select player"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {playersArray.map((player: Player) => (
@@ -328,7 +330,9 @@ export default function RoundManagement() {
                   <Label htmlFor="test-course">Course</Label>
                   <Select value={testRoundData.courseId} onValueChange={(value) => setTestRoundData({ ...testRoundData, courseId: value })}>
                     <SelectTrigger data-testid="select-test-course">
-                      <SelectValue placeholder="Select course" />
+                      <SelectValue placeholder="Select course">
+                        {testRoundData.courseId ? getCourseName(testRoundData.courseId) : "Select course"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {coursesArray.map((course: Course) => (
