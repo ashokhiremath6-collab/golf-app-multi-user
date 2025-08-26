@@ -11,6 +11,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+interface Hole {
+  id: string;
+  courseId: string;
+  number: number;
+  par: number;
+  distance: number;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  tees: string;
+  parTotal: number;
+  rating: number | null;
+  slope: number | null;
+}
+
 export default function NewRound() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
@@ -152,7 +169,7 @@ export default function NewRound() {
     }
 
     // Use par as default for empty scores before submission
-    const finalScores = scores.map((score, index) => score || holes[index]?.par || 0);
+    const finalScores = scores.map((score, index) => score || holes?.[index]?.par || 0);
     const validScores = finalScores.every(score => score > 0 && score <= 10);
     if (!validScores) {
       toast({
