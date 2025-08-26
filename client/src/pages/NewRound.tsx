@@ -35,18 +35,22 @@ export default function NewRound() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
-    queryKey: ["/api/courses", Date.now()], // Cache bust with timestamp
+    queryKey: ["/api/courses"],
     retry: false,
     staleTime: 0, // Force refresh of course data
     gcTime: 0, // Don't cache course data
+    refetchOnMount: "always", // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window gets focus
   });
 
   const { data: holes, isLoading: holesLoading } = useQuery({
-    queryKey: ["/api/courses", selectedCourseId, "holes", Date.now()], // Cache bust with timestamp
+    queryKey: ["/api/courses", selectedCourseId, "holes"],
     enabled: !!selectedCourseId,
     retry: false,
     staleTime: 0, // Force refresh of hole data
     gcTime: 0, // Don't cache hole data
+    refetchOnMount: "always", // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window gets focus
   });
 
   const createRoundMutation = useMutation({
