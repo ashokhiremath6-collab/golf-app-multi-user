@@ -36,6 +36,9 @@ export default function NewRound() {
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
   const [roundSubmitted, setRoundSubmitted] = useState<boolean>(false);
 
+  // DEBUG: Log state changes
+  console.log("🏌️ DEBUG STATE:", { selectedCourseId, holesLoading, holes: holes?.length });
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -68,6 +71,15 @@ export default function NewRound() {
     gcTime: 0, // Don't cache hole data
     refetchOnMount: "always", // Always refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when window gets focus
+  });
+
+  // DEBUG: Log query state
+  console.log("🏌️ QUERY DEBUG:", { 
+    selectedCourseId, 
+    enabled: !!selectedCourseId, 
+    holesLoading, 
+    holesCount: holes?.length,
+    queryKey: ["/api/courses", selectedCourseId, "holes"]
   });
 
   const createRoundMutation = useMutation({
