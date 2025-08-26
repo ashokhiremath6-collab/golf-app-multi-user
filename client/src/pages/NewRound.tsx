@@ -289,8 +289,8 @@ export default function NewRound() {
                   </div>
                 )}
 
-                {/* Action Buttons - Moved up 1.5cm */}
-                <div className="flex space-x-4 mt-16">
+                {/* Action Buttons - Moved up 2.5cm */}
+                <div className="flex space-x-4 mt-24">
                   <Button
                     variant="outline"
                     onClick={() => setLocation('/')}
