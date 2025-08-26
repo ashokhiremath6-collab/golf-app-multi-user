@@ -43,8 +43,9 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    console.error("Application error:", err);
     res.status(status).json({ message });
-    throw err;
+    // Don't throw the error - just log it to prevent process crash
   });
 
   // importantly only setup vite in development and after
@@ -56,16 +57,54 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
+  // Validate production environment variables
+  if (app.get("env") === "production") {
+    const requiredEnvVars = ['DATABASE_URL'];
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
+      process.exit(1);
+    }
+  }
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
+  // Add error handling for server startup
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, (error?: Error) => {
+    if (error) {
+      console.error("Failed to start server:", error);
+      process.exit(1);
+    }
     log(`serving on port ${port}`);
   });
-})();
+
+  // Graceful shutdown handling
+  const gracefulShutdown = () => {
+    log("Received shutdown signal, closing server...");
+    server.close(() => {
+      log("Server closed");
+      process.exit(0);
+    });
+    
+    // Force close after 10 seconds
+    setTimeout(() => {
+      log("Forcefully shutting down");
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
+})().catch((error) => {
+  console.error("Fatal error during server initialization:", error);
+  process.exit(1);
+});
