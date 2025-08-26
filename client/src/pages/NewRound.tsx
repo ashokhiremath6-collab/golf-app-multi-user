@@ -279,7 +279,7 @@ export default function NewRound() {
                 <div className="mb-4">
                   {!holesLoading && holes && (
                     <>
-                      {console.log("HOLES DATA:", holes?.slice(0, 3))} {/* DEBUG */}
+                      {console.log("🏌️ HOLES DATA DEBUG:", holes?.slice(0, 5)?.map(h => ({hole: h.number, par: h.par})))} {/* DEBUG */}
                       <ScoreGrid
                         holes={holes}
                         scores={scores}
