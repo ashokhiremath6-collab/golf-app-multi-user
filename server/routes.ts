@@ -355,6 +355,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin-only endpoint for creating test rounds with any player ID
+  app.post('/api/admin/rounds', isAuthenticated, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const userEmail = req.user.claims.email;
+      const authenticatedPlayer = await storage.getPlayerByEmail(userEmail || '');
+      
+      if (!authenticatedPlayer?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = createRoundSchema.parse(req.body);
+      
+      // For admin test rounds, use the provided playerId instead of authenticated user
+      const targetPlayer = await storage.getPlayer(validatedData.playerId);
+      if (!targetPlayer) {
+        return res.status(404).json({ message: "Target player not found" });
+      }
+
+      // Get course and holes for calculations
+      const course = await storage.getCourse(validatedData.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      const holes = await storage.getHolesByCourse(course.id);
+      if (holes.length !== 18) {
+        return res.status(400).json({ message: "Course must have 18 holes configured" });
+      }
+
+      const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
+      
+      // Calculate round scores
+      const scoreCalculation = calculateRoundScores(
+        validatedData.rawScores,
+        holePars,
+        validatedData.courseHandicap,
+        course.parTotal
+      );
+
+      // Create complete round data using specified player (admin privilege)
+      const roundData = {
+        ...validatedData,
+        playerId: validatedData.playerId, // Use the specified playerId for admin test rounds
+        cappedScores: scoreCalculation.cappedScores,
+        grossCapped: scoreCalculation.grossCapped,
+        net: scoreCalculation.net,
+        overPar: scoreCalculation.overPar.toString(),
+        source: 'admin' as const,
+      };
+
+      const newRound = await storage.createRound(roundData);
+      res.status(201).json(newRound);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create admin test round" });
+    }
+  });
+
   // Update round (admin only)
   app.put('/api/rounds/:id', isAuthenticated, async (req: any, res) => {
     try {

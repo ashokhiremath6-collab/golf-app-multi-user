@@ -134,7 +134,7 @@ export default function RoundManagement() {
 
   const createTestRoundMutation = useMutation({
     mutationFn: async (roundData: any) => {
-      await apiRequest("POST", "/api/rounds", {
+      await apiRequest("POST", "/api/admin/rounds", {
         ...roundData,
         rawScores: roundData.scores,
       });
