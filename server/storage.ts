@@ -162,11 +162,13 @@ export class DatabaseStorage implements IStorage {
 
   // Hole operations
   async getHolesByCourse(courseId: string): Promise<Hole[]> {
+    console.log("🏌️ STORAGE DEBUG - Course ID:", courseId);
     const result = await db
       .select()
       .from(holes)
       .where(eq(holes.courseId, courseId))
       .orderBy(asc(holes.number));
+    console.log("🏌️ STORAGE DEBUG - Raw DB result:", result.slice(0, 5).map(h => ({hole: h.number, par: h.par})));
     return result;
   }
 
