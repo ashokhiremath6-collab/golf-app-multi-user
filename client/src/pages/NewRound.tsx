@@ -36,9 +36,6 @@ export default function NewRound() {
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
   const [roundSubmitted, setRoundSubmitted] = useState<boolean>(false);
 
-  // DEBUG: Log state changes
-  console.log("🏌️ DEBUG STATE:", { selectedCourseId, holesLoading, holes: holes?.length });
-
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -73,7 +70,8 @@ export default function NewRound() {
     refetchOnWindowFocus: true, // Refetch when window gets focus
   });
 
-  // DEBUG: Log query state
+  // DEBUG: Log state changes after variables are declared
+  console.log("🏌️ DEBUG STATE:", { selectedCourseId, holesLoading, holes: holes?.length });
   console.log("🏌️ QUERY DEBUG:", { 
     selectedCourseId, 
     enabled: !!selectedCourseId, 
