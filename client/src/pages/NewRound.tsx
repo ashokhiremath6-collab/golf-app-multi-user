@@ -173,11 +173,11 @@ export default function NewRound() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <Card data-testid="card-new-round">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900" data-testid="text-new-round-title">
+      <main className="max-w-7xl mx-auto px-4 py-3 min-h-[calc(100vh-80px)] flex flex-col">
+        <Card data-testid="card-new-round" className="flex-1 flex flex-col">
+          <CardContent className="pt-4 flex-1 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900" data-testid="text-new-round-title">
                 New Round
               </h2>
               {selectedCourse && (
@@ -193,7 +193,7 @@ export default function NewRound() {
             </div>
 
             {/* Course Selection */}
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Course
               </label>
@@ -213,82 +213,84 @@ export default function NewRound() {
 
             {selectedCourse && (
               <>
-                {/* Course Summary */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6" data-testid="card-course-summary">
-                  <div className="grid grid-cols-4 gap-4 text-center">
+                {/* Compact Course Summary */}
+                <div className="bg-gray-50 rounded-lg p-3 mb-4" data-testid="card-course-summary">
+                  <div className="grid grid-cols-4 gap-3 text-center">
                     <div>
-                      <div className="text-lg font-bold" data-testid="text-course-par">
+                      <div className="text-base font-bold" data-testid="text-course-par">
                         {selectedCourse.parTotal}
                       </div>
-                      <div className="text-xs text-gray-600">Course Par</div>
+                      <div className="text-2xs text-gray-600">Par</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold" data-testid="text-gross-score">
+                      <div className="text-base font-bold" data-testid="text-gross-score">
                         {totals.gross || 0}
                       </div>
-                      <div className="text-xs text-gray-600">Gross Score</div>
+                      <div className="text-2xs text-gray-600">Gross</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold" data-testid="text-handicap">
+                      <div className="text-base font-bold" data-testid="text-handicap">
                         {courseHandicap}
                       </div>
-                      <div className="text-xs text-gray-600">Handicap</div>
+                      <div className="text-2xs text-gray-600">Handicap</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-golf-blue" data-testid="text-net">
+                      <div className="text-base font-bold text-golf-blue" data-testid="text-net">
                         {totals.net || 0}
                       </div>
-                      <div className="text-xs text-gray-600">Net</div>
+                      <div className="text-2xs text-gray-600">Net</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Score Entry */}
-                {!holesLoading && holes && (
-                  <ScoreGrid
-                    holes={holes as any[]}
-                    scores={scores}
-                    onScoreChange={handleScoreChange}
-                  />
-                )}
+                {/* Score Entry - Flexible */}
+                <div className="flex-1 mb-4">
+                  {!holesLoading && holes && (
+                    <ScoreGrid
+                      holes={holes as any[]}
+                      scores={scores}
+                      onScoreChange={handleScoreChange}
+                    />
+                  )}
+                </div>
 
                 {/* Round Summary - Only show after submission */}
                 {roundSubmitted && (
-                  <div className="bg-golf-green bg-opacity-5 border border-golf-green rounded-lg p-4 mt-6" data-testid="card-round-summary">
-                    <h3 className="font-medium text-gray-900 mb-3" data-testid="text-summary-title">
+                  <div className="bg-golf-green bg-opacity-5 border border-golf-green rounded-lg p-3 mb-4" data-testid="card-round-summary">
+                    <h3 className="font-medium text-gray-900 mb-2" data-testid="text-summary-title">
                       Round Summary
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <div className="grid grid-cols-4 gap-3 text-center">
                       <div>
-                        <div className="text-2xl font-black text-gray-900" data-testid="text-summary-gross">
+                        <div className="text-lg font-black text-gray-900" data-testid="text-summary-gross">
                           {totals.gross}
                         </div>
-                        <div className="text-sm font-semibold text-gray-700">Gross Total</div>
+                        <div className="text-2xs font-semibold text-gray-700">Gross</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-black text-golf-green" data-testid="text-summary-capped">
+                        <div className="text-lg font-black text-golf-green" data-testid="text-summary-capped">
                           {totals.capped}
                         </div>
-                        <div className="text-sm font-semibold text-gray-700">Gross Capped</div>
+                        <div className="text-2xs font-semibold text-gray-700">Capped</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-net">
+                        <div className="text-lg font-black text-golf-blue" data-testid="text-summary-net">
                           {totals.net}
                         </div>
-                        <div className="text-sm font-semibold text-gray-700">Net Score</div>
+                        <div className="text-2xs font-semibold text-gray-700">Net</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-over-par">
+                        <div className="text-lg font-black text-golf-gold" data-testid="text-summary-over-par">
                           {totals.overPar > 0 ? '+' : ''}{totals.overPar}
                         </div>
-                        <div className="text-sm font-semibold text-gray-700">Over Par</div>
+                        <div className="text-2xs font-semibold text-gray-700">Over Par</div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex space-x-4 mt-6">
+                {/* Action Buttons - Always Visible */}
+                <div className="flex space-x-4 mt-auto pt-4 border-t">
                   <Button
                     variant="outline"
                     onClick={() => setLocation('/')}
