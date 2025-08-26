@@ -70,15 +70,6 @@ export default function NewRound() {
     refetchOnWindowFocus: true, // Refetch when window gets focus
   });
 
-  // DEBUG: Log state changes after variables are declared
-  console.log("🏌️ DEBUG STATE:", { selectedCourseId, holesLoading, holes: holes?.length });
-  console.log("🏌️ QUERY DEBUG:", { 
-    selectedCourseId, 
-    enabled: !!selectedCourseId, 
-    holesLoading, 
-    holesCount: holes?.length,
-    queryKey: ["/api/courses", selectedCourseId, "holes"]
-  });
 
   const createRoundMutation = useMutation({
     mutationFn: async (roundData: any) => {
@@ -291,14 +282,11 @@ export default function NewRound() {
                 {/* Score Entry */}
                 <div className="mb-4">
                   {!holesLoading && holes && (
-                    <>
-                      {console.log("🏌️ HOLES DATA DEBUG - Course:", selectedCourseId, "Data:", holes?.slice(0, 5)?.map(h => ({hole: h.number, par: h.par})))} {/* DEBUG */}
-                      <ScoreGrid
-                        holes={holes}
-                        scores={scores}
-                        onScoreChange={handleScoreChange}
-                      />
-                    </>
+                    <ScoreGrid
+                      holes={holes}
+                      scores={scores}
+                      onScoreChange={handleScoreChange}
+                    />
                   )}
                 </div>
 
