@@ -68,8 +68,13 @@ export default function Home() {
     );
   }
 
-  // currentPlayer is now from useCurrentPlayer hook - no need to get from players array
-  const lastRound = (recentRounds as any[])?.[0];
+  // Filter rounds to show only current player's rounds
+  const playerRounds = (recentRounds as any[])?.filter(
+    (round: any) => round.playerId === currentPlayer?.id
+  ) || [];
+  
+  // Get current player's most recent round
+  const lastRound = playerRounds[0];
   
   // Get the latest handicap snapshot for current player to show previous handicap
   const latestSnapshot = (handicapSnapshots as any[])?.find(
@@ -185,7 +190,7 @@ export default function Home() {
         )}
 
         {/* Season Summary - Compact Footer */}
-        {recentRounds && (recentRounds as any[]).length > 0 && (
+        {playerRounds && playerRounds.length > 0 && (
           <Card data-testid="card-overall-summary">
             <CardContent className="pt-4 pb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center" data-testid="text-overall-summary">
@@ -194,25 +199,25 @@ export default function Home() {
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
                   <div className="text-lg font-black text-gray-900" data-testid="text-summary-rounds">
-                    {(recentRounds as any[]).length}
+                    {playerRounds.length}
                   </div>
                   <div className="text-xs font-semibold text-gray-700">Rounds</div>
                 </div>
                 <div>
                   <div className="text-lg font-black text-golf-green" data-testid="text-summary-avg-gross">
-                    {Math.round((recentRounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / (recentRounds as any[]).length)}
+                    {Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / playerRounds.length)}
                   </div>
                   <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
                 </div>
                 <div>
                   <div className="text-lg font-black text-golf-blue" data-testid="text-summary-avg-net">
-                    {Math.round((recentRounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / (recentRounds as any[]).length)}
+                    {Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.net, 0) / playerRounds.length)}
                   </div>
                   <div className="text-xs font-semibold text-gray-700">Avg Net</div>
                 </div>
                 <div>
                   <div className="text-lg font-black text-golf-gold" data-testid="text-summary-avg-over-par">
-                    +{((recentRounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / (recentRounds as any[]).length).toFixed(1)}
+                    +{(playerRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / playerRounds.length).toFixed(1)}
                   </div>
                   <div className="text-xs font-semibold text-gray-700">Avg Over</div>
                 </div>
