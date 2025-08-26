@@ -80,131 +80,141 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-3">
-        {/* Compact Status & Last Round Card */}
-        <Card className="mb-4" data-testid="card-status">
-          <CardContent className="pt-4">
-            {/* Header with handicaps inline */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-500" data-testid="text-previous-handicap">
-                    {latestSnapshot?.prevHandicap || currentPlayer?.currentHandicap || 0}
-                  </div>
-                  <div className="text-xs text-gray-600">Prev</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-golf-green" data-testid="text-current-handicap">
-                    {currentPlayer?.currentHandicap || 0}
-                  </div>
-                  <div className="text-xs text-gray-600">Current</div>
-                </div>
-              </div>
+      <main className="max-w-7xl mx-auto px-4 py-6 min-h-[calc(100vh-120px)] flex flex-col">
+        {/* Status Header */}
+        <Card className="mb-6" data-testid="card-status">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900" data-testid="text-status-title">
+                Your Golf Status
+              </h2>
               <Badge variant="default" className="bg-golf-green" data-testid="badge-season">
                 Season Active
               </Badge>
             </div>
-
-            {/* Last Round in same card */}
-            {lastRound && (
-              <div className="bg-gray-50 rounded-lg p-3" data-testid="card-last-round">
-                <div className="flex justify-between items-center mb-2">
-                  <div>
-                    <h3 className="font-medium text-gray-900" data-testid="text-last-course">
-                      {lastRound.courseName || 'Last Round'}
-                    </h3>
-                    <p className="text-xs text-gray-600" data-testid="text-last-date">
-                      {new Date(lastRound.playedOn).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-xs" data-testid="badge-tees">Blue Tees</Badge>
+            
+            {/* Handicap Display */}
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-gray-500" data-testid="text-previous-handicap">
+                  {latestSnapshot?.prevHandicap || currentPlayer?.currentHandicap || 0}
                 </div>
-                
-                {/* Compact Scorecard */}
-                <div className="mb-2">
-                  <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono">
-                    {lastRound.cappedScores?.slice(0, 9).map((score: number, index: number) => (
-                      <div key={index} className="bg-white rounded px-0.5 py-1 border" data-testid={`hole-${index + 1}-score`}>
-                        <div className="text-2xs text-gray-500">{index + 1}</div>
-                        <div className="font-bold text-xs">{score}</div>
-                      </div>
-                    ))}
-                    <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold" data-testid="front-nine-total">
-                      <div className="text-2xs">OUT</div>
-                      <div className="font-bold text-xs">{lastRound.cappedScores?.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono mt-0.5">
-                    {lastRound.cappedScores?.slice(9, 18).map((score: number, index: number) => (
-                      <div key={index + 9} className="bg-white rounded px-0.5 py-1 border" data-testid={`hole-${index + 10}-score`}>
-                        <div className="text-2xs text-gray-500">{index + 10}</div>
-                        <div className="font-bold text-xs">{score}</div>
-                      </div>
-                    ))}
-                    <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold" data-testid="back-nine-total">
-                      <div className="text-2xs">IN</div>
-                      <div className="font-bold text-xs">{lastRound.cappedScores?.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Compact Last Round Summary */}
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <div className="font-bold text-base" data-testid="text-last-gross">
-                      {lastRound.grossCapped}
-                    </div>
-                    <div className="text-2xs text-gray-600">Gross</div>
-                  </div>
-                  <div>
-                    <div className="font-bold text-base text-golf-blue" data-testid="text-last-net">
-                      {lastRound.net}
-                    </div>
-                    <div className="text-2xs text-gray-600">Net</div>
-                  </div>
-                  <div>
-                    <div className="font-bold text-base text-golf-gold" data-testid="text-last-over-par">
-                      +{parseFloat(lastRound.overPar).toFixed(0)}
-                    </div>
-                    <div className="text-2xs text-gray-600">Over Par</div>
-                  </div>
-                </div>
+                <div className="text-sm text-gray-600">Previous Handicap</div>
               </div>
-            )}
+              <div className="text-center">
+                <div className="text-3xl font-bold text-golf-green" data-testid="text-current-handicap">
+                  {currentPlayer?.currentHandicap || 0}
+                </div>
+                <div className="text-sm text-gray-600">Current Handicap</div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Compact Season Summary */}
+        {/* Last Round Card - Expanded */}
+        {lastRound && (
+          <Card className="mb-6 flex-1" data-testid="card-last-round">
+            <CardContent className="pt-6 h-full flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" data-testid="text-last-course">
+                    {lastRound.courseName || 'Last Round'}
+                  </h3>
+                  <p className="text-sm text-gray-600" data-testid="text-last-date">
+                    {new Date(lastRound.playedOn).toLocaleDateString()}
+                  </p>
+                </div>
+                <Badge variant="outline" data-testid="badge-tees">Blue Tees</Badge>
+              </div>
+              
+              {/* Scorecard with better spacing */}
+              <div className="mb-6 flex-1 flex flex-col justify-center">
+                <div className="text-sm text-gray-600 mb-4 text-center">Full Scorecard:</div>
+                {/* Front 9 */}
+                <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono mb-3">
+                  {lastRound.cappedScores?.slice(0, 9).map((score: number, index: number) => (
+                    <div key={index} className="bg-white rounded px-2 py-3 border" data-testid={`hole-${index + 1}-score`}>
+                      <div className="text-xs text-gray-500 mb-1">{index + 1}</div>
+                      <div className="font-bold text-lg">{score}</div>
+                    </div>
+                  ))}
+                  <div className="bg-golf-green text-white rounded px-2 py-3 border font-bold" data-testid="front-nine-total">
+                    <div className="text-xs mb-1">OUT</div>
+                    <div className="font-bold text-lg">{lastRound.cappedScores?.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                  </div>
+                </div>
+                
+                {/* Back 9 */}
+                <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono mb-6">
+                  {lastRound.cappedScores?.slice(9, 18).map((score: number, index: number) => (
+                    <div key={index + 9} className="bg-white rounded px-2 py-3 border" data-testid={`hole-${index + 10}-score`}>
+                      <div className="text-xs text-gray-500 mb-1">{index + 10}</div>
+                      <div className="font-bold text-lg">{score}</div>
+                    </div>
+                  ))}
+                  <div className="bg-golf-green text-white rounded px-2 py-3 border font-bold" data-testid="back-nine-total">
+                    <div className="text-xs mb-1">IN</div>
+                    <div className="font-bold text-lg">{lastRound.cappedScores?.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                  </div>
+                </div>
+
+                {/* Last Round Summary */}
+                <div className="grid grid-cols-3 gap-6 text-center">
+                  <div>
+                    <div className="font-bold text-2xl" data-testid="text-last-gross">
+                      {lastRound.grossCapped}
+                    </div>
+                    <div className="text-sm text-gray-600">Gross Score</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-2xl text-golf-blue" data-testid="text-last-net">
+                      {lastRound.net}
+                    </div>
+                    <div className="text-sm text-gray-600">Net Score</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-2xl text-golf-gold" data-testid="text-last-over-par">
+                      +{parseFloat(lastRound.overPar).toFixed(0)}
+                    </div>
+                    <div className="text-sm text-gray-600">Over Par</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Season Summary - Compact Footer */}
         {recentRounds && (recentRounds as any[]).length > 0 && (
           <Card data-testid="card-overall-summary">
-            <CardContent className="pt-4">
-              <h3 className="text-base font-semibold text-gray-900 mb-3" data-testid="text-overall-summary">
+            <CardContent className="pt-4 pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center" data-testid="text-overall-summary">
                 Season Summary
               </h3>
-              <div className="grid grid-cols-4 gap-3 text-center">
+              <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-xl font-black text-gray-900" data-testid="text-summary-rounds">
+                  <div className="text-lg font-black text-gray-900" data-testid="text-summary-rounds">
                     {(recentRounds as any[]).length}
                   </div>
-                  <div className="text-2xs font-semibold text-gray-700">Rounds</div>
+                  <div className="text-xs font-semibold text-gray-700">Rounds</div>
                 </div>
                 <div>
-                  <div className="text-xl font-black text-golf-green" data-testid="text-summary-avg-gross">
+                  <div className="text-lg font-black text-golf-green" data-testid="text-summary-avg-gross">
                     {Math.round((recentRounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / (recentRounds as any[]).length)}
                   </div>
-                  <div className="text-2xs font-semibold text-gray-700">Avg Gross</div>
+                  <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
                 </div>
                 <div>
-                  <div className="text-xl font-black text-golf-blue" data-testid="text-summary-avg-net">
+                  <div className="text-lg font-black text-golf-blue" data-testid="text-summary-avg-net">
                     {Math.round((recentRounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / (recentRounds as any[]).length)}
                   </div>
-                  <div className="text-2xs font-semibold text-gray-700">Avg Net</div>
+                  <div className="text-xs font-semibold text-gray-700">Avg Net</div>
                 </div>
                 <div>
-                  <div className="text-xl font-black text-golf-gold" data-testid="text-summary-avg-over-par">
+                  <div className="text-lg font-black text-golf-gold" data-testid="text-summary-avg-over-par">
                     +{((recentRounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / (recentRounds as any[]).length).toFixed(1)}
                   </div>
-                  <div className="text-2xs font-semibold text-gray-700">Avg Over</div>
+                  <div className="text-xs font-semibold text-gray-700">Avg Over</div>
                 </div>
               </div>
             </CardContent>
