@@ -4,16 +4,13 @@ import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
-import RoundHistory from "@/components/RoundHistory";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 export default function History() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("self");
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -35,14 +32,18 @@ export default function History() {
     retry: false,
   });
 
-
   // Construct proper query parameters for rounds API
   const roundsPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
-  const roundsMonth = selectedMonth === "all" ? undefined : selectedMonth;
   
-  // Fetch all rounds for all players to show each player's last round
-  const { data: allRounds, isLoading: roundsLoading } = useQuery({
-    queryKey: ["/api/rounds"],
+  const { data: rounds, isLoading: roundsLoading } = useQuery({
+    queryKey: ["/api/rounds", { playerId: roundsPlayerId }],
+    queryFn: ({ queryKey }) => {
+      const [, params] = queryKey as [string, { playerId?: string }];
+      const searchParams = new URLSearchParams();
+      if (params.playerId) searchParams.set('playerId', params.playerId);
+      return fetch(`/api/rounds?${searchParams.toString()}`, { credentials: 'include' }).then(res => res.json());
+    },
+    enabled: !!roundsPlayerId,
     retry: false,
   });
 
@@ -59,21 +60,31 @@ export default function History() {
     );
   }
 
-  // Get the last round for each player
-  const getLastRoundForEachPlayer = () => {
-    if (!allRounds || !players) return [];
-    
-    return (players as any[]).map((player: any) => {
-      const playerRounds = (allRounds as any[]).filter((round: any) => round.playerId === player.id);
-      const lastRound = playerRounds.length > 0 ? playerRounds[0] : null; // rounds are already sorted by date desc
-      return {
-        player,
-        lastRound
-      };
-    }).filter(item => item.lastRound); // Only show players who have played rounds
+  const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
+  const displayPlayer = selectedPlayerId === "self" ? currentPlayer : (players as any[])?.find((p: any) => p.id === selectedPlayerId);
+
+  // Get last round and calculate summary for the selected player
+  const lastRound = rounds && (rounds as any[]).length > 0 ? (rounds as any[])[0] : null;
+  
+  const calculateSummary = () => {
+    if (!rounds || (rounds as any[]).length === 0) {
+      return { roundsPlayed: 0, avgGross: 0, avgNet: 0, avgOverPar: 0 };
+    }
+
+    const roundsPlayed = (rounds as any[]).length;
+    const avgGross = (rounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
+    const avgNet = (rounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
+    const avgOverPar = (rounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
+
+    return {
+      roundsPlayed,
+      avgGross: Math.round(avgGross),
+      avgNet: Math.round(avgNet),
+      avgOverPar: avgOverPar.toFixed(1),
+    };
   };
 
-  const playersWithLastRounds = getLastRoundForEachPlayer();
+  const summary = calculateSummary();
 
   // Render scorecard component similar to Home page
   const renderScorecard = (round: any) => {
@@ -126,76 +137,130 @@ export default function History() {
         <Card data-testid="card-history">
           <CardContent className="pt-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6" data-testid="text-history-title">
-              Last Rounds - All Players
+              Player History
             </h2>
 
-            {/* Players' Last Rounds */}
-            {roundsLoading ? (
-              <div className="space-y-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse border border-gray-200 rounded-lg p-4">
-                    <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                    <div className="h-20 bg-gray-200 rounded"></div>
-                  </div>
-                ))}
-              </div>
-            ) : playersWithLastRounds.length > 0 ? (
-              <div className="space-y-6">
-                {playersWithLastRounds.map(({ player, lastRound }) => (
-                  <Card key={player.id} className="border-2" data-testid={`card-player-${player.id}`}>
-                    <CardContent className="pt-6">
-                      {/* Player Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900" data-testid={`text-player-name-${player.id}`}>
-                            {player.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            Current Handicap: <span className="font-medium">{player.currentHandicap}</span>
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600">Last Round</div>
-                          <div className="font-medium">{lastRound.courseName}</div>
-                          <div className="text-sm text-gray-500">{new Date(lastRound.playedOn).toLocaleDateString()}</div>
-                        </div>
-                      </div>
+            {/* Player Selection Tabs */}
+            <div className="flex space-x-2 mb-6 overflow-x-auto">
+              <Button
+                variant={selectedPlayerId === "self" ? "default" : "outline"}
+                onClick={() => setSelectedPlayerId("self")}
+                className={selectedPlayerId === "self" ? "bg-golf-green text-white" : ""}
+                data-testid="button-select-self"
+              >
+                Your History
+              </Button>
+              {(players as any[])?.filter((p: any) => p.id !== currentPlayer?.id).map((player: any) => (
+                <Button
+                  key={player.id}
+                  variant={selectedPlayerId === player.id ? "default" : "outline"}
+                  onClick={() => setSelectedPlayerId(player.id)}
+                  className={`whitespace-nowrap ${selectedPlayerId === player.id ? "bg-golf-green text-white" : ""}`}
+                  data-testid={`button-select-player-${player.id}`}
+                >
+                  {player.name}
+                </Button>
+              ))}
+            </div>
 
-                      {/* Last Round Scorecard */}
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        {renderScorecard(lastRound)}
-                        
-                        {/* Summary */}
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div>
-                            <div className="font-bold text-lg" data-testid={`text-gross-${player.id}`}>
-                              {lastRound.grossCapped}
-                            </div>
-                            <div className="text-xs text-gray-600">Gross</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-lg text-golf-blue" data-testid={`text-net-${player.id}`}>
-                              {lastRound.net}
-                            </div>
-                            <div className="text-xs text-gray-600">Net</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-lg text-golf-gold" data-testid={`text-over-par-${player.id}`}>
-                              +{parseFloat(lastRound.overPar).toFixed(0)}
-                            </div>
-                            <div className="text-xs text-gray-600">Over Par</div>
-                          </div>
+            {/* Selected Player's Last Round and Summary */}
+            {roundsLoading ? (
+              <div className="space-y-4">
+                <div className="animate-pulse border border-gray-200 rounded-lg p-4">
+                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                  <div className="h-32 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            ) : lastRound ? (
+              <div className="space-y-6">
+                {/* Player Info */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900" data-testid="text-selected-player-name">
+                      {displayPlayer?.name || 'Unknown Player'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Current Handicap: <span className="font-medium">{displayPlayer?.currentHandicap || 0}</span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600">Last Round</div>
+                    <div className="font-medium">{lastRound.courseName}</div>
+                    <div className="text-sm text-gray-500">{new Date(lastRound.playedOn).toLocaleDateString()}</div>
+                  </div>
+                </div>
+
+                {/* Last Round Scorecard */}
+                <Card className="bg-gray-50">
+                  <CardContent className="pt-6">
+                    {renderScorecard(lastRound)}
+                    
+                    {/* Last Round Summary */}
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="font-bold text-lg" data-testid="text-last-gross">
+                          {lastRound.grossCapped}
                         </div>
+                        <div className="text-xs text-gray-600">Gross</div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <div>
+                        <div className="font-bold text-lg text-golf-blue" data-testid="text-last-net">
+                          {lastRound.net}
+                        </div>
+                        <div className="text-xs text-gray-600">Net</div>
+                      </div>
+                      <div>
+                        <div className="font-bold text-lg text-golf-gold" data-testid="text-last-over-par">
+                          +{parseFloat(lastRound.overPar).toFixed(0)}
+                        </div>
+                        <div className="text-xs text-gray-600">Over Par</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Overall Summary Statistics */}
+                <Card className="bg-white">
+                  <CardContent className="pt-6">
+                    <h3 className="font-medium text-gray-900 mb-4" data-testid="text-player-summary">
+                      {displayPlayer?.name}'s Season Summary
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-black text-gray-900" data-testid="text-summary-rounds">
+                          {summary.roundsPlayed}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Rounds Played</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-black text-golf-green" data-testid="text-summary-avg-gross">
+                          {summary.avgGross}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Avg Gross</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-avg-net">
+                          {summary.avgNet}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Avg Net</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-avg-over-par">
+                          +{summary.avgOverPar}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-700">Avg Over Par</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             ) : (
               <div className="text-center py-8" data-testid="empty-state-rounds">
                 <i className="fas fa-golf-ball text-4xl text-gray-300 mb-4"></i>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No rounds found</h3>
-                <p className="text-gray-500">No players have played any rounds yet</p>
+                <p className="text-gray-500">
+                  {displayPlayer?.name || 'This player'} hasn't played any rounds yet
+                </p>
               </div>
             )}
           </CardContent>

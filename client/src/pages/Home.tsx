@@ -178,55 +178,42 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* Recent Rounds */}
-        <Card className="mb-6" data-testid="card-recent-rounds">
-          <CardContent className="pt-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4" data-testid="text-recent-rounds">
-              Last 5 Rounds
-            </h2>
-            <div className="space-y-3">
-              {recentRounds && (recentRounds as any[]).slice(0, 5).length > 0 ? (
-                (recentRounds as any[]).slice(0, 5).map((round: any, index: number) => (
-                  <div
-                    key={round.id}
-                    className="w-full p-4 border border-gray-200 rounded-lg bg-gray-50"
-                    data-testid={`card-round-${round.id}`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium text-gray-900" data-testid={`text-round-course-${round.id}`}>
-                          {round.courseName || 'Course'}
-                        </h3>
-                        <p className="text-sm text-gray-600" data-testid={`text-round-date-${round.id}`}>
-                          {new Date(round.playedOn).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex space-x-4 text-sm">
-                          <span className="font-medium" data-testid={`text-round-gross-${round.id}`}>
-                            Gross: {round.grossCapped}
-                          </span>
-                          <span className="font-medium text-golf-blue" data-testid={`text-round-net-${round.id}`}>
-                            Net: {round.net}
-                          </span>
-                          <span className="font-medium text-golf-gold" data-testid={`text-round-over-par-${round.id}`}>
-                            +{parseFloat(round.overPar).toFixed(0)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+        {/* Overall Summary Statistics */}
+        {recentRounds && (recentRounds as any[]).length > 0 && (
+          <Card className="mb-6" data-testid="card-overall-summary">
+            <CardContent className="pt-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4" data-testid="text-overall-summary">
+                Your Season Summary
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-black text-gray-900" data-testid="text-summary-rounds">
+                    {(recentRounds as any[]).length}
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8" data-testid="empty-state-rounds">
-                  <i className="fas fa-golf-ball text-4xl text-gray-300 mb-3"></i>
-                  <p className="text-gray-500">No rounds played yet</p>
-                  <p className="text-sm text-gray-400">Start your first round below!</p>
+                  <div className="text-sm font-semibold text-gray-700">Rounds Played</div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <div>
+                  <div className="text-2xl font-black text-golf-green" data-testid="text-summary-avg-gross">
+                    {Math.round((recentRounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / (recentRounds as any[]).length)}
+                  </div>
+                  <div className="text-sm font-semibold text-gray-700">Avg Gross</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-avg-net">
+                    {Math.round((recentRounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / (recentRounds as any[]).length)}
+                  </div>
+                  <div className="text-sm font-semibold text-gray-700">Avg Net</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-avg-over-par">
+                    +{((recentRounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / (recentRounds as any[]).length).toFixed(1)}
+                  </div>
+                  <div className="text-sm font-semibold text-gray-700">Avg Over Par</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       </main>
     </div>
