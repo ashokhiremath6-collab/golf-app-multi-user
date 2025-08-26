@@ -98,7 +98,7 @@ export default function Navigation() {
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 sm:hidden z-50" data-testid="nav-mobile">
         <div className="flex justify-around py-2">
-          {navItems.slice(0, 4).map((item) => (
+          {navItems.filter(item => item.path !== '/admin').map((item) => (
             <button
               key={item.path}
               onClick={() => setLocation(item.path)}
