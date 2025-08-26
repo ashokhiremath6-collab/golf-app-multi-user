@@ -105,7 +105,7 @@ export default function Home() {
                 <div className="text-3xl font-bold text-golf-green" data-testid="text-current-handicap">
                   {currentPlayer?.currentHandicap || 0}
                 </div>
-                <div className="text-sm text-gray-600">Current Handicap</div>
+                <div className="text-sm text-gray-600">New Handicap</div>
               </div>
             </div>
           </CardContent>
