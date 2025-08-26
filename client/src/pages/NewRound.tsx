@@ -61,7 +61,7 @@ export default function NewRound() {
   });
 
   const { data: holes, isLoading: holesLoading, refetch: refetchHoles } = useQuery<Hole[]>({
-    queryKey: ["/api/courses", selectedCourseId, "holes", Date.now()], // Timestamp cache busting
+    queryKey: ["/api/courses", selectedCourseId, "holes"],
     enabled: !!selectedCourseId,
     retry: false,
     staleTime: 0, // Force refresh of hole data
@@ -223,10 +223,13 @@ export default function NewRound() {
                 Select Course
               </label>
               <Select value={selectedCourseId} onValueChange={(courseId) => {
+                console.log("🏌️ COURSE SELECTED:", courseId); // DEBUG
                 setSelectedCourseId(courseId);
                 setScores(Array(18).fill(0));
                 setRoundSubmitted(false);
                 // Force complete cache clear
+                queryClient.removeQueries({ queryKey: ["/api/courses"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
                 queryClient.removeQueries({ queryKey: ["/api/courses", courseId, "holes"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/courses", courseId, "holes"] });
               }}>
@@ -279,7 +282,7 @@ export default function NewRound() {
                 <div className="mb-4">
                   {!holesLoading && holes && (
                     <>
-                      {console.log("🏌️ HOLES DATA DEBUG:", holes?.slice(0, 5)?.map(h => ({hole: h.number, par: h.par})))} {/* DEBUG */}
+                      {console.log("🏌️ HOLES DATA DEBUG - Course:", selectedCourseId, "Data:", holes?.slice(0, 5)?.map(h => ({hole: h.number, par: h.par})))} {/* DEBUG */}
                       <ScoreGrid
                         holes={holes}
                         scores={scores}
