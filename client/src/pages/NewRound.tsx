@@ -173,7 +173,7 @@ export default function NewRound() {
     <div className="bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-3 pb-8">
+      <main className="max-w-7xl mx-auto px-4 py-3 pb-24">
         <Card data-testid="card-new-round">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between mb-4">
