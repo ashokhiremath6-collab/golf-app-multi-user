@@ -60,8 +60,8 @@ export default function NewRound() {
     refetchOnWindowFocus: true, // Refetch when window gets focus
   });
 
-  const { data: holes, isLoading: holesLoading } = useQuery<Hole[]>({
-    queryKey: ["/api/courses", selectedCourseId, "holes"],
+  const { data: holes, isLoading: holesLoading, refetch: refetchHoles } = useQuery<Hole[]>({
+    queryKey: ["/api/courses", selectedCourseId, "holes", Date.now()], // Timestamp cache busting
     enabled: !!selectedCourseId,
     retry: false,
     staleTime: 0, // Force refresh of hole data
@@ -222,7 +222,14 @@ export default function NewRound() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Course
               </label>
-              <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+              <Select value={selectedCourseId} onValueChange={(courseId) => {
+                setSelectedCourseId(courseId);
+                setScores(Array(18).fill(0));
+                setRoundSubmitted(false);
+                // Force complete cache clear
+                queryClient.removeQueries({ queryKey: ["/api/courses", courseId, "holes"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/courses", courseId, "holes"] });
+              }}>
                 <SelectTrigger data-testid="select-course">
                   <SelectValue placeholder="Choose a course" />
                 </SelectTrigger>
