@@ -35,14 +35,14 @@ export default function NewRound() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
-    queryKey: ["/api/courses"],
+    queryKey: ["/api/courses", Date.now()], // Cache bust with timestamp
     retry: false,
     staleTime: 0, // Force refresh of course data
     gcTime: 0, // Don't cache course data
   });
 
   const { data: holes, isLoading: holesLoading } = useQuery({
-    queryKey: ["/api/courses", selectedCourseId, "holes"],
+    queryKey: ["/api/courses", selectedCourseId, "holes", Date.now()], // Cache bust with timestamp
     enabled: !!selectedCourseId,
     retry: false,
     staleTime: 0, // Force refresh of hole data
