@@ -86,43 +86,42 @@ export default function History() {
 
   const summary = calculateSummary();
 
-  // Render scorecard component similar to Home page
+  // Render compact scorecard component
   const renderScorecard = (round: any) => {
     if (!round.cappedScores || round.cappedScores.length !== 18) {
       return (
-        <div className="text-sm text-gray-500 text-center py-4">
+        <div className="text-xs text-gray-500 text-center py-2">
           Scorecard data not available
         </div>
       );
     }
 
     return (
-      <div className="mb-3">
-        <div className="text-xs text-gray-600 mb-2">Scorecard:</div>
+      <div className="mb-2">
         {/* Front 9 */}
-        <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono mb-1">
+        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono mb-0.5">
           {round.cappedScores.slice(0, 9).map((score: number, index: number) => (
-            <div key={index} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 1}-score`}>
-              <div className="text-xs text-gray-500">{index + 1}</div>
-              <div className="font-bold">{score}</div>
+            <div key={index} className="bg-white rounded px-0.5 py-1 border" data-testid={`hole-${index + 1}-score`}>
+              <div className="text-2xs text-gray-500">{index + 1}</div>
+              <div className="font-bold text-xs">{score}</div>
             </div>
           ))}
-          <div className="bg-golf-green text-white rounded px-1 py-1 border font-bold" data-testid="front-nine-total">
-            <div className="text-xs">OUT</div>
-            <div className="font-bold">{round.cappedScores.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
+          <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold" data-testid="front-nine-total">
+            <div className="text-2xs">OUT</div>
+            <div className="font-bold text-xs">{round.cappedScores.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
           </div>
         </div>
         {/* Back 9 */}
-        <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono">
+        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono">
           {round.cappedScores.slice(9, 18).map((score: number, index: number) => (
-            <div key={index + 9} className="bg-white rounded px-1 py-1 border" data-testid={`hole-${index + 10}-score`}>
-              <div className="text-xs text-gray-500">{index + 10}</div>
-              <div className="font-bold">{score}</div>
+            <div key={index + 9} className="bg-white rounded px-0.5 py-1 border" data-testid={`hole-${index + 10}-score`}>
+              <div className="text-2xs text-gray-500">{index + 10}</div>
+              <div className="font-bold text-xs">{score}</div>
             </div>
           ))}
-          <div className="bg-golf-green text-white rounded px-1 py-1 border font-bold" data-testid="back-nine-total">
-            <div className="text-xs">IN</div>
-            <div className="font-bold">{round.cappedScores.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
+          <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold" data-testid="back-nine-total">
+            <div className="text-2xs">IN</div>
+            <div className="font-bold text-xs">{round.cappedScores.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
           </div>
         </div>
       </div>
@@ -133,15 +132,15 @@ export default function History() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-3">
         <Card data-testid="card-history">
-          <CardContent className="pt-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6" data-testid="text-history-title">
+          <CardContent className="pt-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4" data-testid="text-history-title">
               Player History
             </h2>
 
             {/* Player Selection Tabs */}
-            <div className="flex space-x-2 mb-6 overflow-x-auto">
+            <div className="flex space-x-2 mb-4 overflow-x-auto">
               <Button
                 variant={selectedPlayerId === "self" ? "default" : "outline"}
                 onClick={() => setSelectedPlayerId("self")}
@@ -172,83 +171,81 @@ export default function History() {
                 </div>
               </div>
             ) : lastRound ? (
-              <div className="space-y-6">
-                {/* Player Info */}
+              <div className="space-y-4">
+                {/* Compact Player Info */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900" data-testid="text-selected-player-name">
+                    <h3 className="text-base font-semibold text-gray-900" data-testid="text-selected-player-name">
                       {displayPlayer?.name || 'Unknown Player'}
                     </h3>
-                    <p className="text-sm text-gray-600">
-                      Current Handicap: <span className="font-medium">{displayPlayer?.currentHandicap || 0}</span>
+                    <p className="text-xs text-gray-600">
+                      Handicap: <span className="font-medium">{displayPlayer?.currentHandicap || 0}</span>
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-gray-600">Last Round</div>
-                    <div className="font-medium">{lastRound.courseName}</div>
-                    <div className="text-sm text-gray-500">{new Date(lastRound.playedOn).toLocaleDateString()}</div>
+                    <div className="text-xs text-gray-600">Last Round</div>
+                    <div className="font-medium text-sm">{lastRound.courseName}</div>
+                    <div className="text-xs text-gray-500">{new Date(lastRound.playedOn).toLocaleDateString()}</div>
                   </div>
                 </div>
 
-                {/* Last Round Scorecard */}
+                {/* Compact Last Round & Summary Combined */}
                 <Card className="bg-gray-50">
-                  <CardContent className="pt-6">
+                  <CardContent className="pt-4">
                     {renderScorecard(lastRound)}
                     
-                    {/* Last Round Summary */}
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <div className="font-bold text-lg" data-testid="text-last-gross">
-                          {lastRound.grossCapped}
+                    {/* Combined Stats - Last Round + Season Summary */}
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div>
+                          <div className="font-bold text-base" data-testid="text-last-gross">
+                            {lastRound.grossCapped}
+                          </div>
+                          <div className="text-2xs text-gray-600">Last Gross</div>
                         </div>
-                        <div className="text-xs text-gray-600">Gross</div>
+                        <div>
+                          <div className="font-bold text-base text-golf-blue" data-testid="text-last-net">
+                            {lastRound.net}
+                          </div>
+                          <div className="text-2xs text-gray-600">Last Net</div>
+                        </div>
+                        <div>
+                          <div className="font-bold text-base text-golf-gold" data-testid="text-last-over-par">
+                            +{parseFloat(lastRound.overPar).toFixed(0)}
+                          </div>
+                          <div className="text-2xs text-gray-600">Last Over</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-bold text-lg text-golf-blue" data-testid="text-last-net">
-                          {lastRound.net}
+                      
+                      {/* Season Averages */}
+                      <div className="border-t pt-3">
+                        <div className="text-xs font-medium text-gray-700 mb-2 text-center">Season Averages</div>
+                        <div className="grid grid-cols-4 gap-3 text-center">
+                          <div>
+                            <div className="text-lg font-black text-gray-900" data-testid="text-summary-rounds">
+                              {summary.roundsPlayed}
+                            </div>
+                            <div className="text-2xs font-semibold text-gray-700">Rounds</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-black text-golf-green" data-testid="text-summary-avg-gross">
+                              {summary.avgGross}
+                            </div>
+                            <div className="text-2xs font-semibold text-gray-700">Avg Gross</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-black text-golf-blue" data-testid="text-summary-avg-net">
+                              {summary.avgNet}
+                            </div>
+                            <div className="text-2xs font-semibold text-gray-700">Avg Net</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-black text-golf-gold" data-testid="text-summary-avg-over-par">
+                              +{summary.avgOverPar}
+                            </div>
+                            <div className="text-2xs font-semibold text-gray-700">Avg Over</div>
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-600">Net</div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-lg text-golf-gold" data-testid="text-last-over-par">
-                          +{parseFloat(lastRound.overPar).toFixed(0)}
-                        </div>
-                        <div className="text-xs text-gray-600">Over Par</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Overall Summary Statistics */}
-                <Card className="bg-white">
-                  <CardContent className="pt-6">
-                    <h3 className="font-medium text-gray-900 mb-4" data-testid="text-player-summary">
-                      {displayPlayer?.name}'s Season Summary
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                      <div>
-                        <div className="text-2xl font-black text-gray-900" data-testid="text-summary-rounds">
-                          {summary.roundsPlayed}
-                        </div>
-                        <div className="text-sm font-semibold text-gray-700">Rounds Played</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-black text-golf-green" data-testid="text-summary-avg-gross">
-                          {summary.avgGross}
-                        </div>
-                        <div className="text-sm font-semibold text-gray-700">Avg Gross</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-black text-golf-blue" data-testid="text-summary-avg-net">
-                          {summary.avgNet}
-                        </div>
-                        <div className="text-sm font-semibold text-gray-700">Avg Net</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-black text-golf-gold" data-testid="text-summary-avg-over-par">
-                          +{summary.avgOverPar}
-                        </div>
-                        <div className="text-sm font-semibold text-gray-700">Avg Over Par</div>
                       </div>
                     </div>
                   </CardContent>

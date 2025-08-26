@@ -62,15 +62,15 @@ export default function Leaderboard() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-3">
         <Card data-testid="card-leaderboard">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900" data-testid="text-leaderboard-title">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900" data-testid="text-leaderboard-title">
                 Season Leaderboard
               </h2>
               <div className="text-right">
-                <div className="text-sm text-gray-600" data-testid="text-season-info">
+                <div className="text-xs text-gray-600" data-testid="text-season-info">
                   2024-25 Season
                 </div>
                 <div className="text-xs text-gray-500">Ends Mar 31, 2026</div>
