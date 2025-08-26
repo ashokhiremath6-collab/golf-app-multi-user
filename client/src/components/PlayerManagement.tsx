@@ -33,7 +33,7 @@ export default function PlayerManagement() {
     isAdmin: false,
   });
 
-  const { data: players, isLoading } = useQuery({
+  const { data: players, isLoading } = useQuery<Player[]>({
     queryKey: ["/api/players"],
     retry: false,
   });
@@ -395,7 +395,7 @@ export default function PlayerManagement() {
                         className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         data-testid={`button-edit-player-${player.id}`}
                       >
-                        <i className="fas fa-edit"></i>
+                        <span className="text-base">✏️</span>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -405,7 +405,7 @@ export default function PlayerManagement() {
                             className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             data-testid={`button-delete-player-${player.id}`}
                           >
-                            <i className="fas fa-trash"></i>
+                            <span className="text-base">🗑️</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent data-testid={`dialog-delete-player-${player.id}`}>
