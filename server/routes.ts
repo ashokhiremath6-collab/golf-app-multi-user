@@ -855,7 +855,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to clear session" });
       }
       res.clearCookie('connect.sid');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.json({ message: "Session cleared successfully" });
+    });
+  });
+
+  // Force refresh endpoint to clear all caches
+  app.get('/api/force-refresh', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache'); 
+    res.setHeader('Expires', '0');
+    res.json({ 
+      message: "Cache cleared - please refresh the page",
+      timestamp: new Date().toISOString()
     });
   });
 
