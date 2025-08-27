@@ -271,6 +271,15 @@ export class DatabaseStorage implements IStorage {
     await db.delete(rounds).where(eq(rounds.id, id));
   }
 
+  async clearAllRounds(): Promise<void> {
+    await db.delete(rounds);
+  }
+
+  async createHole(holeData: InsertHole): Promise<Hole> {
+    const [created] = await db.insert(holes).values(holeData).returning();
+    return created;
+  }
+
   // Handicap snapshot operations
   async getHandicapSnapshots(playerId: string): Promise<HandicapSnapshot[]> {
     return await db
