@@ -847,6 +847,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Development session clear endpoint  
+  app.get('/api/clear-session', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destroy error:', err);
+        return res.status(500).json({ message: "Failed to clear session" });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: "Session cleared successfully" });
+    });
+  });
+
   // Group settings
   app.get('/api/group/settings', async (req, res) => {
     try {
