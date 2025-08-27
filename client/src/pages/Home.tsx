@@ -205,7 +205,7 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="text-lg font-black text-golf-green" data-testid="text-summary-avg-gross">
-                    {Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / playerRounds.length)}
+                    {Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.rawScores.reduce((holeSum: number, score: number) => holeSum + score, 0), 0) / playerRounds.length)}
                   </div>
                   <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
                 </div>
