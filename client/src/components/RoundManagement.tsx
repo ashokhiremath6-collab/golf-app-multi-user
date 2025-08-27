@@ -43,6 +43,7 @@ export default function RoundManagement() {
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [editScores, setEditScores] = useState<number[]>([]);
+  const [editHandicap, setEditHandicap] = useState<number>(0);
   const [showTestRoundForm, setShowTestRoundForm] = useState(false);
   const [testRoundData, setTestRoundData] = useState({
     playerId: '',
@@ -178,6 +179,7 @@ export default function RoundManagement() {
   const handleEdit = (round: Round) => {
     setEditingRound(round);
     setEditScores([...round.rawScores]);
+    setEditHandicap(round.courseHandicap);
   };
 
   const handleScoreChange = (holeIndex: number, score: string) => {
@@ -202,6 +204,7 @@ export default function RoundManagement() {
     updateRoundMutation.mutate({
       id: editingRound.id,
       rawScores: editScores,
+      courseHandicap: editHandicap,
     });
   };
 
@@ -429,7 +432,18 @@ export default function RoundManagement() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div><strong>Course:</strong> {getCourseName(editingRound.courseId)}</div>
                     <div><strong>Date:</strong> {new Date(editingRound.playedOn).toLocaleDateString()}</div>
-                    <div><strong>Handicap:</strong> {editingRound.courseHandicap}</div>
+                    <div>
+                      <strong>Course Handicap:</strong>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="54"
+                        value={editHandicap}
+                        onChange={(e) => setEditHandicap(parseInt(e.target.value) || 0)}
+                        className="mt-1 w-20 text-center inline-block ml-2"
+                        data-testid="input-edit-handicap"
+                      />
+                    </div>
                     <div><strong>Status:</strong> 
                       <Badge className="ml-2" variant={editingRound.status === 'ok' ? 'default' : 'destructive'}>
                         {editingRound.status}

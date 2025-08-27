@@ -432,14 +432,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Round not found" });
       }
 
-      // Validate only rawScores for now (partial update)
-      const { rawScores } = req.body;
+      // Validate rawScores and courseHandicap
+      const { rawScores, courseHandicap } = req.body;
       if (!Array.isArray(rawScores) || rawScores.length !== 18) {
         return res.status(400).json({ message: "Must provide exactly 18 scores" });
       }
 
       if (!rawScores.every(score => Number.isInteger(score) && score >= 1 && score <= 10)) {
         return res.status(400).json({ message: "All scores must be integers between 1 and 10" });
+      }
+
+      // Validate courseHandicap if provided
+      const updatedHandicap = courseHandicap !== undefined ? courseHandicap : existingRound.courseHandicap;
+      if (typeof updatedHandicap !== 'number' || updatedHandicap < 0 || updatedHandicap > 54) {
+        return res.status(400).json({ message: "Course handicap must be a number between 0 and 54" });
       }
 
       // Get course and holes for recalculation
@@ -455,17 +461,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
       
-      // Recalculate round scores with new raw scores
+      // Recalculate round scores with new raw scores and handicap
       const scoreCalculation = calculateRoundScores(
         rawScores,
         holePars,
-        existingRound.courseHandicap,
+        updatedHandicap,
         course.parTotal
       );
 
       // Update round with recalculated values
       const updatedRound = await storage.updateRound(roundId, {
         rawScores: rawScores,
+        courseHandicap: updatedHandicap,
         cappedScores: scoreCalculation.cappedScores,
         grossCapped: scoreCalculation.grossCapped,
         net: scoreCalculation.net,
