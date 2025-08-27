@@ -102,6 +102,38 @@ export const handicapSnapshots = pgTable("handicap_snapshots", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Monthly leaderboard snapshots table
+export const monthlyLeaderboards = pgTable("monthly_leaderboards", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  playerId: uuid("player_id").references(() => players.id).notNull(),
+  month: text("month").notNull(), // YYYY-MM format
+  playerName: text("player_name").notNull(),
+  roundsCount: integer("rounds_count").notNull(),
+  avgNet: numeric("avg_net").notNull(),
+  avgOverPar: numeric("avg_over_par").notNull(),
+  avgGrossCapped: numeric("avg_gross_capped").notNull(),
+  currentHandicap: integer("current_handicap").notNull(),
+  rank: integer("rank").notNull(),
+  lastRoundDate: date("last_round_date").notNull(),
+  isFinalized: boolean("is_finalized").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Monthly winners table
+export const monthlyWinners = pgTable("monthly_winners", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  month: text("month").notNull(), // YYYY-MM format
+  winnerId: uuid("winner_id").references(() => players.id).notNull(),
+  winnerName: text("winner_name").notNull(),
+  winnerScore: numeric("winner_score").notNull(),
+  runnerUpId: uuid("runner_up_id").references(() => players.id),
+  runnerUpName: text("runner_up_name"),
+  runnerUpScore: numeric("runner_up_score"),
+  announcedAt: timestamp("announced_at").defaultNow(),
+  announcedBy: uuid("announced_by").references(() => players.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Season settings table
 export const seasonSettings = pgTable("season_settings", {
   id: integer("id").primaryKey().default(1),
@@ -116,6 +148,9 @@ export const seasonSettings = pgTable("season_settings", {
 export const playersRelations = relations(players, ({ many }) => ({
   rounds: many(rounds),
   handicapSnapshots: many(handicapSnapshots),
+  monthlyLeaderboards: many(monthlyLeaderboards),
+  monthlyWins: many(monthlyWinners, { relationName: 'winner' }),
+  monthlyRunnerUps: many(monthlyWinners, { relationName: 'runnerUp' }),
 }));
 
 export const coursesRelations = relations(courses, ({ many }) => ({
@@ -148,6 +183,31 @@ export const handicapSnapshotsRelations = relations(handicapSnapshots, ({ one })
   }),
 }));
 
+export const monthlyLeaderboardsRelations = relations(monthlyLeaderboards, ({ one }) => ({
+  player: one(players, {
+    fields: [monthlyLeaderboards.playerId],
+    references: [players.id],
+  }),
+}));
+
+export const monthlyWinnersRelations = relations(monthlyWinners, ({ one }) => ({
+  winner: one(players, {
+    fields: [monthlyWinners.winnerId],
+    references: [players.id],
+    relationName: 'winner',
+  }),
+  runnerUp: one(players, {
+    fields: [monthlyWinners.runnerUpId],
+    references: [players.id],
+    relationName: 'runnerUp',
+  }),
+  announcedByPlayer: one(players, {
+    fields: [monthlyWinners.announcedBy],
+    references: [players.id],
+    relationName: 'announcer',
+  }),
+}));
+
 // Zod schemas
 export const insertPlayerSchema = createInsertSchema(players).omit({
   id: true,
@@ -170,6 +230,17 @@ export const insertRoundSchema = createInsertSchema(rounds).omit({
   grossCapped: true,
   net: true,
   overPar: true,
+});
+
+export const insertMonthlyLeaderboardSchema = createInsertSchema(monthlyLeaderboards).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMonthlyWinnerSchema = createInsertSchema(monthlyWinners).omit({
+  id: true,
+  createdAt: true,
+  announcedAt: true,
 });
 
 export const insertHandicapSnapshotSchema = createInsertSchema(handicapSnapshots).omit({

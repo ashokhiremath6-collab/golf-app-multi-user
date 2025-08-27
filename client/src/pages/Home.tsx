@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -7,12 +7,18 @@ import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, TrendingUp, Target, Trophy } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function Home() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [, setLocation] = useLocation();
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -51,6 +57,20 @@ export default function Home() {
 
   const { data: handicapSnapshots } = useQuery({
     queryKey: ["/api/handicaps/snapshots"],
+    retry: false,
+  });
+
+  // Fetch monthly stats
+  const { data: monthlyStats, isLoading: monthlyLoading } = useQuery({
+    queryKey: ["/api/players", currentPlayer?.id, "stats", "monthly", selectedMonth],
+    enabled: !!currentPlayer,
+    retry: false,
+  });
+
+  // Fetch cumulative stats
+  const { data: cumulativeStats, isLoading: cumulativeLoading } = useQuery({
+    queryKey: ["/api/players", currentPlayer?.id, "stats", "cumulative"],
+    enabled: !!currentPlayer,
     retry: false,
   });
 
@@ -189,39 +209,95 @@ export default function Home() {
           </Card>
         )}
 
-        {/* Season Summary - Compact Footer */}
+        {/* Player Statistics - Cumulative vs Monthly */}
         {playerRounds && playerRounds.length > 0 && (
-          <Card data-testid="card-overall-summary">
+          <Card data-testid="card-player-stats">
             <CardContent className="pt-4 pb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center" data-testid="text-overall-summary">
-                Season Summary
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center" data-testid="text-player-stats-title">
+                Your Statistics
               </h3>
-              <div className="grid grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-lg font-black text-gray-900" data-testid="text-summary-rounds">
-                    {playerRounds.length}
+              
+              <Tabs defaultValue="cumulative" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="cumulative" data-testid="tab-season-total">
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Season Total
+                  </TabsTrigger>
+                  <TabsTrigger value="monthly" data-testid="tab-current-month">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    This Month
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="cumulative">
+                  <div className="grid grid-cols-4 gap-4 text-center">
+                    <div>
+                      <div className="text-lg font-black text-gray-900" data-testid="text-cumulative-rounds">
+                        {cumulativeStats?.roundsCount || playerRounds.length}
+                      </div>
+                      <div className="text-xs font-semibold text-gray-700">Total Rounds</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-black text-golf-green" data-testid="text-cumulative-avg-gross">
+                        {cumulativeStats?.avgGrossCapped ? Math.round(parseFloat(cumulativeStats.avgGrossCapped)) : 
+                          Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / playerRounds.length)}
+                      </div>
+                      <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-black text-golf-blue" data-testid="text-cumulative-avg-net">
+                        {cumulativeStats?.avgNet ? Math.round(parseFloat(cumulativeStats.avgNet)) : 
+                          Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.net, 0) / playerRounds.length)}
+                      </div>
+                      <div className="text-xs font-semibold text-gray-700">Avg Net</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-black text-golf-gold" data-testid="text-cumulative-avg-over-par">
+                        +{cumulativeStats?.avgOverPar ? parseFloat(cumulativeStats.avgOverPar).toFixed(1) : 
+                          (playerRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / playerRounds.length).toFixed(1)}
+                      </div>
+                      <div className="text-xs font-semibold text-gray-700">Avg Over</div>
+                    </div>
                   </div>
-                  <div className="text-xs font-semibold text-gray-700">Rounds</div>
-                </div>
-                <div>
-                  <div className="text-lg font-black text-golf-green" data-testid="text-summary-avg-gross">
-                    {Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / playerRounds.length)}
-                  </div>
-                  <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
-                </div>
-                <div>
-                  <div className="text-lg font-black text-golf-blue" data-testid="text-summary-avg-net">
-                    {Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.net, 0) / playerRounds.length)}
-                  </div>
-                  <div className="text-xs font-semibold text-gray-700">Avg Net</div>
-                </div>
-                <div>
-                  <div className="text-lg font-black text-golf-gold" data-testid="text-summary-avg-over-par">
-                    +{(playerRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / playerRounds.length).toFixed(1)}
-                  </div>
-                  <div className="text-xs font-semibold text-gray-700">Avg Over</div>
-                </div>
-              </div>
+                </TabsContent>
+
+                <TabsContent value="monthly">
+                  {monthlyStats && monthlyStats.roundsCount > 0 ? (
+                    <div className="grid grid-cols-4 gap-4 text-center">
+                      <div>
+                        <div className="text-lg font-black text-gray-900" data-testid="text-monthly-rounds">
+                          {monthlyStats.roundsCount}
+                        </div>
+                        <div className="text-xs font-semibold text-gray-700">Rounds</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-black text-golf-green" data-testid="text-monthly-avg-gross">
+                          {Math.round(parseFloat(monthlyStats.avgGrossCapped))}
+                        </div>
+                        <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-black text-golf-blue" data-testid="text-monthly-avg-net">
+                          {Math.round(parseFloat(monthlyStats.avgNet))}
+                        </div>
+                        <div className="text-xs font-semibold text-gray-700">Avg Net</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-black text-golf-gold" data-testid="text-monthly-avg-over-par">
+                          +{parseFloat(monthlyStats.avgOverPar).toFixed(1)}
+                        </div>
+                        <div className="text-xs font-semibold text-gray-700">Avg Over</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p data-testid="text-no-monthly-rounds">No rounds played this month yet</p>
+                      <p className="text-sm mt-2">Start playing to see your monthly statistics!</p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}

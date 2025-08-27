@@ -5,6 +5,8 @@ import {
   holes,
   rounds,
   handicapSnapshots,
+  monthlyLeaderboards,
+  monthlyWinners,
   seasonSettings,
   type User,
   type UpsertUser,
@@ -19,6 +21,8 @@ import {
   type HandicapSnapshot,
   type InsertHandicapSnapshot,
   type SeasonSettings,
+  insertMonthlyLeaderboardSchema,
+  insertMonthlyWinnerSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, sql, avg, count } from "drizzle-orm";
@@ -66,6 +70,22 @@ export interface IStorage {
   
   // Leaderboard operations
   getLeaderboard(): Promise<any[]>;
+  getMonthlyLeaderboard(month: string): Promise<any[]>;
+  getCumulativeLeaderboard(): Promise<any[]>;
+  
+  // Monthly leaderboard history
+  saveMonthlyLeaderboardSnapshot(month: string): Promise<void>;
+  getLeaderboardHistory(): Promise<any[]>;
+  getMonthlyLeaderboardSnapshot(month: string): Promise<any[]>;
+  
+  // Monthly winners
+  getMonthlyWinners(): Promise<any[]>;
+  getMonthlyWinner(month: string): Promise<any>;
+  announceMonthlyWinner(winnerData: any): Promise<any>;
+  
+  // Player statistics
+  getPlayerMonthlyStats(playerId: string, month: string): Promise<any>;
+  getPlayerCumulativeStats(playerId: string): Promise<any>;
   
   // Season settings
   getSeasonSettings(): Promise<SeasonSettings>;
@@ -344,6 +364,195 @@ export class DatabaseStorage implements IStorage {
 
   async updateGroupSettings(settings: { groupName?: string }): Promise<SeasonSettings> {
     return this.updateSeasonSettings(settings);
+  }
+
+  // Monthly leaderboard operations
+  async getMonthlyLeaderboard(month: string): Promise<any[]> {
+    const result = await db
+      .select({
+        playerId: players.id,
+        playerName: players.name,
+        currentHandicap: players.currentHandicap,
+        roundsCount: count(rounds.id),
+        avgNet: avg(rounds.net),
+        avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
+        avgGrossCapped: avg(rounds.grossCapped),
+        lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
+      })
+      .from(players)
+      .leftJoin(rounds, and(
+        eq(players.id, rounds.playerId),
+        sql`to_char(${rounds.playedOn}, 'YYYY-MM') = ${month}`
+      ))
+      .groupBy(players.id, players.name, players.currentHandicap)
+      .having(sql`count(${rounds.id}) > 0`)
+      .orderBy(asc(avg(rounds.net)));
+
+    return result;
+  }
+
+  async getCumulativeLeaderboard(): Promise<any[]> {
+    const result = await db
+      .select({
+        playerId: players.id,
+        playerName: players.name,
+        currentHandicap: players.currentHandicap,
+        roundsCount: count(rounds.id),
+        avgNet: avg(rounds.net),
+        avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
+        avgGrossCapped: avg(rounds.grossCapped),
+        lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
+      })
+      .from(players)
+      .leftJoin(rounds, eq(players.id, rounds.playerId))
+      .groupBy(players.id, players.name, players.currentHandicap)
+      .having(sql`count(${rounds.id}) > 0`)
+      .orderBy(asc(avg(rounds.net)));
+
+    return result;
+  }
+
+  async saveMonthlyLeaderboardSnapshot(month: string): Promise<void> {
+    const monthlyData = await this.getMonthlyLeaderboard(month);
+    
+    // Delete existing snapshot for the month
+    await db.delete(monthlyLeaderboards).where(eq(monthlyLeaderboards.month, month));
+    
+    // Save new snapshot
+    if (monthlyData.length > 0) {
+      const snapshots = monthlyData.map((player: any, index: number) => ({
+        playerId: player.playerId,
+        month: month,
+        playerName: player.playerName,
+        roundsCount: Number(player.roundsCount),
+        avgNet: player.avgNet,
+        avgOverPar: player.avgOverPar,
+        avgGrossCapped: player.avgGrossCapped,
+        currentHandicap: player.currentHandicap,
+        rank: index + 1,
+        lastRoundDate: player.lastRoundDate,
+        isFinalized: true,
+      }));
+      
+      await db.insert(monthlyLeaderboards).values(snapshots);
+    }
+  }
+
+  async getLeaderboardHistory(): Promise<any[]> {
+    const result = await db
+      .select({
+        month: monthlyLeaderboards.month,
+        playerCount: count(monthlyLeaderboards.id),
+        avgRoundsPerPlayer: avg(monthlyLeaderboards.roundsCount),
+        winner: sql<string>`(
+          SELECT player_name FROM monthly_leaderboards ml2 
+          WHERE ml2.month = ${monthlyLeaderboards.month} AND ml2.rank = 1 
+          LIMIT 1
+        )`,
+        runnerUp: sql<string>`(
+          SELECT player_name FROM monthly_leaderboards ml3 
+          WHERE ml3.month = ${monthlyLeaderboards.month} AND ml3.rank = 2 
+          LIMIT 1
+        )`,
+      })
+      .from(monthlyLeaderboards)
+      .where(eq(monthlyLeaderboards.isFinalized, true))
+      .groupBy(monthlyLeaderboards.month)
+      .orderBy(desc(monthlyLeaderboards.month));
+
+    return result;
+  }
+
+  async getMonthlyLeaderboardSnapshot(month: string): Promise<any[]> {
+    const result = await db
+      .select()
+      .from(monthlyLeaderboards)
+      .where(and(
+        eq(monthlyLeaderboards.month, month),
+        eq(monthlyLeaderboards.isFinalized, true)
+      ))
+      .orderBy(asc(monthlyLeaderboards.rank));
+
+    return result;
+  }
+
+  // Monthly winners operations
+  async getMonthlyWinners(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: monthlyWinners.id,
+        month: monthlyWinners.month,
+        winnerId: monthlyWinners.winnerId,
+        winnerName: monthlyWinners.winnerName,
+        winnerScore: monthlyWinners.winnerScore,
+        runnerUpId: monthlyWinners.runnerUpId,
+        runnerUpName: monthlyWinners.runnerUpName,
+        runnerUpScore: monthlyWinners.runnerUpScore,
+        announcedAt: monthlyWinners.announcedAt,
+        announcedBy: monthlyWinners.announcedBy,
+      })
+      .from(monthlyWinners)
+      .orderBy(desc(monthlyWinners.month));
+
+    return result;
+  }
+
+  async getMonthlyWinner(month: string): Promise<any> {
+    const [result] = await db
+      .select()
+      .from(monthlyWinners)
+      .where(eq(monthlyWinners.month, month))
+      .limit(1);
+
+    return result;
+  }
+
+  async announceMonthlyWinner(winnerData: any): Promise<any> {
+    const [result] = await db
+      .insert(monthlyWinners)
+      .values(winnerData)
+      .returning();
+
+    return result;
+  }
+
+  // Player statistics
+  async getPlayerMonthlyStats(playerId: string, month: string): Promise<any> {
+    const [result] = await db
+      .select({
+        roundsCount: count(rounds.id),
+        avgNet: avg(rounds.net),
+        avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
+        avgGrossCapped: avg(rounds.grossCapped),
+        bestNet: sql<number>`MIN(${rounds.net})`,
+        worstNet: sql<number>`MAX(${rounds.net})`,
+        lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
+      })
+      .from(rounds)
+      .where(and(
+        eq(rounds.playerId, playerId),
+        sql`to_char(${rounds.playedOn}, 'YYYY-MM') = ${month}`
+      ));
+
+    return result;
+  }
+
+  async getPlayerCumulativeStats(playerId: string): Promise<any> {
+    const [result] = await db
+      .select({
+        roundsCount: count(rounds.id),
+        avgNet: avg(rounds.net),
+        avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
+        avgGrossCapped: avg(rounds.grossCapped),
+        bestNet: sql<number>`MIN(${rounds.net})`,
+        worstNet: sql<number>`MAX(${rounds.net})`,
+        lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
+        firstRoundDate: sql<string>`MIN(${rounds.playedOn})`,
+      })
+      .from(rounds)
+      .where(eq(rounds.playerId, playerId));
+
+    return result;
   }
 }
 

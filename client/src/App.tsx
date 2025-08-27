@@ -9,6 +9,7 @@ import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import NewRound from "@/pages/NewRound";
 import Leaderboard from "@/pages/Leaderboard";
+import LeaderboardHistory from "@/pages/LeaderboardHistory";
 import History from "@/pages/History";
 import Handicaps from "@/pages/Handicaps";
 import Admin from "@/pages/Admin";
@@ -37,6 +38,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/rounds/new" component={NewRound} />
           <Route path="/leaderboard" component={Leaderboard} />
+          <Route path="/leaderboard-history" component={LeaderboardHistory} />
           <Route path="/history" component={History} />
           <Route path="/handicaps" component={Handicaps} />
           <Route path="/players/:id/rounds" component={History} />

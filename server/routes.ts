@@ -520,6 +520,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Monthly leaderboard endpoints
+  app.get('/api/leaderboard/monthly/:month', async (req, res) => {
+    try {
+      const { month } = req.params;
+      const leaderboard = await storage.getMonthlyLeaderboard(month);
+      res.json(leaderboard);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch monthly leaderboard" });
+    }
+  });
+
+  app.get('/api/leaderboard/cumulative', async (req, res) => {
+    try {
+      const leaderboard = await storage.getCumulativeLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cumulative leaderboard" });
+    }
+  });
+
+  // Leaderboard history
+  app.get('/api/leaderboard/history', async (req, res) => {
+    try {
+      const history = await storage.getLeaderboardHistory();
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch leaderboard history" });
+    }
+  });
+
+  app.get('/api/leaderboard/history/:month', async (req, res) => {
+    try {
+      const { month } = req.params;
+      const snapshot = await storage.getMonthlyLeaderboardSnapshot(month);
+      res.json(snapshot);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch monthly leaderboard snapshot" });
+    }
+  });
+
+  // Monthly winners
+  app.get('/api/monthly-winners', async (req, res) => {
+    try {
+      const winners = await storage.getMonthlyWinners();
+      res.json(winners);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch monthly winners" });
+    }
+  });
+
+  app.get('/api/monthly-winners/:month', async (req, res) => {
+    try {
+      const { month } = req.params;
+      const winner = await storage.getMonthlyWinner(month);
+      res.json(winner || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch monthly winner" });
+    }
+  });
+
+  // Admin endpoint to announce monthly winner
+  app.post('/api/admin/announce-winner', isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      const player = await storage.getPlayerByEmail(userEmail || '');
+      
+      if (!player?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { month, winnerId, winnerName, winnerScore, runnerUpId, runnerUpName, runnerUpScore } = req.body;
+      
+      if (!month || !winnerId || !winnerName || winnerScore === undefined) {
+        return res.status(400).json({ message: "Missing required winner data" });
+      }
+
+      // Check if winner already announced for this month
+      const existingWinner = await storage.getMonthlyWinner(month);
+      if (existingWinner) {
+        return res.status(400).json({ message: "Winner already announced for this month" });
+      }
+
+      // Save leaderboard snapshot first
+      await storage.saveMonthlyLeaderboardSnapshot(month);
+
+      // Announce winner
+      const winnerData = {
+        month,
+        winnerId,
+        winnerName,
+        winnerScore: winnerScore.toString(),
+        runnerUpId: runnerUpId || null,
+        runnerUpName: runnerUpName || null,
+        runnerUpScore: runnerUpScore ? runnerUpScore.toString() : null,
+        announcedBy: player.id,
+      };
+
+      const result = await storage.announceMonthlyWinner(winnerData);
+      res.json(result);
+    } catch (error) {
+      console.error('Error announcing monthly winner:', error);
+      res.status(500).json({ message: "Failed to announce monthly winner" });
+    }
+  });
+
+  // Player statistics endpoints
+  app.get('/api/players/:playerId/stats/monthly/:month', async (req, res) => {
+    try {
+      const { playerId, month } = req.params;
+      const stats = await storage.getPlayerMonthlyStats(playerId, month);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch player monthly stats" });
+    }
+  });
+
+  app.get('/api/players/:playerId/stats/cumulative', async (req, res) => {
+    try {
+      const { playerId } = req.params;
+      const stats = await storage.getPlayerCumulativeStats(playerId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch player cumulative stats" });
+    }
+  });
+
   // Handicap recalculation routes
   // Handicap recalculation endpoint (supports both GET for cron and POST for manual)
   const handleHandicapRecalculation = async (req: any, res: any) => {
