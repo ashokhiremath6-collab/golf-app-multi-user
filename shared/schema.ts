@@ -140,7 +140,7 @@ export const seasonSettings = pgTable("season_settings", {
   groupName: text("group_name").default('Blues Golf Challenge'),
   seasonEnd: date("season_end").default('2026-03-31'),
   leaderboardMetric: text("leaderboard_metric").default('avg_over_par'),
-  kFactor: numeric("k_factor").default('0.5'),
+  kFactor: numeric("k_factor").default('0.3'),
   changeCap: numeric("change_cap").default('2.0'),
 });
 
