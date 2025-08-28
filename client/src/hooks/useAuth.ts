@@ -38,7 +38,7 @@ export function useCurrentPlayer() {
       id: "10c6bb1e-6ab4-43c0-88d2-5e2e63824f96", // Your ID from API
       name: "Ashok Hiremath",
       email: "ashokhiremath6@gmail.com", 
-      currentHandicap: 15,
+      currentHandicap: 15, // Your correct imported handicap
       isAdmin: true
     },
     isLoading: false,

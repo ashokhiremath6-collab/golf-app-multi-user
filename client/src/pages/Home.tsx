@@ -16,8 +16,8 @@ export default function Home() {
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    // Set to June 2025 where your tournament data is
+    return '2025-06';
   });
 
   // Redirect to login if not authenticated - TEMPORARILY DISABLED TO SHOW TOURNAMENT DATA
