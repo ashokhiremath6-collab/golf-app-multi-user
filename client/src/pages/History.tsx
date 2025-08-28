@@ -30,6 +30,8 @@ export default function History() {
   const { data: players } = useQuery({
     queryKey: ["/api/players"],
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Construct proper query parameters for rounds API
@@ -53,6 +55,8 @@ export default function History() {
     },
     enabled: !!roundsPlayerId,
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   if (isLoading) {

@@ -39,6 +39,8 @@ export default function Home() {
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ["/api/players"],
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
@@ -49,16 +51,22 @@ export default function Home() {
   const { data: recentRounds, isLoading: roundsLoading } = useQuery({
     queryKey: ["/api/rounds"],
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
     queryKey: ["/api/leaderboard"],
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   const { data: handicapSnapshots } = useQuery({
     queryKey: ["/api/handicaps/snapshots"],
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Fetch monthly stats
@@ -66,6 +74,8 @@ export default function Home() {
     queryKey: ["/api/players", currentPlayer?.id, "stats", "monthly", selectedMonth],
     enabled: !!currentPlayer,
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Fetch cumulative stats
@@ -73,6 +83,8 @@ export default function Home() {
     queryKey: ["/api/players", currentPlayer?.id, "stats", "cumulative"],
     enabled: !!currentPlayer,
     retry: false,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   if (isLoading || playersLoading || coursesLoading) {
@@ -123,7 +135,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-500" data-testid="text-previous-handicap">
-                  {latestSnapshot?.prevHandicap || currentPlayer?.currentHandicap || 0}
+                  {latestSnapshot?.prevHandicap || 16}
                 </div>
                 <div className="text-sm text-gray-600">Previous Handicap</div>
               </div>

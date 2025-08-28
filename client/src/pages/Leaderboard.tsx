@@ -15,7 +15,7 @@ import { Link } from "wouter";
 export default function Leaderboard() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
-  const [activeTab, setActiveTab] = useState('cumulative');
+  const [activeTab, setActiveTab] = useState('monthly'); // Default to monthly to show June data
   const [selectedMonth, setSelectedMonth] = useState(() => {
     // Default to June 2025 where your tournament data is
     return '2025-06';
