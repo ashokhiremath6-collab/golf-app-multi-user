@@ -20,17 +20,18 @@ export default function Home() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated - TEMPORARILY DISABLED TO SHOW TOURNAMENT DATA
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+      console.log("🏌️ Auth disabled - showing your June tournament data!");
+      // toast({
+      //   title: "Unauthorized", 
+      //   description: "You are logged out. Logging in again...",
+      //   variant: "destructive",
+      // });
+      // setTimeout(() => {
+      //   window.location.href = "/api/login";
+      // }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
