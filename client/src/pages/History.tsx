@@ -75,8 +75,15 @@ export default function History() {
   const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
   const displayPlayer = selectedPlayerId === "self" ? currentPlayer : (players as any[])?.find((p: any) => p.id === selectedPlayerId);
 
-  // Get last round and calculate summary for the selected player
-  const lastRound = rounds && (rounds as any[]).length > 0 ? (rounds as any[])[0] : null;
+  // Enrich rounds with course/player names for display
+  const enrichedRounds = rounds ? (rounds as any[]).map((round: any) => ({
+    ...round,
+    courseName: (courses as any[])?.find((c: any) => c.id === round.courseId)?.name || 'Golf Course',
+    playerName: (players as any[])?.find((p: any) => p.id === round.playerId)?.name || 'Unknown Player'
+  })) : [];
+
+  // Get last round and calculate summary for the selected player  
+  const lastRound = enrichedRounds && enrichedRounds.length > 0 ? enrichedRounds[0] : null;
   
   const calculateSummary = () => {
     if (!rounds || (rounds as any[]).length === 0) {

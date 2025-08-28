@@ -101,10 +101,13 @@ export default function Home() {
     );
   }
 
-  // Filter rounds to show only current player's rounds
+  // Filter rounds to show only current player's rounds and enrich with course names
   const playerRounds = (recentRounds as any[])?.filter(
     (round: any) => round.playerId === currentPlayer?.id
-  ) || [];
+  ).map((round: any) => ({
+    ...round,
+    courseName: (courses as any[])?.find((c: any) => c.id === round.courseId)?.name || 'Golf Course'
+  })) || [];
   
   // Get current player's most recent round
   const lastRound = playerRounds[0];
