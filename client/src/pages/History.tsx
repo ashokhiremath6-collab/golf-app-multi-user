@@ -31,7 +31,14 @@ export default function History() {
     queryKey: ["/api/players"],
     retry: false,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
+  });
+
+  const { data: courses } = useQuery({
+    queryKey: ["/api/courses"],
+    retry: false,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Construct proper query parameters for rounds API
@@ -56,7 +63,7 @@ export default function History() {
     enabled: !!roundsPlayerId,
     retry: false,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
   });
 
   if (isLoading) {
@@ -86,14 +93,14 @@ export default function History() {
   const lastRound = enrichedRounds && enrichedRounds.length > 0 ? enrichedRounds[0] : null;
   
   const calculateSummary = () => {
-    if (!rounds || (rounds as any[]).length === 0) {
+    if (!enrichedRounds || enrichedRounds.length === 0) {
       return { roundsPlayed: 0, avgGross: 0, avgNet: 0, avgOverPar: 0 };
     }
 
-    const roundsPlayed = (rounds as any[]).length;
-    const avgGross = (rounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
-    const avgNet = (rounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
-    const avgOverPar = (rounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
+    const roundsPlayed = enrichedRounds.length;
+    const avgGross = enrichedRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
+    const avgNet = enrichedRounds.reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
+    const avgOverPar = enrichedRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
 
     return {
       roundsPlayed,
