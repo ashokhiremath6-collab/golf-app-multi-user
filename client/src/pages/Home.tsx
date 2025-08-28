@@ -122,6 +122,13 @@ export default function Home() {
   // Get current player's most recent round
   const lastRound = playerRounds[0];
   
+  console.log('🏌️ PLAYER ROUNDS:', {
+    totalRounds: playerRounds.length,
+    hasLastRound: !!lastRound,
+    lastRoundCourse: lastRound?.courseName,
+    lastRoundScores: lastRound?.cappedScores?.length
+  });
+  
   // Get the latest handicap snapshot for current player to show previous handicap
   const latestSnapshot = (handicapSnapshots as any[])?.find(
     (snapshot: any) => snapshot.playerId === currentPlayer?.id
