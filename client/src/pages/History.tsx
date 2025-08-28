@@ -41,7 +41,15 @@ export default function History() {
       const [, params] = queryKey as [string, { playerId?: string }];
       const searchParams = new URLSearchParams();
       if (params.playerId) searchParams.set('playerId', params.playerId);
-      return fetch(`/api/rounds?${searchParams.toString()}`, { credentials: 'include' }).then(res => res.json());
+      const url = `/api/rounds?${searchParams.toString()}&_t=${Date.now()}`;
+      return fetch(url, { 
+        credentials: 'include',
+        cache: "no-cache",
+        headers: {
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
+        }
+      }).then(res => res.json());
     },
     enabled: !!roundsPlayerId,
     retry: false,
