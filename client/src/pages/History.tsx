@@ -30,15 +30,6 @@ export default function History() {
   const { data: players } = useQuery({
     queryKey: ["/api/players"],
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  const { data: courses } = useQuery({
-    queryKey: ["/api/courses"],
-    retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   // Construct proper query parameters for rounds API
@@ -50,20 +41,10 @@ export default function History() {
       const [, params] = queryKey as [string, { playerId?: string }];
       const searchParams = new URLSearchParams();
       if (params.playerId) searchParams.set('playerId', params.playerId);
-      const url = `/api/rounds?${searchParams.toString()}&_t=${Date.now()}`;
-      return fetch(url, { 
-        credentials: 'include',
-        cache: "no-cache",
-        headers: {
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache"
-        }
-      }).then(res => res.json());
+      return fetch(`/api/rounds?${searchParams.toString()}`, { credentials: 'include' }).then(res => res.json());
     },
     enabled: !!roundsPlayerId,
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   if (isLoading) {
@@ -82,25 +63,18 @@ export default function History() {
   const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
   const displayPlayer = selectedPlayerId === "self" ? currentPlayer : (players as any[])?.find((p: any) => p.id === selectedPlayerId);
 
-  // Enrich rounds with course/player names for display
-  const enrichedRounds = rounds ? (rounds as any[]).map((round: any) => ({
-    ...round,
-    courseName: (courses as any[])?.find((c: any) => c.id === round.courseId)?.name || 'Golf Course',
-    playerName: (players as any[])?.find((p: any) => p.id === round.playerId)?.name || 'Unknown Player'
-  })) : [];
-
-  // Get last round and calculate summary for the selected player  
-  const lastRound = enrichedRounds && enrichedRounds.length > 0 ? enrichedRounds[0] : null;
+  // Get last round and calculate summary for the selected player
+  const lastRound = rounds && (rounds as any[]).length > 0 ? (rounds as any[])[0] : null;
   
   const calculateSummary = () => {
-    if (!enrichedRounds || enrichedRounds.length === 0) {
+    if (!rounds || (rounds as any[]).length === 0) {
       return { roundsPlayed: 0, avgGross: 0, avgNet: 0, avgOverPar: 0 };
     }
 
-    const roundsPlayed = enrichedRounds.length;
-    const avgGross = enrichedRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
-    const avgNet = enrichedRounds.reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
-    const avgOverPar = enrichedRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
+    const roundsPlayed = (rounds as any[]).length;
+    const avgGross = (rounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
+    const avgNet = (rounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
+    const avgOverPar = (rounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
 
     return {
       roundsPlayed,

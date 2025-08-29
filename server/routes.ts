@@ -4,7 +4,6 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { handicapService } from "./services/handicapService";
 import { importService } from "./services/importService";
-import { dataImportService } from "./services/dataImportService";
 import { calculateRoundScores } from "./services/golfCalculations";
 import { z } from "zod";
 import { insertPlayerSchema, insertCourseSchema, insertHoleSchema, insertRoundSchema } from "@shared/schema";
@@ -803,74 +802,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ message: "Failed to generate sample CSV" });
     }
-  });
-
-  // Historical data import endpoints (admin only)
-  app.post('/api/import/historical-excel', isAuthenticated, async (req: any, res) => {
-    try {
-      // Check if user is admin
-      const userEmail = req.user.claims.email;
-      const player = await storage.getPlayerByEmail(userEmail || '');
-      
-      if (!player?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { filePath } = req.body;
-      if (!filePath) {
-        return res.status(400).json({ message: "File path is required" });
-      }
-
-      const result = await dataImportService.importHistoricalData(filePath);
-      res.json(result);
-    } catch (error) {
-      console.error('Import error:', error);
-      res.status(500).json({ message: "Failed to import historical data" });
-    }
-  });
-
-  app.post('/api/import/clear-test-data', isAuthenticated, async (req: any, res) => {
-    try {
-      // Check if user is admin
-      const userEmail = req.user.claims.email;
-      const player = await storage.getPlayerByEmail(userEmail || '');
-      
-      if (!player?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const result = await dataImportService.clearTestData();
-      res.json(result);
-    } catch (error) {
-      console.error('Clear data error:', error);
-      res.status(500).json({ message: "Failed to clear test data" });
-    }
-  });
-
-  // Development session clear endpoint  
-  app.get('/api/clear-session', (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Session destroy error:', err);
-        return res.status(500).json({ message: "Failed to clear session" });
-      }
-      res.clearCookie('connect.sid');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.json({ message: "Session cleared successfully" });
-    });
-  });
-
-  // Force refresh endpoint to clear all caches
-  app.get('/api/force-refresh', (req, res) => {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache'); 
-    res.setHeader('Expires', '0');
-    res.json({ 
-      message: "Cache cleared - please refresh the page",
-      timestamp: new Date().toISOString()
-    });
   });
 
   // Group settings

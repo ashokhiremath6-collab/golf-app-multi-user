@@ -18,7 +18,7 @@ export class HandicapService {
     const players = await storage.getAllPlayers();
     const seasonSettings = await storage.getSeasonSettings();
     
-    const kFactor = parseFloat(seasonSettings.kFactor?.toString() || '0.3');
+    const kFactor = parseFloat(seasonSettings.kFactor?.toString() || '0.5');
     const changeCap = parseFloat(seasonSettings.changeCap?.toString() || '2.0');
     
     const snapshots = [];

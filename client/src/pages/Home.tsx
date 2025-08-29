@@ -16,22 +16,21 @@ export default function Home() {
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(() => {
-    // Set to June 2025 where your tournament data is
-    return '2025-06';
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  // Redirect to login if not authenticated - TEMPORARILY DISABLED TO SHOW TOURNAMENT DATA
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      console.log("🏌️ Auth disabled - showing your June tournament data!");
-      // toast({
-      //   title: "Unauthorized", 
-      //   description: "You are logged out. Logging in again...",
-      //   variant: "destructive",
-      // });
-      // setTimeout(() => {
-      //   window.location.href = "/api/login";
-      // }, 500);
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
@@ -39,8 +38,6 @@ export default function Home() {
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ["/api/players"],
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
@@ -51,22 +48,16 @@ export default function Home() {
   const { data: recentRounds, isLoading: roundsLoading } = useQuery({
     queryKey: ["/api/rounds"],
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
     queryKey: ["/api/leaderboard"],
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   const { data: handicapSnapshots } = useQuery({
     queryKey: ["/api/handicaps/snapshots"],
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   // Fetch monthly stats
@@ -74,8 +65,6 @@ export default function Home() {
     queryKey: ["/api/players", currentPlayer?.id, "stats", "monthly", selectedMonth],
     enabled: !!currentPlayer,
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   // Fetch cumulative stats
@@ -83,8 +72,6 @@ export default function Home() {
     queryKey: ["/api/players", currentPlayer?.id, "stats", "cumulative"],
     enabled: !!currentPlayer,
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 
   if (isLoading || playersLoading || coursesLoading) {
@@ -101,16 +88,10 @@ export default function Home() {
     );
   }
 
-  // Filter rounds to show only current player's rounds and enrich with course names
+  // Filter rounds to show only current player's rounds
   const playerRounds = (recentRounds as any[])?.filter(
     (round: any) => round.playerId === currentPlayer?.id
-  ).map((round: any) => {
-    const course = (courses as any[])?.find((c: any) => c.id === round.courseId);
-    return {
-      ...round,
-      courseName: course?.name || 'Golf Course'
-    };
-  }) || [];
+  ) || [];
   
   // Get current player's most recent round
   const lastRound = playerRounds[0];
@@ -124,7 +105,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-6 pb-20 flex flex-col space-y-4">
+      <main className="max-w-7xl mx-auto px-4 py-6 min-h-[calc(100vh-120px)] flex flex-col">
         {/* Status Header */}
         <Card className="mb-4" data-testid="card-status">
           <CardContent className="pt-4">
@@ -141,7 +122,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-500" data-testid="text-previous-handicap">
-                  {latestSnapshot?.prevHandicap || 16}
+                  {latestSnapshot?.prevHandicap || currentPlayer?.currentHandicap || 0}
                 </div>
                 <div className="text-sm text-gray-600">Previous Handicap</div>
               </div>
@@ -252,27 +233,27 @@ export default function Home() {
                   <div className="grid grid-cols-4 gap-4 text-center">
                     <div>
                       <div className="text-lg font-black text-gray-900" data-testid="text-cumulative-rounds">
-                        {(cumulativeStats as any)?.roundsCount || playerRounds.length}
+                        {cumulativeStats?.roundsCount || playerRounds.length}
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Total Rounds</div>
                     </div>
                     <div>
                       <div className="text-lg font-black text-golf-green" data-testid="text-cumulative-avg-gross">
-                        {(cumulativeStats as any)?.avgGrossCapped ? Math.round(parseFloat((cumulativeStats as any).avgGrossCapped)) : 
+                        {cumulativeStats?.avgGrossCapped ? Math.round(parseFloat(cumulativeStats.avgGrossCapped)) : 
                           Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / playerRounds.length)}
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
                     </div>
                     <div>
                       <div className="text-lg font-black text-golf-blue" data-testid="text-cumulative-avg-net">
-                        {(cumulativeStats as any)?.avgNet ? Math.round(parseFloat((cumulativeStats as any).avgNet)) : 
+                        {cumulativeStats?.avgNet ? Math.round(parseFloat(cumulativeStats.avgNet)) : 
                           Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.net, 0) / playerRounds.length)}
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Avg Net</div>
                     </div>
                     <div>
                       <div className="text-lg font-black text-golf-gold" data-testid="text-cumulative-avg-over-par">
-                        +{(cumulativeStats as any)?.avgOverPar ? parseFloat((cumulativeStats as any).avgOverPar).toFixed(1) : 
+                        +{cumulativeStats?.avgOverPar ? parseFloat(cumulativeStats.avgOverPar).toFixed(1) : 
                           (playerRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / playerRounds.length).toFixed(1)}
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Avg Over</div>
@@ -281,29 +262,29 @@ export default function Home() {
                 </TabsContent>
 
                 <TabsContent value="monthly">
-                  {monthlyStats && (monthlyStats as any).roundsCount > 0 ? (
+                  {monthlyStats && monthlyStats.roundsCount > 0 ? (
                     <div className="grid grid-cols-4 gap-4 text-center">
                       <div>
                         <div className="text-lg font-black text-gray-900" data-testid="text-monthly-rounds">
-                          {(monthlyStats as any).roundsCount}
+                          {monthlyStats.roundsCount}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Rounds</div>
                       </div>
                       <div>
                         <div className="text-lg font-black text-golf-green" data-testid="text-monthly-avg-gross">
-                          {Math.round(parseFloat((monthlyStats as any).avgGrossCapped))}
+                          {Math.round(parseFloat(monthlyStats.avgGrossCapped))}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
                       </div>
                       <div>
                         <div className="text-lg font-black text-golf-blue" data-testid="text-monthly-avg-net">
-                          {Math.round(parseFloat((monthlyStats as any).avgNet))}
+                          {Math.round(parseFloat(monthlyStats.avgNet))}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Avg Net</div>
                       </div>
                       <div>
                         <div className="text-lg font-black text-golf-gold" data-testid="text-monthly-avg-over-par">
-                          +{parseFloat((monthlyStats as any).avgOverPar).toFixed(1)}
+                          +{parseFloat(monthlyStats.avgOverPar).toFixed(1)}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Avg Over</div>
                       </div>
