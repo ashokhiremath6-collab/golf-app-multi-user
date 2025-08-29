@@ -6,7 +6,24 @@ export interface ImportRoundData {
   player_name: string;
   course_name: string;
   played_on: string; // YYYY-MM-DD
-  gross_score: number;
+  scores_1: number;
+  scores_2: number;
+  scores_3: number;
+  scores_4: number;
+  scores_5: number;
+  scores_6: number;
+  scores_7: number;
+  scores_8: number;
+  scores_9: number;
+  scores_10: number;
+  scores_11: number;
+  scores_12: number;
+  scores_13: number;
+  scores_14: number;
+  scores_15: number;
+  scores_16: number;
+  scores_17: number;
+  scores_18: number;
   course_handicap: number;
 }
 
@@ -54,8 +71,8 @@ export class ImportService {
         const rowNumber = i + 1;
 
         // Validate required fields
-        if (!rowData.player_name || !rowData.course_name || !rowData.played_on || !rowData.gross_score || rowData.course_handicap === undefined) {
-          result.errors.push(`Row ${rowNumber}: Missing required fields (player_name, course_name, played_on, gross_score, course_handicap)`);
+        if (!rowData.player_name || !rowData.course_name || !rowData.played_on || rowData.course_handicap === undefined) {
+          result.errors.push(`Row ${rowNumber}: Missing required fields (player_name, course_name, played_on, course_handicap)`);
           result.skipped++;
           continue;
         }
@@ -67,11 +84,15 @@ export class ImportService {
           continue;
         }
 
-        // Validate gross score
-        if (rowData.gross_score < 50 || rowData.gross_score > 150) {
-          result.errors.push(`Row ${rowNumber}: Invalid gross score. Must be between 50 and 150`);
-          result.skipped++;
-          continue;
+        // Validate individual hole scores
+        for (let hole = 1; hole <= 18; hole++) {
+          const scoreKey = `scores_${hole}` as keyof ImportRoundData;
+          const score = rowData[scoreKey] as number;
+          if (typeof score !== 'number' || score < 1 || score > 10) {
+            result.errors.push(`Row ${rowNumber}: Invalid score for hole ${hole}: ${score}. Must be between 1 and 10.`);
+            result.skipped++;
+            continue;
+          }
         }
 
         // Validate course handicap
@@ -131,6 +152,12 @@ export class ImportService {
         }
 
         // Get course holes for par calculation
+        if (!course) {
+          result.errors.push(`Row ${rowNumber}: Course not found after creation/lookup`);
+          result.skipped++;
+          continue;
+        }
+        
         const holes = await storage.getHolesByCourse(course.id);
         if (holes.length !== 18) {
           result.errors.push(`Row ${rowNumber}: Course '${rowData.course_name}' does not have 18 holes configured`);
@@ -138,27 +165,52 @@ export class ImportService {
           continue;
         }
 
-        // Calculate net score and over par from gross score
-        const net = rowData.gross_score - rowData.course_handicap;
-        const overPar = rowData.gross_score - course.parTotal;
-        
-        // Create dummy raw scores array (we don't have hole-by-hole data)
-        // Use average score per hole based on gross total
-        const avgScorePerHole = Math.round(rowData.gross_score / 18);
-        const rawScores = Array(18).fill(avgScorePerHole);
+        // Extract individual hole scores (scores_1 through scores_18)
+        const rawScores: number[] = [];
+        for (let hole = 1; hole <= 18; hole++) {
+          const scoreKey = `scores_${hole}` as keyof ImportRoundData;
+          const score = rowData[scoreKey] as number;
+          if (typeof score !== 'number' || score < 1 || score > 10) {
+            throw new Error(`Invalid score for hole ${hole}: ${score}. Must be between 1 and 10.`);
+          }
+          rawScores.push(score);
+        }
 
-        // Create round
-        const roundData: InsertRound = {
+        // Get hole pars for calculation
+        const holePars = holes.map(hole => hole.par);
+
+        // Calculate all required round data using golf calculations
+        const { calculateRoundScores } = await import('./golfCalculations');
+        const scoreCalculation = calculateRoundScores(
+          rawScores,
+          holePars,
+          rowData.course_handicap,
+          course.parTotal
+        );
+
+        // Ensure player is defined
+        if (!player) {
+          result.errors.push(`Row ${rowNumber}: Player not found after creation/lookup`);
+          result.skipped++;
+          continue;
+        }
+
+        // Create round with all calculated fields
+        const roundData = {
           playerId: player.id,
           courseId: course.id,
           playedOn: rowData.played_on,
-          rawScores,
+          rawScores: scoreCalculation.rawScores,
+          cappedScores: scoreCalculation.cappedScores,
+          grossCapped: scoreCalculation.grossCapped,
           courseHandicap: rowData.course_handicap,
-          source: 'import',
-          status: 'ok',
+          net: scoreCalculation.net,
+          overPar: scoreCalculation.overPar.toString(),
+          source: 'import' as const,
+          status: 'ok' as const,
         };
 
-        await storage.createRound(roundData);
+        await storage.createRound(roundData as any);
         result.imported++;
         result.summary.roundsImported++;
 
@@ -190,8 +242,10 @@ export class ImportService {
 
       headers.forEach((header, index) => {
         const value = values[index];
-        if (header === 'gross_score' || header === 'course_handicap') {
+        if (header === 'course_handicap' || header.startsWith('scores_')) {
           row[header] = parseInt(value, 10);
+        } else if (header === 'played_on') {
+          row[header] = value;
         } else {
           row[header] = value;
         }
