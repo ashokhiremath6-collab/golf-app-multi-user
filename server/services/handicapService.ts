@@ -1,5 +1,5 @@
 import { storage } from "../storage";
-import { monthlyHandicapUpdate, calculateAverageOverPar } from "./golfCalculations";
+import { calculateAverageOverPar } from "./golfCalculations";
 import type { InsertHandicapSnapshot } from "@shared/schema";
 
 /**
@@ -16,24 +16,23 @@ export class HandicapService {
   }> {
     const month = targetMonth || this.getPreviousMonth();
     const players = await storage.getAllPlayers();
-    const seasonSettings = await storage.getSeasonSettings();
-    
-    const kFactor = parseFloat(seasonSettings.kFactor?.toString() || '0.3');
-    const changeCap = parseFloat(seasonSettings.changeCap?.toString() || '2.0');
-    
+
     const snapshots = [];
     let playersUpdated = 0;
 
     for (const player of players) {
       // Check if we already have a snapshot for this month
-      const existingSnapshot = await storage.getHandicapSnapshotByMonth(player.id, month);
+      const existingSnapshot = await storage.getHandicapSnapshotByMonth(
+        player.id,
+        month,
+      );
       if (existingSnapshot) {
         continue; // Skip if already processed
       }
 
       // Get rounds for the target month
       const monthlyRounds = await storage.getRoundsByPlayer(player.id, month);
-      
+
       const prevHandicap = player.currentHandicap;
       let newHandicap = prevHandicap;
       let avgMonthlyOverPar = null;
@@ -41,13 +40,15 @@ export class HandicapService {
 
       if (monthlyRounds.length > 0) {
         // Calculate average over par for the month
-        const overParValues = monthlyRounds.map(round => parseFloat(round.overPar.toString()));
+        const overParValues = monthlyRounds.map((round) =>
+          parseFloat(round.overPar.toString()),
+        );
         avgMonthlyOverPar = calculateAverageOverPar(overParValues);
-        
-        // Calculate new handicap
-        newHandicap = monthlyHandicapUpdate(avgMonthlyOverPar, prevHandicap, kFactor, changeCap);
+
+        // Formula: 0.3 * overPar + 0.7 * old handicap
+        newHandicap = 0.3 * avgMonthlyOverPar + 0.7 * prevHandicap;
         delta = newHandicap - prevHandicap;
-        
+
         // Update player's current handicap
         await storage.updatePlayer(player.id, { currentHandicap: newHandicap });
         playersUpdated++;
@@ -84,7 +85,7 @@ export class HandicapService {
   private getPreviousMonth(): string {
     const now = new Date();
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+    return `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`;
   }
 
   /**
@@ -99,7 +100,10 @@ export class HandicapService {
     const snapshots = [];
 
     for (const player of players) {
-      const snapshot = await storage.getHandicapSnapshotByMonth(player.id, month);
+      const snapshot = await storage.getHandicapSnapshotByMonth(
+        player.id,
+        month,
+      );
       if (snapshot) {
         snapshots.push({
           ...snapshot,
@@ -122,23 +126,25 @@ export class HandicapService {
    * Generate WhatsApp summary text
    */
   private generateWhatsAppSummary(month: string, snapshots: any[]): string {
-    const monthName = new Date(month + '-01').toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long' 
+    const monthName = new Date(month + "-01").toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
     });
 
     let summary = `🏌️ Blues Golf Challenge - ${monthName} Handicap Update\n\n`;
-    
-    snapshots.forEach(snapshot => {
-      const direction = snapshot.delta > 0 ? '↗️' : snapshot.delta < 0 ? '↘️' : '➡️';
-      const deltaStr = snapshot.delta > 0 ? `+${snapshot.delta}` : snapshot.delta.toString();
-      
+
+    snapshots.forEach((snapshot) => {
+      const direction =
+        snapshot.delta > 0 ? "↗️" : snapshot.delta < 0 ? "↘️" : "➡️";
+      const deltaStr =
+        snapshot.delta > 0 ? `+${snapshot.delta}` : snapshot.delta.toString();
+
       summary += `${snapshot.playerName}: ${snapshot.prevHandicap} → ${snapshot.newHandicap} (${deltaStr}) ${direction}\n`;
-      summary += `   ${snapshot.roundsCount} rounds, Avg: ${snapshot.avgMonthlyOverPar ? `+${parseFloat(snapshot.avgMonthlyOverPar).toFixed(1)}` : 'N/A'}\n\n`;
+      summary += `   ${snapshot.roundsCount} rounds, Avg: ${snapshot.avgMonthlyOverPar ? `+${parseFloat(snapshot.avgMonthlyOverPar).toFixed(1)}` : "N/A"}\n\n`;
     });
 
-    summary += '⛳ Keep playing and improving!';
-    
+    summary += "⛳ Keep playing and improving!";
+
     return summary;
   }
 }
