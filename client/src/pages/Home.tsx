@@ -105,7 +105,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 pb-12">
         {/* Status Header */}
         <Card className="mb-4" data-testid="card-status">
           <CardContent className="pt-4">
