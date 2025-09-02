@@ -46,7 +46,7 @@ export class HandicapService {
         avgMonthlyOverPar = calculateAverageOverPar(overParValues);
 
         // Formula: 0.3 * overPar + 0.7 * old handicap
-        newHandicap = 0.3 * avgMonthlyOverPar + 0.7 * prevHandicap;
+        newHandicap = Math.round(0.3 * avgMonthlyOverPar + 0.7 * prevHandicap);
         delta = newHandicap - prevHandicap;
 
         // Update player's current handicap
