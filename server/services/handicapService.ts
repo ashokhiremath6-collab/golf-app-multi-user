@@ -1,5 +1,5 @@
 import { storage } from "../storage";
-import { calculateAverageOverPar } from "./golfCalculations";
+import { monthlyHandicapUpdate, calculateAverageOverPar } from "./golfCalculations";
 import type { InsertHandicapSnapshot } from "@shared/schema";
 
 /**
@@ -16,7 +16,11 @@ export class HandicapService {
   }> {
     const month = targetMonth || this.getPreviousMonth();
     const players = await storage.getAllPlayers();
-
+    const seasonSettings = await storage.getSeasonSettings();
+    
+    const kFactor = parseFloat(seasonSettings.kFactor?.toString() || '0.3');
+    const changeCap = parseFloat(seasonSettings.changeCap?.toString() || '2.0');
+    
     const snapshots = [];
     let playersUpdated = 0;
 
@@ -45,8 +49,8 @@ export class HandicapService {
         );
         avgMonthlyOverPar = calculateAverageOverPar(overParValues);
 
-        // Formula: 0.3 * overPar + 0.7 * old handicap
-        newHandicap = Math.round(0.3 * avgMonthlyOverPar + 0.7 * prevHandicap);
+        // Calculate new handicap
+        newHandicap = monthlyHandicapUpdate(avgMonthlyOverPar, prevHandicap, kFactor, changeCap);
         delta = newHandicap - prevHandicap;
 
         // Update player's current handicap
