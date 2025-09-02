@@ -235,7 +235,7 @@ export default function Leaderboard() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <TabsList className="grid w-full max-w-md grid-cols-2">
                   <TabsTrigger value="cumulative" data-testid="tab-cumulative">
                     <Trophy className="h-4 w-4 mr-2" />
@@ -248,7 +248,7 @@ export default function Leaderboard() {
                 </TabsList>
                 
                 {activeTab === 'monthly' && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-sm text-gray-600">Month:</span>
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                       <SelectTrigger className="w-48" data-testid="select-month">
