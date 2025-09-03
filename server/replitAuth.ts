@@ -23,7 +23,8 @@ const getOidcConfig = memoize(
 );
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  // Session valid until April 1st, 2026 (210 days from now)
+  const sessionTtl = 210 * 24 * 60 * 60 * 1000; // Until April 1, 2026
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
