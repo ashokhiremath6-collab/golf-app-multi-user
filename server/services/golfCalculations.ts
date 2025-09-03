@@ -89,8 +89,14 @@ export function monthlyHandicapUpdate(
   // Floor at 0
   const newHandicapFloored = Math.max(0, newHandicapClamped);
   
-  // Round to nearest integer
-  return Math.round(newHandicapFloored);
+  // Custom rounding: 17.4 and below → 17, 17.5 and above → 18
+  // This is standard mathematical rounding, but making it explicit
+  const decimalPart = newHandicapFloored - Math.floor(newHandicapFloored);
+  if (decimalPart < 0.5) {
+    return Math.floor(newHandicapFloored);
+  } else {
+    return Math.ceil(newHandicapFloored);
+  }
 }
 
 /**
