@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/handicaps/apply?window=previous",
-      "schedule": "30 21 1 * *"
+      "schedule": "30 0 1 * *"
     }
   ],
   "functions": {
