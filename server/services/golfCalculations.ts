@@ -107,3 +107,66 @@ export function calculateAverageOverPar(overParValues: number[]): number {
   const sum = overParValues.reduce((acc, val) => acc + val, 0);
   return sum / overParValues.length;
 }
+
+/**
+ * SLOPE-ADJUSTED HANDICAP CALCULATIONS
+ */
+
+/**
+ * Convert Willingdon-based handicap to Handicap Index
+ * Current handicaps are based on Willingdon (slope 110)
+ */
+export function calculateHandicapIndex(willingdonHandicap: number): number {
+  return (willingdonHandicap * 113) / 110;
+}
+
+/**
+ * Calculate course handicap using slope rating
+ * Formula: Course Handicap = round(Handicap Index × Slope Rating ÷ 113)
+ */
+export function calculateCourseHandicap(handicapIndex: number, slopeRating: number): number {
+  return Math.round((handicapIndex * slopeRating) / 113);
+}
+
+/**
+ * Calculate slope-adjusted DTH (Difference to Handicap)
+ * DTH = Over Par - Course Handicap (slope-adjusted)
+ */
+export function calculateSlopeAdjustedDTH(overPar: number, slopeAdjustedCourseHandicap: number): number {
+  return overPar - slopeAdjustedCourseHandicap;
+}
+
+/**
+ * Calculate normalized over par to compare across courses
+ * Normalizes performance to Willingdon baseline (slope 110)
+ */
+export function calculateNormalizedOverPar(
+  overPar: number, 
+  handicapIndex: number, 
+  courseSlopeRating: number
+): number {
+  const courseHandicap = calculateCourseHandicap(handicapIndex, courseSlopeRating);
+  const willingdonHandicap = calculateCourseHandicap(handicapIndex, 110);
+  return overPar - (courseHandicap - willingdonHandicap);
+}
+
+/**
+ * Get slope-adjusted round data with all calculated fields
+ */
+export function calculateSlopeAdjustedRound(
+  overPar: number,
+  willingdonHandicap: number,
+  courseSlopeRating: number
+) {
+  const handicapIndex = calculateHandicapIndex(willingdonHandicap);
+  const slopeAdjustedCourseHandicap = calculateCourseHandicap(handicapIndex, courseSlopeRating);
+  const slopeAdjustedDTH = calculateSlopeAdjustedDTH(overPar, slopeAdjustedCourseHandicap);
+  const normalizedOverPar = calculateNormalizedOverPar(overPar, handicapIndex, courseSlopeRating);
+
+  return {
+    handicapIndex,
+    slopeAdjustedCourseHandicap,
+    slopeAdjustedDTH,
+    normalizedOverPar
+  };
+}
