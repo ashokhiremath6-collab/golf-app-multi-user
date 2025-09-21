@@ -1,6 +1,22 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { readFileSync } from "fs";
+
+// Load environment variables from .env file for development
+if (process.env.NODE_ENV === 'development') {
+  try {
+    const env = readFileSync('.env', 'utf8');
+    env.split('\n').forEach(line => {
+      const [key, value] = line.split('=');
+      if (key && value) {
+        process.env[key] = value;
+      }
+    });
+  } catch (error) {
+    // .env file might not exist, that's okay
+  }
+}
 
 const app = express();
 app.use(express.json());
