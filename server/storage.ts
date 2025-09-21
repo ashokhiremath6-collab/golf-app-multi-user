@@ -56,8 +56,8 @@ export interface IStorage {
   
   // Round operations
   getRound(id: string): Promise<Round | undefined>;
-  getRoundsByPlayer(playerId: string, month?: string): Promise<Round[]>;
-  getAllRounds(month?: string): Promise<Round[]>;
+  getRoundsByPlayer(playerId: string, month?: string): Promise<any[]>;
+  getAllRounds(month?: string): Promise<any[]>;
   createRound(round: InsertRound): Promise<Round>;
   updateRound(id: string, round: Partial<InsertRound>): Promise<Round>;
   deleteRound(id: string): Promise<void>;
@@ -215,11 +215,31 @@ export class DatabaseStorage implements IStorage {
     return round;
   }
 
-  async getRoundsByPlayer(playerId: string, month?: string): Promise<Round[]> {
+  async getRoundsByPlayer(playerId: string, month?: string): Promise<any[]> {
     if (month) {
       return await db
-        .select()
+        .select({
+          id: rounds.id,
+          playerId: rounds.playerId,
+          courseId: rounds.courseId,
+          playedOn: rounds.playedOn,
+          rawScores: rounds.rawScores,
+          cappedScores: rounds.cappedScores,
+          grossCapped: rounds.grossCapped,
+          courseHandicap: rounds.courseHandicap,
+          net: rounds.net,
+          overPar: rounds.overPar,
+          source: rounds.source,
+          status: rounds.status,
+          createdAt: rounds.createdAt,
+          courseName: courses.name,
+          course: {
+            name: courses.name,
+            tees: courses.tees,
+          },
+        })
         .from(rounds)
+        .leftJoin(courses, eq(rounds.courseId, courses.id))
         .where(
           and(
             eq(rounds.playerId, playerId),
@@ -230,17 +250,57 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await db
-      .select()
+      .select({
+        id: rounds.id,
+        playerId: rounds.playerId,
+        courseId: rounds.courseId,
+        playedOn: rounds.playedOn,
+        rawScores: rounds.rawScores,
+        cappedScores: rounds.cappedScores,
+        grossCapped: rounds.grossCapped,
+        courseHandicap: rounds.courseHandicap,
+        net: rounds.net,
+        overPar: rounds.overPar,
+        source: rounds.source,
+        status: rounds.status,
+        createdAt: rounds.createdAt,
+        courseName: courses.name,
+        course: {
+          name: courses.name,
+          tees: courses.tees,
+        },
+      })
       .from(rounds)
+      .leftJoin(courses, eq(rounds.courseId, courses.id))
       .where(eq(rounds.playerId, playerId))
       .orderBy(desc(rounds.playedOn));
   }
 
-  async getAllRounds(month?: string): Promise<Round[]> {
+  async getAllRounds(month?: string): Promise<any[]> {
     if (month) {
       return await db
-        .select()
+        .select({
+          id: rounds.id,
+          playerId: rounds.playerId,
+          courseId: rounds.courseId,
+          playedOn: rounds.playedOn,
+          rawScores: rounds.rawScores,
+          cappedScores: rounds.cappedScores,
+          grossCapped: rounds.grossCapped,
+          courseHandicap: rounds.courseHandicap,
+          net: rounds.net,
+          overPar: rounds.overPar,
+          source: rounds.source,
+          status: rounds.status,
+          createdAt: rounds.createdAt,
+          courseName: courses.name,
+          course: {
+            name: courses.name,
+            tees: courses.tees,
+          },
+        })
         .from(rounds)
+        .leftJoin(courses, eq(rounds.courseId, courses.id))
         .where(
           sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
         )
@@ -248,8 +308,28 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await db
-      .select()
+      .select({
+        id: rounds.id,
+        playerId: rounds.playerId,
+        courseId: rounds.courseId,
+        playedOn: rounds.playedOn,
+        rawScores: rounds.rawScores,
+        cappedScores: rounds.cappedScores,
+        grossCapped: rounds.grossCapped,
+        courseHandicap: rounds.courseHandicap,
+        net: rounds.net,
+        overPar: rounds.overPar,
+        source: rounds.source,
+        status: rounds.status,
+        createdAt: rounds.createdAt,
+        courseName: courses.name,
+        course: {
+          name: courses.name,
+          tees: courses.tees,
+        },
+      })
       .from(rounds)
+      .leftJoin(courses, eq(rounds.courseId, courses.id))
       .orderBy(desc(rounds.playedOn));
   }
 
