@@ -458,7 +458,14 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(rounds, eq(players.id, rounds.playerId))
       .leftJoin(courses, eq(rounds.courseId, courses.id))
       .groupBy(players.id, players.name, players.currentHandicap)
-      .orderBy(asc(avg(rounds.net)));
+      .orderBy(sql`
+        AVG(CASE 
+          WHEN ${courses.slope} IS NOT NULL THEN 
+            ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
+          ELSE 
+            ${rounds.overPar} - ${rounds.courseHandicap}
+          END) ASC NULLS LAST
+      `);
 
     return result;
   }
@@ -520,7 +527,14 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(courses, eq(rounds.courseId, courses.id))
       .groupBy(players.id, players.name, players.currentHandicap)
       .having(sql`count(${rounds.id}) > 0`)
-      .orderBy(asc(avg(rounds.net)));
+      .orderBy(sql`
+        AVG(CASE 
+          WHEN ${courses.slope} IS NOT NULL THEN 
+            ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
+          ELSE 
+            ${rounds.overPar} - ${rounds.courseHandicap}
+          END) ASC NULLS LAST
+      `);
 
     return result;
   }
@@ -550,7 +564,14 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(courses, eq(rounds.courseId, courses.id))
       .groupBy(players.id, players.name, players.currentHandicap)
       .having(sql`count(${rounds.id}) > 0`)
-      .orderBy(asc(avg(rounds.net)));
+      .orderBy(sql`
+        AVG(CASE 
+          WHEN ${courses.slope} IS NOT NULL THEN 
+            ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
+          ELSE 
+            ${rounds.overPar} - ${rounds.courseHandicap}
+          END) ASC NULLS LAST
+      `);
 
     return result;
   }
