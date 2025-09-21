@@ -90,9 +90,12 @@ export default function History() {
     const avgNet = (rounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
     const avgOverPar = (rounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
     
-    // Calculate DTH (Difference to Handicap) = overPar - courseHandicap
+    // Calculate DTH (Difference to Handicap) using slope-adjusted values when available
     const avgDTH = (rounds as any[]).reduce((sum: number, round: any) => {
-      const dth = parseFloat(round.overPar) - round.courseHandicap;
+      // Use slope-adjusted DTH if available, otherwise fall back to original calculation
+      const dth = round.slopeAdjustedDTH !== undefined 
+        ? round.slopeAdjustedDTH 
+        : parseFloat(round.overPar) - round.courseHandicap;
       return sum + dth;
     }, 0) / roundsPlayed;
 
@@ -237,11 +240,17 @@ export default function History() {
                     </h3>
                     <p className="text-xs text-gray-600">
                       Handicap: <span className="font-medium">{displayPlayer?.currentHandicap || 0}</span>
+                      {selectedRound.slopeAdjustedCourseHandicap !== undefined && selectedRound.slopeAdjustedCourseHandicap !== selectedRound.courseHandicap && (
+                        <> | Course Hcp: <span className="font-medium">{selectedRound.slopeAdjustedCourseHandicap}</span></>
+                      )}
                     </p>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-600">Selected Round</div>
                     <div className="font-medium text-sm">{selectedRound.courseName}</div>
+                    {selectedRound.course?.slope && (
+                      <div className="text-xs text-gray-500">Slope: {selectedRound.course.slope}</div>
+                    )}
                     <div className="text-xs text-gray-500">{new Date(selectedRound.playedOn).toLocaleDateString()}</div>
                   </div>
                 </div>
@@ -274,7 +283,12 @@ export default function History() {
                         </div>
                         <div>
                           <div className="font-bold text-base text-purple-600" data-testid="text-last-dth">
-                            {(parseFloat(selectedRound.overPar) - selectedRound.courseHandicap) >= 0 ? '+' : ''}{(parseFloat(selectedRound.overPar) - selectedRound.courseHandicap).toFixed(0)}
+                            {(() => {
+                              const dth = selectedRound.slopeAdjustedDTH !== undefined 
+                                ? selectedRound.slopeAdjustedDTH 
+                                : parseFloat(selectedRound.overPar) - selectedRound.courseHandicap;
+                              return (dth >= 0 ? '+' : '') + dth.toFixed(0);
+                            })()} 
                           </div>
                           <div className="text-2xs text-gray-600">Round DTH</div>
                         </div>
