@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function History() {
   const { toast } = useToast();
-  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
+  const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("self");
   const [selectedRoundId, setSelectedRoundId] = useState<string>("");
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated (but not in preview mode)
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !isPreviewMode) {
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
@@ -27,7 +27,7 @@ export default function History() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
   const { data: players } = useQuery({
     queryKey: ["/api/players"],
@@ -155,6 +155,15 @@ export default function History() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
+      
+      {/* Preview Mode Banner */}
+      {isPreviewMode && (
+        <div className="bg-blue-600 text-white px-4 py-2 text-center">
+          <div className="max-w-7xl mx-auto">
+            <span className="font-medium">Preview Mode:</span> View-only access - data modifications are disabled
+          </div>
+        </div>
+      )}
       
       <main className="max-w-7xl mx-auto px-4 py-3">
         <Card data-testid="card-history">

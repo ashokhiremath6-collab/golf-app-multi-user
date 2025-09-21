@@ -1,17 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 
 export function useAuth() {
+  // Always call both queries to maintain hook order
   const { data: authResponse, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
 
+  const { data: previewStatus } = useQuery({
+    queryKey: ["/api/preview/status"],
+    retry: false,
+  });
+
+  const isPreviewMode = (previewStatus as any)?.preview || false;
+
   return {
     user: authResponse,
-    linkedPlayer: authResponse?.linkedPlayer || null,
-    isLinkedToPlayer: authResponse?.isLinkedToPlayer || false,
+    linkedPlayer: (authResponse as any)?.linkedPlayer || null,
+    isLinkedToPlayer: (authResponse as any)?.isLinkedToPlayer || false,
     isLoading,
     isAuthenticated: !!authResponse,
+    isPreviewMode,
   };
 }
 
@@ -30,12 +39,13 @@ interface Player {
 
 // Helper hook to get current player using linked player data
 export function useCurrentPlayer() {
-  const { user, linkedPlayer, isLinkedToPlayer, isLoading } = useAuth();
+  const { user, linkedPlayer, isLinkedToPlayer, isLoading, isPreviewMode } = useAuth();
 
   return {
     currentPlayer: linkedPlayer,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user || isPreviewMode, // Allow access in preview mode
     isLinkedToPlayer,
+    isPreviewMode,
   };
 }

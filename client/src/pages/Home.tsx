@@ -13,16 +13,16 @@ import { useLocation } from "wouter";
 
 export default function Home() {
   const { toast } = useToast();
-  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
+  const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated (but not in preview mode)
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !isPreviewMode) {
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
@@ -33,7 +33,7 @@ export default function Home() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ["/api/players"],
@@ -104,6 +104,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
+      
+      {/* Preview Mode Banner */}
+      {isPreviewMode && (
+        <div className="bg-blue-600 text-white px-4 py-2 text-center">
+          <div className="max-w-7xl mx-auto">
+            <span className="font-medium">Preview Mode:</span> Score submission and account changes are disabled
+          </div>
+        </div>
+      )}
       
       <main className="max-w-7xl mx-auto px-4 py-6 pb-16">
         {/* Status Header */}

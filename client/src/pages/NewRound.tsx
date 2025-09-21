@@ -30,15 +30,15 @@ interface Course {
 
 export default function NewRound() {
   const { toast } = useToast();
-  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
+  const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
   const [roundSubmitted, setRoundSubmitted] = useState<boolean>(false);
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated (but not in preview mode)
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !isPreviewMode) {
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
@@ -49,7 +49,7 @@ export default function NewRound() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ["/api/courses"],
@@ -160,6 +160,15 @@ export default function NewRound() {
   };
 
   const handleSubmit = () => {
+    if (isPreviewMode) {
+      toast({
+        title: "Preview Mode",
+        description: "Score submission is disabled in preview mode",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!selectedCourseId) {
       toast({
         title: "Error",
@@ -207,6 +216,15 @@ export default function NewRound() {
   return (
     <div className="bg-gray-50">
       <Navigation />
+      
+      {/* Preview Mode Banner */}
+      {isPreviewMode && (
+        <div className="bg-blue-600 text-white px-4 py-2 text-center">
+          <div className="max-w-7xl mx-auto">
+            <span className="font-medium">Preview Mode:</span> Score submission and account changes are disabled
+          </div>
+        </div>
+      )}
       
       <main className="max-w-7xl mx-auto px-4 py-3 pb-24">
         <Card data-testid="card-new-round">
@@ -349,11 +367,11 @@ export default function NewRound() {
                   </Button>
                   <Button
                     onClick={handleSubmit}
-                    disabled={createRoundMutation.isPending}
+                    disabled={createRoundMutation.isPending || isPreviewMode}
                     className="flex-1 bg-golf-green hover:bg-green-700"
                     data-testid="button-submit-round"
                   >
-                    {createRoundMutation.isPending ? "Saving..." : "Submit Score"}
+                    {createRoundMutation.isPending ? "Saving..." : isPreviewMode ? "Preview Mode" : "Submit Score"}
                   </Button>
                 </div>
               </>
