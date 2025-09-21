@@ -6,6 +6,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function History() {
   const { toast } = useToast();
@@ -139,27 +140,34 @@ export default function History() {
               Player History
             </h2>
 
-            {/* Player Selection Tabs */}
-            <div className="flex space-x-2 mb-4 overflow-x-auto">
-              <Button
-                variant={selectedPlayerId === "self" ? "default" : "outline"}
-                onClick={() => setSelectedPlayerId("self")}
-                className={selectedPlayerId === "self" ? "bg-golf-green text-white" : ""}
-                data-testid="button-select-self"
+            {/* Player Selection Dropdown */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Player
+              </label>
+              <Select 
+                value={selectedPlayerId} 
+                onValueChange={setSelectedPlayerId}
+                data-testid="select-player"
               >
-                Your History
-              </Button>
-              {(players as any[])?.filter((p: any) => p.id !== currentPlayer?.id).map((player: any) => (
-                <Button
-                  key={player.id}
-                  variant={selectedPlayerId === player.id ? "default" : "outline"}
-                  onClick={() => setSelectedPlayerId(player.id)}
-                  className={`whitespace-nowrap ${selectedPlayerId === player.id ? "bg-golf-green text-white" : ""}`}
-                  data-testid={`button-select-player-${player.id}`}
-                >
-                  {player.name}
-                </Button>
-              ))}
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a player" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="self" data-testid="select-player-self">
+                    Your History
+                  </SelectItem>
+                  {(players as any[])?.filter((p: any) => p.id !== currentPlayer?.id).map((player: any) => (
+                    <SelectItem 
+                      key={player.id} 
+                      value={player.id}
+                      data-testid={`select-player-${player.id}`}
+                    >
+                      {player.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Selected Player's Last Round and Summary */}
