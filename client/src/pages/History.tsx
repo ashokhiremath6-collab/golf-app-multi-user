@@ -82,19 +82,26 @@ export default function History() {
   
   const calculateSummary = () => {
     if (!rounds || (rounds as any[]).length === 0) {
-      return { roundsPlayed: 0, avgGross: 0, avgNet: 0, avgOverPar: 0 };
+      return { roundsPlayed: 0, avgGross: 0, avgNet: 0, avgOverPar: 0, avgDTH: 0 };
     }
 
     const roundsPlayed = (rounds as any[]).length;
     const avgGross = (rounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
     const avgNet = (rounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
     const avgOverPar = (rounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
+    
+    // Calculate DTH (Difference to Handicap) = overPar - courseHandicap
+    const avgDTH = (rounds as any[]).reduce((sum: number, round: any) => {
+      const dth = parseFloat(round.overPar) - round.courseHandicap;
+      return sum + dth;
+    }, 0) / roundsPlayed;
 
     return {
       roundsPlayed,
       avgGross: Math.round(avgGross),
       avgNet: Math.round(avgNet),
       avgOverPar: avgOverPar.toFixed(1),
+      avgDTH: avgDTH.toFixed(1),
     };
   };
 
@@ -246,7 +253,7 @@ export default function History() {
                     
                     {/* Combined Stats - Last Round + Season Summary */}
                     <div className="space-y-3">
-                      <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="grid grid-cols-4 gap-3 text-center">
                         <div>
                           <div className="font-bold text-base" data-testid="text-last-gross">
                             {selectedRound.grossCapped}
@@ -265,12 +272,18 @@ export default function History() {
                           </div>
                           <div className="text-2xs text-gray-600">Round Over</div>
                         </div>
+                        <div>
+                          <div className="font-bold text-base text-purple-600" data-testid="text-last-dth">
+                            {(parseFloat(selectedRound.overPar) - selectedRound.courseHandicap) >= 0 ? '+' : ''}{(parseFloat(selectedRound.overPar) - selectedRound.courseHandicap).toFixed(0)}
+                          </div>
+                          <div className="text-2xs text-gray-600">Round DTH</div>
+                        </div>
                       </div>
                       
                       {/* Season Averages */}
                       <div className="border-t pt-3">
                         <div className="text-xs font-medium text-gray-700 mb-2 text-center">Season Averages</div>
-                        <div className="grid grid-cols-4 gap-3 text-center">
+                        <div className="grid grid-cols-5 gap-2 text-center">
                           <div>
                             <div className="text-lg font-black text-gray-900" data-testid="text-summary-rounds">
                               {summary.roundsPlayed}
@@ -294,6 +307,12 @@ export default function History() {
                               +{summary.avgOverPar}
                             </div>
                             <div className="text-2xs font-semibold text-gray-700">Avg Over</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-black text-purple-600" data-testid="text-summary-avg-dth">
+                              {Number(summary.avgDTH) >= 0 ? '+' : ''}{summary.avgDTH}
+                            </div>
+                            <div className="text-2xs font-semibold text-gray-700">Avg DTH</div>
                           </div>
                         </div>
                       </div>
