@@ -12,6 +12,7 @@ export default function History() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("self");
+  const [selectedRoundId, setSelectedRoundId] = useState<string>("");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -64,8 +65,20 @@ export default function History() {
   const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
   const displayPlayer = selectedPlayerId === "self" ? currentPlayer : (players as any[])?.find((p: any) => p.id === selectedPlayerId);
 
-  // Get last round and calculate summary for the selected player
+  // Get rounds for the selected player and handle round selection
   const lastRound = rounds && (rounds as any[]).length > 0 ? (rounds as any[])[0] : null;
+  
+  // Reset selected round when player changes or set to last round by default
+  useEffect(() => {
+    if (rounds && (rounds as any[]).length > 0) {
+      if (!selectedRoundId || !(rounds as any[]).find((r: any) => r.id === selectedRoundId)) {
+        setSelectedRoundId((rounds as any[])[0].id); // Default to most recent round
+      }
+    }
+  }, [rounds, selectedRoundId]);
+  
+  // Find the selected round
+  const selectedRound = selectedRoundId && rounds ? (rounds as any[]).find((r: any) => r.id === selectedRoundId) : lastRound;
   
   const calculateSummary = () => {
     if (!rounds || (rounds as any[]).length === 0) {
@@ -170,6 +183,35 @@ export default function History() {
               </Select>
             </div>
 
+            {/* Round Selection Dropdown */}
+            {rounds && (rounds as any[]).length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Round
+                </label>
+                <Select 
+                  value={selectedRoundId} 
+                  onValueChange={setSelectedRoundId}
+                  data-testid="select-round"
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose a round" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(rounds as any[]).map((round: any, index: number) => (
+                      <SelectItem 
+                        key={round.id} 
+                        value={round.id}
+                        data-testid={`select-round-${round.id}`}
+                      >
+                        {round.courseName || 'Unknown Course'} - {new Date(round.playedOn).toLocaleDateString()} (Net {round.net})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Selected Player's Last Round and Summary */}
             {roundsLoading ? (
               <div className="space-y-4">
@@ -178,7 +220,7 @@ export default function History() {
                   <div className="h-32 bg-gray-200 rounded"></div>
                 </div>
               </div>
-            ) : lastRound ? (
+            ) : selectedRound ? (
               <div className="space-y-4">
                 {/* Compact Player Info */}
                 <div className="flex items-center justify-between">
@@ -191,37 +233,37 @@ export default function History() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-gray-600">Last Round</div>
-                    <div className="font-medium text-sm">{lastRound.courseName}</div>
-                    <div className="text-xs text-gray-500">{new Date(lastRound.playedOn).toLocaleDateString()}</div>
+                    <div className="text-xs text-gray-600">Selected Round</div>
+                    <div className="font-medium text-sm">{selectedRound.courseName}</div>
+                    <div className="text-xs text-gray-500">{new Date(selectedRound.playedOn).toLocaleDateString()}</div>
                   </div>
                 </div>
 
                 {/* Compact Last Round & Summary Combined */}
                 <Card className="bg-gray-50">
                   <CardContent className="pt-4">
-                    {renderScorecard(lastRound)}
+                    {renderScorecard(selectedRound)}
                     
                     {/* Combined Stats - Last Round + Season Summary */}
                     <div className="space-y-3">
                       <div className="grid grid-cols-3 gap-3 text-center">
                         <div>
                           <div className="font-bold text-base" data-testid="text-last-gross">
-                            {lastRound.grossCapped}
+                            {selectedRound.grossCapped}
                           </div>
-                          <div className="text-2xs text-gray-600">Last Gross</div>
+                          <div className="text-2xs text-gray-600">Round Gross</div>
                         </div>
                         <div>
                           <div className="font-bold text-base text-golf-blue" data-testid="text-last-net">
-                            {lastRound.net}
+                            {selectedRound.net}
                           </div>
-                          <div className="text-2xs text-gray-600">Last Net</div>
+                          <div className="text-2xs text-gray-600">Round Net</div>
                         </div>
                         <div>
                           <div className="font-bold text-base text-golf-gold" data-testid="text-last-over-par">
-                            +{parseFloat(lastRound.overPar).toFixed(0)}
+                            +{parseFloat(selectedRound.overPar).toFixed(0)}
                           </div>
-                          <div className="text-2xs text-gray-600">Last Over</div>
+                          <div className="text-2xs text-gray-600">Round Over</div>
                         </div>
                       </div>
                       
