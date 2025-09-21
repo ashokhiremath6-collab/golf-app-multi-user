@@ -230,7 +230,7 @@ export default function Home() {
                 </TabsList>
 
                 <TabsContent value="cumulative">
-                  <div className="grid grid-cols-4 gap-4 text-center">
+                  <div className="grid grid-cols-5 gap-3 text-center">
                     <div>
                       <div className="text-lg font-black text-gray-900" data-testid="text-cumulative-rounds">
                         {(cumulativeStats as any)?.roundsCount || playerRounds.length}
@@ -258,12 +258,24 @@ export default function Home() {
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Avg Over</div>
                     </div>
+                    <div>
+                      <div className="text-lg font-black text-purple-600" data-testid="text-cumulative-avg-dth">
+                        {(cumulativeStats as any)?.avgDTH ? 
+                          (Number((cumulativeStats as any).avgDTH) >= 0 ? '+' : '') + parseFloat((cumulativeStats as any).avgDTH).toFixed(1) : 
+                          (() => {
+                            const avgDTH = playerRounds.reduce((sum: number, round: any) => sum + (parseFloat(round.overPar) - round.courseHandicap), 0) / playerRounds.length;
+                            return (avgDTH >= 0 ? '+' : '') + avgDTH.toFixed(1);
+                          })()
+                        }
+                      </div>
+                      <div className="text-xs font-semibold text-gray-700">Avg DTH</div>
+                    </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="monthly">
                   {monthlyStats && (monthlyStats as any).roundsCount > 0 ? (
-                    <div className="grid grid-cols-4 gap-4 text-center">
+                    <div className="grid grid-cols-5 gap-3 text-center">
                       <div>
                         <div className="text-lg font-black text-gray-900" data-testid="text-monthly-rounds">
                           {(monthlyStats as any).roundsCount}
@@ -287,6 +299,15 @@ export default function Home() {
                           +{parseFloat((monthlyStats as any).avgOverPar).toFixed(1)}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Avg Over</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-black text-purple-600" data-testid="text-monthly-avg-dth">
+                          {(monthlyStats as any).avgDTH ? 
+                            (Number((monthlyStats as any).avgDTH) >= 0 ? '+' : '') + parseFloat((monthlyStats as any).avgDTH).toFixed(1) : 
+                            'N/A'
+                          }
+                        </div>
+                        <div className="text-xs font-semibold text-gray-700">Avg DTH</div>
                       </div>
                     </div>
                   ) : (
