@@ -16,6 +16,7 @@ interface Round {
   course: {
     name: string;
     tees: string;
+    slope: number | null;
   };
 }
 
@@ -147,6 +148,11 @@ export default function RoundHistory({ rounds }: RoundHistoryProps) {
                         <p className="text-sm text-gray-600" data-testid={`text-round-date-${round.id}`}>
                           {new Date(round.playedOn).toLocaleDateString()} • {round.course?.tees || 'Blue'} Tees
                         </p>
+                        {round.course?.slope && (
+                          <p className="text-xs text-gray-500" data-testid={`text-slope-rating-${round.id}`}>
+                            Slope Rating: {round.course.slope}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
