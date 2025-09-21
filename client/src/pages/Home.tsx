@@ -148,6 +148,14 @@ export default function Home() {
                   <p className="text-sm text-gray-600" data-testid="text-last-date">
                     {new Date(lastRound.playedOn).toLocaleDateString()}
                   </p>
+                  {lastRound.course?.slope && (
+                    <p className="text-xs text-gray-500">
+                      Slope: {lastRound.course.slope}
+                      {lastRound.slopeAdjustedCourseHandicap !== undefined && lastRound.slopeAdjustedCourseHandicap !== lastRound.courseHandicap && (
+                        <> | Course Hcp: {lastRound.slopeAdjustedCourseHandicap}</>
+                      )}
+                    </p>
+                  )}
                 </div>
                 <Badge variant="outline" data-testid="badge-tees">Blue Tees</Badge>
               </div>
@@ -184,7 +192,7 @@ export default function Home() {
                 </div>
 
                 {/* Last Round Summary */}
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-4 gap-3 text-center">
                   <div>
                     <div className="font-bold text-xl" data-testid="text-last-gross">
                       {lastRound.grossCapped}
@@ -202,6 +210,17 @@ export default function Home() {
                       +{parseFloat(lastRound.overPar).toFixed(0)}
                     </div>
                     <div className="text-sm text-gray-600">Over Par</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-xl text-purple-600" data-testid="text-last-dth">
+                      {(() => {
+                        const dth = lastRound.slopeAdjustedDTH !== undefined 
+                          ? lastRound.slopeAdjustedDTH 
+                          : parseFloat(lastRound.overPar) - lastRound.courseHandicap;
+                        return (dth >= 0 ? '+' : '') + dth.toFixed(0);
+                      })()} 
+                    </div>
+                    <div className="text-sm text-gray-600">DTH</div>
                   </div>
                 </div>
               </div>
