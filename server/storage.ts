@@ -26,6 +26,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, sql, avg, count } from "drizzle-orm";
+import { calculateSlopeAdjustedRound } from "./services/golfCalculations";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -216,8 +217,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRoundsByPlayer(playerId: string, month?: string): Promise<any[]> {
+    let rawRounds;
+    
     if (month) {
-      return await db
+      rawRounds = await db
         .select({
           id: rounds.id,
           playerId: rounds.playerId,
@@ -236,6 +239,7 @@ export class DatabaseStorage implements IStorage {
           course: {
             name: courses.name,
             tees: courses.tees,
+            slope: courses.slope,
           },
         })
         .from(rounds)
@@ -247,33 +251,62 @@ export class DatabaseStorage implements IStorage {
           )
         )
         .orderBy(desc(rounds.playedOn));
+    } else {
+      rawRounds = await db
+        .select({
+          id: rounds.id,
+          playerId: rounds.playerId,
+          courseId: rounds.courseId,
+          playedOn: rounds.playedOn,
+          rawScores: rounds.rawScores,
+          cappedScores: rounds.cappedScores,
+          grossCapped: rounds.grossCapped,
+          courseHandicap: rounds.courseHandicap,
+          net: rounds.net,
+          overPar: rounds.overPar,
+          source: rounds.source,
+          status: rounds.status,
+          createdAt: rounds.createdAt,
+          courseName: courses.name,
+          course: {
+            name: courses.name,
+            tees: courses.tees,
+            slope: courses.slope,
+          },
+        })
+        .from(rounds)
+        .leftJoin(courses, eq(rounds.courseId, courses.id))
+        .where(eq(rounds.playerId, playerId))
+        .orderBy(desc(rounds.playedOn));
     }
 
-    return await db
-      .select({
-        id: rounds.id,
-        playerId: rounds.playerId,
-        courseId: rounds.courseId,
-        playedOn: rounds.playedOn,
-        rawScores: rounds.rawScores,
-        cappedScores: rounds.cappedScores,
-        grossCapped: rounds.grossCapped,
-        courseHandicap: rounds.courseHandicap,
-        net: rounds.net,
-        overPar: rounds.overPar,
-        source: rounds.source,
-        status: rounds.status,
-        createdAt: rounds.createdAt,
-        courseName: courses.name,
-        course: {
-          name: courses.name,
-          tees: courses.tees,
-        },
-      })
-      .from(rounds)
-      .leftJoin(courses, eq(rounds.courseId, courses.id))
-      .where(eq(rounds.playerId, playerId))
-      .orderBy(desc(rounds.playedOn));
+    // Add slope-adjusted calculations to each round
+    return rawRounds.map(round => {
+      if (round.course?.slope && round.courseHandicap !== undefined && round.overPar !== undefined) {
+        const slopeAdjustments = calculateSlopeAdjustedRound(
+          parseFloat(round.overPar.toString()),
+          parseFloat(round.courseHandicap.toString()),
+          parseFloat(round.course.slope.toString())
+        );
+        
+        return {
+          ...round,
+          slopeAdjustedCourseHandicap: slopeAdjustments.slopeAdjustedCourseHandicap,
+          slopeAdjustedDTH: slopeAdjustments.slopeAdjustedDTH,
+          handicapIndex: slopeAdjustments.handicapIndex,
+          normalizedOverPar: slopeAdjustments.normalizedOverPar,
+        };
+      }
+      
+      // Fallback for rounds without slope data
+      return {
+        ...round,
+        slopeAdjustedCourseHandicap: round.courseHandicap,
+        slopeAdjustedDTH: round.overPar ? parseFloat(round.overPar.toString()) - round.courseHandicap : 0,
+        handicapIndex: null,
+        normalizedOverPar: round.overPar,
+      };
+    });
   }
 
   async getAllRounds(month?: string): Promise<any[]> {
@@ -297,6 +330,7 @@ export class DatabaseStorage implements IStorage {
           course: {
             name: courses.name,
             tees: courses.tees,
+            slope: courses.slope,
           },
         })
         .from(rounds)
@@ -326,6 +360,7 @@ export class DatabaseStorage implements IStorage {
         course: {
           name: courses.name,
           tees: courses.tees,
+          slope: courses.slope,
         },
       })
       .from(rounds)
