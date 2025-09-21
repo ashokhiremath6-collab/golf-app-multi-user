@@ -7,6 +7,7 @@ import { importService } from "./services/importService";
 import { calculateRoundScores } from "./services/golfCalculations";
 import { z } from "zod";
 import { insertPlayerSchema, insertCourseSchema, insertHoleSchema, insertRoundSchema } from "@shared/schema";
+import { isPreviewMode, createPreviewResponse } from "./previewMode";
 
 // Validation schemas
 const createRoundSchema = insertRoundSchema.extend({
@@ -24,12 +25,34 @@ const handicapRecalcSchema = z.object({
   month: z.string().optional(),
 });
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+// Preview mode middleware to block write operations
+const isPreviewWriteBlocked = (req: any, res: any, next: any) => {
+  if (isPreviewMode() && req.method !== 'GET') {
+    return res.status(403).json({ message: "Preview mode: write operations disabled" });
+  }
+  next();
+};
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Preview status endpoint (available before auth setup)
+  app.get('/api/preview/status', (req, res) => {
+    res.json({ preview: isPreviewMode() });
+  });
+
+  // Apply preview write protection globally
+  app.use(isPreviewWriteBlocked);
+
+  // Auth middleware - conditionally skip in preview mode
+  if (!isPreviewMode()) {
+    await setupAuth(app);
+  }
+
+  // Auth routes - handle both normal and preview modes
+  app.get('/api/auth/user', isPreviewMode() ? (req: any, res: any) => res.json(null) : isAuthenticated, async (req: any, res) => {
+    if (isPreviewMode()) {
+      return res.json(null);
+    }
+    
     try {
       const userId = req.user.claims.sub;
       const userEmail = req.user.claims.email;
@@ -47,18 +70,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isLinkedToPlayer: !!player
       };
       
-      res.json(response);
+      res.json(createPreviewResponse(response));
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
+  // Stub auth endpoints for preview mode
+  if (isPreviewMode()) {
+    app.get('/api/login', (req, res) => {
+      res.status(200).json({ message: "Preview mode: auth disabled" });
+    });
+    
+    app.get('/api/logout', (req, res) => {
+      res.status(200).json({ message: "Preview mode: auth disabled" });
+    });
+  }
+
   // Player routes
   app.get('/api/players', async (req, res) => {
     try {
       const players = await storage.getAllPlayers();
-      res.json(players);
+      res.json(createPreviewResponse(players));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch players" });
     }
@@ -70,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!player) {
         return res.status(404).json({ message: "Player not found" });
       }
-      res.json(player);
+      res.json(createPreviewResponse(player));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch player" });
     }
@@ -680,8 +714,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST endpoint for manual recalculation (requires auth)
   app.post('/api/handicaps/apply', isAuthenticated, handleHandicapRecalculation);
   
-  // GET endpoint for automated cron job (no auth required for cron)
+  // GET endpoint for automated cron job (blocked in preview mode)
   app.get('/api/handicaps/apply', async (req, res) => {
+    // Block in preview mode
+    if (isPreviewMode()) {
+      return res.status(403).json({ message: "Preview mode: handicap recalculation disabled" });
+    }
+    
     try {
       const window = req.query.window as string || 'previous';
       const month = req.query.month as string;
@@ -726,7 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/handicaps/snapshots', async (req, res) => {
     try {
       const snapshots = await storage.getAllHandicapSnapshots();
-      res.json(snapshots);
+      res.json(createPreviewResponse(snapshots));
     } catch (error) {
       console.error('Error fetching handicap snapshots:', error);
       res.status(500).json({ message: "Failed to fetch handicap snapshots" });
