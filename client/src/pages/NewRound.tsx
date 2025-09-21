@@ -221,7 +221,7 @@ export default function NewRound() {
                     {selectedCourse.name}
                   </div>
                   <div className="text-xs text-gray-500" data-testid="text-course-info">
-                    {selectedCourse.tees} Tees • Par {selectedCourse.parTotal}
+                    {selectedCourse.tees} Tees • Par {selectedCourse.parTotal} {selectedCourse.slope && `• Slope ${selectedCourse.slope}`}
                   </div>
                 </div>
               )}
@@ -249,7 +249,7 @@ export default function NewRound() {
                 <SelectContent>
                   {(courses as any[])?.map((course: any) => (
                     <SelectItem key={course.id} value={course.id} data-testid={`select-course-${course.id}`}>
-                      {course.name} - Par {course.parTotal}
+                      {course.name} - Par {course.parTotal} {course.slope && `• Slope ${course.slope}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

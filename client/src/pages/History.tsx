@@ -214,7 +214,7 @@ export default function History() {
                         value={round.id}
                         data-testid={`select-round-${round.id}`}
                       >
-                        {round.courseName || 'Unknown Course'} - {new Date(round.playedOn).toLocaleDateString()} (Net {round.net})
+                        {round.courseName || 'Unknown Course'} {round.course?.slope && `(Slope ${round.course.slope})`} - {new Date(round.playedOn).toLocaleDateString()} (Net {round.net})
                       </SelectItem>
                     ))}
                   </SelectContent>
