@@ -408,6 +408,8 @@ export class DatabaseStorage implements IStorage {
         currentHandicap: players.currentHandicap,
         roundsCount: count(rounds.id),
         avgNet: avg(rounds.net),
+        avgOverPar: avg(rounds.overPar),
+        avgDTH: sql<number>`AVG(${rounds.overPar} - ${rounds.courseHandicap})`,
         lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
       })
       .from(players)
@@ -456,6 +458,7 @@ export class DatabaseStorage implements IStorage {
         roundsCount: count(rounds.id),
         avgNet: avg(rounds.net),
         avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
+        avgDTH: sql<number>`AVG(${rounds.overPar} - ${rounds.courseHandicap})`,
         avgGrossCapped: avg(rounds.grossCapped),
         lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
       })
@@ -480,6 +483,7 @@ export class DatabaseStorage implements IStorage {
         roundsCount: count(rounds.id),
         avgNet: avg(rounds.net),
         avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
+        avgDTH: sql<number>`AVG(${rounds.overPar} - ${rounds.courseHandicap})`,
         avgGrossCapped: avg(rounds.grossCapped),
         lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
       })

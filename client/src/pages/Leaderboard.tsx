@@ -90,6 +90,9 @@ export default function Leaderboard() {
   const avgOverParAll = Array.isArray(leaderboard) && leaderboard.length > 0 
     ? (leaderboard.reduce((sum: number, player: any) => sum + parseFloat(player.avgOverPar || 0), 0) / leaderboard.length).toFixed(1)
     : '0.0';
+  const avgDTHAll = Array.isArray(leaderboard) && leaderboard.length > 0 
+    ? (leaderboard.reduce((sum: number, player: any) => sum + parseFloat(player.avgDTH || 0), 0) / leaderboard.length).toFixed(1)
+    : '0.0';
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return { icon: 'fas fa-trophy', color: 'text-golf-gold' };
@@ -98,7 +101,7 @@ export default function Leaderboard() {
     return { icon: '', color: '' };
   };
 
-  const renderLeaderboardContent = (data: any, totalRounds: number, avgOverParAll: string) => {
+  const renderLeaderboardContent = (data: any, totalRounds: number, avgOverParAll: string, avgDTHAll: string) => {
     if (!Array.isArray(data) || data.length === 0) {
       return (
         <div className="text-center py-8 text-gray-500">
@@ -110,7 +113,7 @@ export default function Leaderboard() {
     return (
       <>
         {/* Summary Stats */}
-        <div className="grid grid-cols-3 gap-6 mb-6 text-center">
+        <div className="grid grid-cols-4 gap-4 mb-6 text-center">
           <div>
             <div className="text-lg font-black text-gray-900" data-testid="text-total-rounds">
               {totalRounds}
@@ -128,6 +131,12 @@ export default function Leaderboard() {
               +{avgOverParAll}
             </div>
             <div className="text-xs font-semibold text-gray-600">Avg Over</div>
+          </div>
+          <div>
+            <div className="text-lg font-black text-purple-600" data-testid="text-avg-dth">
+              {Number(avgDTHAll) >= 0 ? '+' : ''}{avgDTHAll}
+            </div>
+            <div className="text-xs font-semibold text-gray-600">Avg DTH</div>
           </div>
         </div>
         
@@ -147,6 +156,9 @@ export default function Leaderboard() {
                 </th>
                 <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">
                   Avg Net
+                </th>
+                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
+                  DTH
                 </th>
                 <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
                   HCP
@@ -193,6 +205,11 @@ export default function Leaderboard() {
                     <td className="px-2 py-4 text-center">
                       <span className="text-sm font-black text-golf-blue" data-testid={`text-avg-net-${player.playerId}`}>
                         {parseFloat(player.avgNet || 0).toFixed(1)}
+                      </span>
+                    </td>
+                    <td className="px-2 py-4 text-center">
+                      <span className="text-sm font-black text-purple-600" data-testid={`text-avg-dth-${player.playerId}`}>
+                        {Number(player.avgDTH || 0) >= 0 ? '+' : ''}{parseFloat(player.avgDTH || 0).toFixed(1)}
                       </span>
                     </td>
                     <td className="px-2 py-4 text-center">
@@ -273,7 +290,7 @@ export default function Leaderboard() {
                   </div>
                   <div className="text-xs text-gray-500">Ends Mar 31, 2026</div>
                 </div>
-                {renderLeaderboardContent(cumulativeLeaderboard, totalRounds, avgOverParAll)}
+                {renderLeaderboardContent(cumulativeLeaderboard, totalRounds, avgOverParAll, avgDTHAll)}
               </TabsContent>
 
               <TabsContent value="monthly">
@@ -283,7 +300,7 @@ export default function Leaderboard() {
                   </div>
                   <div className="text-xs text-gray-500">Monthly standings</div>
                 </div>
-                {renderLeaderboardContent(monthlyLeaderboard, totalRounds, avgOverParAll)}
+                {renderLeaderboardContent(monthlyLeaderboard, totalRounds, avgOverParAll, avgDTHAll)}
               </TabsContent>
             </Tabs>
 
