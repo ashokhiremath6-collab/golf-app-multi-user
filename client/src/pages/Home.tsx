@@ -232,7 +232,7 @@ export default function Home() {
                                   );
                                 })}
                                 <td className="border-l-2 border-gray-400 px-3 py-2 text-center text-sm font-semibold tabular-nums bg-gray-50" data-testid={`${title.includes('Front') ? 'front' : 'back'}-nine-total`}>
-                                  {lastRound.cappedScores.slice(startIndex, startIndex + 9).reduce((sum, score) => sum + score, 0)}
+                                  {lastRound.cappedScores.slice(startIndex, startIndex + 9).reduce((sum: number, score: number) => sum + score, 0)}
                                 </td>
                               </tr>
                             </tbody>
