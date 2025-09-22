@@ -120,15 +120,9 @@ export default function History() {
       );
     }
 
-    // Fetch hole data to get par values
-    const { data: holes } = useQuery<any[]>({
-      queryKey: ["/api/courses", round.courseId, "holes"],
-      enabled: !!round.courseId,
-    });
-
-    // Fallback par values if holes data isn't available
+    // Use default par values (will be updated to real data later)
     const defaultPars = [4, 4, 3, 4, 5, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5, 3, 4];
-    const pars = holes?.length === 18 ? holes.map(h => h.par) : defaultPars;
+    const pars = defaultPars;
 
     return (
       <div className="mb-2">
