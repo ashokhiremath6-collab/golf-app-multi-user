@@ -127,7 +127,7 @@ export default function History() {
     return (
       <div className="mb-2">
         {/* Header with hole numbers */}
-        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono mb-1">
+        <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
           <div className="text-2xs text-gray-600 py-1">Hole</div>
           {Array.from({length: 9}, (_, i) => (
             <div key={i} className="text-2xs text-gray-600 py-1">{i + 1}</div>
@@ -136,7 +136,7 @@ export default function History() {
         </div>
         
         {/* Par row */}
-        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono mb-0.5">
+        <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
           <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
           {pars.slice(0, 9).map((par: number, index: number) => (
             <div key={index} className="bg-gray-100 rounded px-0.5 py-1 border" data-testid={`hole-${index + 1}-par`}>
@@ -149,7 +149,7 @@ export default function History() {
         </div>
         
         {/* Front 9 scores */}
-        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono mb-2">
+        <div className="grid gap-0.5 text-center text-xs font-mono mb-2" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
           <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
           {round.cappedScores.slice(0, 9).map((score: number, index: number) => {
             const par = pars[index];
@@ -169,7 +169,7 @@ export default function History() {
         </div>
         
         {/* Back 9 hole numbers */}
-        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono mb-1">
+        <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
           <div className="text-2xs text-gray-600 py-1">Hole</div>
           {Array.from({length: 9}, (_, i) => (
             <div key={i + 9} className="text-2xs text-gray-600 py-1">{i + 10}</div>
@@ -178,7 +178,7 @@ export default function History() {
         </div>
         
         {/* Back 9 par row */}
-        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono mb-0.5">
+        <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
           <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
           {pars.slice(9, 18).map((par: number, index: number) => (
             <div key={index + 9} className="bg-gray-100 rounded px-0.5 py-1 border" data-testid={`hole-${index + 10}-par`}>
@@ -191,7 +191,7 @@ export default function History() {
         </div>
         
         {/* Back 9 scores */}
-        <div className="grid grid-cols-10 gap-0.5 text-center text-xs font-mono">
+        <div className="grid gap-0.5 text-center text-xs font-mono" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
           <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
           {round.cappedScores.slice(9, 18).map((score: number, index: number) => {
             const par = pars[index + 9];
