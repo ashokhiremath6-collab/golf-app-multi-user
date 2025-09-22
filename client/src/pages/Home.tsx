@@ -169,34 +169,118 @@ export default function Home() {
                 <Badge variant="outline" data-testid="badge-tees">Blue Tees</Badge>
               </div>
               
-              {/* Scorecard with better spacing */}
+              {/* Professional Golf Scorecard */}
               <div className="mb-4 flex-1 flex flex-col justify-center">
                 <div className="text-sm text-gray-600 mb-3 text-center">Full Scorecard:</div>
-                {/* Front 9 */}
-                <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono mb-2">
-                  {lastRound.cappedScores?.slice(0, 9).map((score: number, index: number) => (
-                    <div key={index} className="bg-white rounded px-1 py-2 border" data-testid={`hole-${index + 1}-score`}>
-                      <div className="text-xs text-gray-500 mb-1">{index + 1}</div>
-                      <div className="font-bold text-base">{score}</div>
-                    </div>
-                  ))}
-                  <div className="bg-golf-green text-white rounded px-1 py-2 border font-bold" data-testid="front-nine-total">
-                    <div className="text-xs mb-1">OUT</div>
-                    <div className="font-bold text-base">{lastRound.cappedScores?.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                <div className="border-2 border-gray-300 rounded-lg p-1 sm:p-2 bg-white shadow-sm">
+                  {/* Front 9 Section */}
+                  <div className="border border-gray-200 rounded-md mb-2 p-1 bg-gray-50/30">
+                    {(() => {
+                      // Use default par values (will be updated to real data later)
+                      const defaultPars = [4, 4, 3, 4, 5, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5, 3, 4];
+                      const pars = defaultPars;
+                      
+                      return (
+                        <>
+                          {/* Header with hole numbers */}
+                          <div className="grid gap-0 text-center text-xs font-mono mb-1 [grid-template-columns:2rem_repeat(9,_1fr)_1.5rem] sm:[grid-template-columns:1.5fr_repeat(9,_1fr)_1.5fr]">
+                            <div className="text-xs sm:text-sm font-bold text-gray-700 py-1 border-r border-gray-300">Hole</div>
+                            {Array.from({length: 9}, (_, i) => (
+                              <div key={i} className="text-xs sm:text-sm font-bold text-gray-700 py-1 border-r border-gray-300 last:border-r-0">{i + 1}</div>
+                            ))}
+                            <div className="text-xs sm:text-sm font-bold text-gray-700 py-1 border-l-2 border-gray-400">OUT</div>
+                          </div>
+                          
+                          {/* Par row */}
+                          <div className="grid gap-0 text-center text-xs font-mono mb-1 [grid-template-columns:2rem_repeat(9,_1fr)_1.5rem] sm:[grid-template-columns:1.5fr_repeat(9,_1fr)_1.5fr]">
+                            <div className="bg-gray-100 px-1 py-1 border-r-2 border-gray-400 text-xs font-bold text-gray-700">Par</div>
+                            {pars.slice(0, 9).map((par: number, index: number) => (
+                              <div key={index} className="bg-gray-100 px-1 py-1 border-r border-gray-300" data-testid={`hole-${index + 1}-par`}>
+                                <div className="font-bold text-xs sm:text-sm">{par}</div>
+                              </div>
+                            ))}
+                            <div className="bg-gray-100 px-1 py-1 border-l-2 border-gray-400 font-bold" data-testid="front-nine-par">
+                              <div className="font-bold text-xs sm:text-sm">{pars.slice(0, 9).reduce((sum: number, par: number) => sum + par, 0)}</div>
+                            </div>
+                          </div>
+                          
+                          {/* Front 9 scores */}
+                          <div className="grid gap-0 text-center text-xs font-mono [grid-template-columns:2rem_repeat(9,_1fr)_1.5rem] sm:[grid-template-columns:1.5fr_repeat(9,_1fr)_1.5fr]">
+                            <div className="bg-gray-50 px-1 py-1 border-r-2 border-gray-400 text-xs font-bold text-gray-700">Score</div>
+                            {lastRound.cappedScores?.slice(0, 9).map((score: number, index: number) => {
+                              const par = pars[index];
+                              const isOver = score > par;
+                              const isUnder = score < par;
+                              return (
+                                <div key={index} className={`px-1 py-1 border-r border-gray-300 ${
+                                  isOver ? 'bg-rose-200 text-rose-900' : isUnder ? 'bg-emerald-200 text-emerald-900' : 'bg-white'
+                                }`} data-testid={`hole-${index + 1}-score`}>
+                                  <div className="font-black text-xs sm:text-sm">{score}</div>
+                                </div>
+                              );
+                            })}
+                            <div className="bg-emerald-700 text-white px-1 py-1 border-l-2 border-gray-400 font-bold" data-testid="front-nine-total">
+                              <div className="font-black text-xs sm:text-sm">{lastRound.cappedScores?.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                </div>
-                
-                {/* Back 9 */}
-                <div className="grid grid-cols-10 gap-1 text-center text-sm font-mono mb-4">
-                  {lastRound.cappedScores?.slice(9, 18).map((score: number, index: number) => (
-                    <div key={index + 9} className="bg-white rounded px-1 py-2 border" data-testid={`hole-${index + 10}-score`}>
-                      <div className="text-xs text-gray-500 mb-1">{index + 10}</div>
-                      <div className="font-bold text-base">{score}</div>
-                    </div>
-                  ))}
-                  <div className="bg-golf-green text-white rounded px-1 py-2 border font-bold" data-testid="back-nine-total">
-                    <div className="text-xs mb-1">IN</div>
-                    <div className="font-bold text-base">{lastRound.cappedScores?.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                  
+                  {/* Back 9 Section */}
+                  <div className="border border-gray-200 rounded-md p-1 bg-gray-50/30">
+                    {(() => {
+                      // Use default par values (will be updated to real data later)
+                      const defaultPars = [4, 4, 3, 4, 5, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5, 3, 4];
+                      const pars = defaultPars;
+                      
+                      return (
+                        <>
+                          {/* Back 9 hole numbers */}
+                          <div className="grid gap-0 text-center text-xs font-mono mb-1 [grid-template-columns:2rem_repeat(9,_1fr)_1.5rem] sm:[grid-template-columns:1.5fr_repeat(9,_1fr)_1.5fr]">
+                            <div className="text-xs sm:text-sm font-bold text-gray-700 py-1 border-r border-gray-300">Hole</div>
+                            {Array.from({length: 9}, (_, i) => (
+                              <div key={i + 9} className="text-xs sm:text-sm font-bold text-gray-700 py-1 border-r border-gray-300 last:border-r-0">{i + 10}</div>
+                            ))}
+                            <div className="text-xs sm:text-sm font-bold text-gray-700 py-1 border-l-2 border-gray-400">IN</div>
+                          </div>
+                          
+                          {/* Back 9 par row */}
+                          <div className="grid gap-0 text-center text-xs font-mono mb-1 [grid-template-columns:2rem_repeat(9,_1fr)_1.5rem] sm:[grid-template-columns:1.5fr_repeat(9,_1fr)_1.5fr]">
+                            <div className="bg-gray-100 px-1 py-1 border-r-2 border-gray-400 text-xs font-bold text-gray-700">Par</div>
+                            {pars.slice(9, 18).map((par: number, index: number) => (
+                              <div key={index + 9} className="bg-gray-100 px-1 py-1 border-r border-gray-300" data-testid={`hole-${index + 10}-par`}>
+                                <div className="font-bold text-xs sm:text-sm">{par}</div>
+                              </div>
+                            ))}
+                            <div className="bg-gray-100 px-1 py-1 border-l-2 border-gray-400 font-bold" data-testid="back-nine-par">
+                              <div className="font-bold text-xs sm:text-sm">{pars.slice(9, 18).reduce((sum: number, par: number) => sum + par, 0)}</div>
+                            </div>
+                          </div>
+                          
+                          {/* Back 9 scores */}
+                          <div className="grid gap-0 text-center text-xs font-mono [grid-template-columns:2rem_repeat(9,_1fr)_1.5rem] sm:[grid-template-columns:1.5fr_repeat(9,_1fr)_1.5fr]">
+                            <div className="bg-gray-50 px-1 py-1 border-r-2 border-gray-400 text-xs font-bold text-gray-700">Score</div>
+                            {lastRound.cappedScores?.slice(9, 18).map((score: number, index: number) => {
+                              const par = pars[index + 9];
+                              const isOver = score > par;
+                              const isUnder = score < par;
+                              return (
+                                <div key={index + 9} className={`px-1 py-1 border-r border-gray-300 ${
+                                  isOver ? 'bg-rose-200 text-rose-900' : isUnder ? 'bg-emerald-200 text-emerald-900' : 'bg-white'
+                                }`} data-testid={`hole-${index + 10}-score`}>
+                                  <div className="font-black text-xs sm:text-sm">{score}</div>
+                                </div>
+                              );
+                            })}
+                            <div className="bg-emerald-700 text-white px-1 py-1 border-l-2 border-gray-400 font-bold" data-testid="back-nine-total">
+                              <div className="font-black text-xs sm:text-sm">{lastRound.cappedScores?.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
