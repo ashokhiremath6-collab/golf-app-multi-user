@@ -184,68 +184,99 @@ export default function Home() {
                   const defaultPars = [4, 4, 3, 4, 5, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5, 3, 4];
                   const pars = defaultPars;
 
-                  const ScoreCard = ({ holes, title, startIndex }: { holes: number[], title: string, startIndex: number }) => (
-                    <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
-                      <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                        <h4 className="text-sm font-medium text-gray-800">{title}</h4>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <div className="inline-block min-w-full">
-                          <table className="min-w-full border-collapse">
-                            <thead>
-                              <tr>
-                                <th className="border-b border-gray-300 bg-gray-50 px-3 py-2 text-left text-xs font-medium text-gray-700 w-16">Hole</th>
-                                {Array.from({length: 9}, (_, i) => (
-                                  <th key={i} className="border-b border-l border-gray-300 bg-gray-50 px-2 py-2 text-center text-xs font-medium text-gray-700 min-w-[32px] tabular-nums">
-                                    {startIndex + i + 1}
-                                  </th>
-                                ))}
-                                <th className="border-b border-l-2 border-gray-400 bg-gray-50 px-3 py-2 text-center text-xs font-medium text-gray-700 w-16">
-                                  {title.includes('Front') ? 'OUT' : 'IN'}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td className="border-b border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-800">Par</td>
-                                {pars.slice(startIndex, startIndex + 9).map((par: number, index: number) => (
-                                  <td key={index} className="border-b border-l border-gray-300 bg-gray-100 px-2 py-2 text-center text-sm tabular-nums" data-testid={`hole-${startIndex + index + 1}-par`}>
-                                    {par}
-                                  </td>
-                                ))}
-                                <td className="border-b border-l-2 border-gray-400 bg-gray-100 px-3 py-2 text-center text-sm font-medium tabular-nums" data-testid={`${title.includes('Front') ? 'front' : 'back'}-nine-par`}>
-                                  {pars.slice(startIndex, startIndex + 9).reduce((sum, par) => sum + par, 0)}
-                                </td>
-                              </tr>
-                              <tr>
-                                <td className="bg-white px-3 py-2 text-sm text-gray-800">Score</td>
-                                {lastRound.cappedScores.slice(startIndex, startIndex + 9).map((score: number, index: number) => {
-                                  const par = pars[startIndex + index];
-                                  const isOver = score > par;
-                                  const isUnder = score < par;
-                                  return (
-                                    <td key={index} className={`border-l border-gray-300 px-2 py-2 text-center text-sm tabular-nums ${
-                                      isOver ? 'text-rose-700 font-medium' : isUnder ? 'text-emerald-700 font-medium' : 'text-gray-900'
-                                    }`} data-testid={`hole-${startIndex + index + 1}-score`}>
-                                      {score}
-                                    </td>
-                                  );
-                                })}
-                                <td className="border-l-2 border-gray-400 px-3 py-2 text-center text-sm font-semibold tabular-nums bg-gray-50" data-testid={`${title.includes('Front') ? 'front' : 'back'}-nine-total`}>
-                                  {lastRound.cappedScores.slice(startIndex, startIndex + 9).reduce((sum: number, score: number) => sum + score, 0)}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  );
-
+                  // Ultra-compact single table showing all 18 holes paired (1/10, 2/11, etc.)
                   return (
-                    <div className="space-y-4">
-                      <ScoreCard holes={Array.from({length: 9}, (_, i) => i + 1)} title="Front 9" startIndex={0} />
-                      <ScoreCard holes={Array.from({length: 9}, (_, i) => i + 10)} title="Back 9" startIndex={9} />
+                    <div className="w-full overflow-hidden">
+                      {/* Single ultra-compact table with all 18 holes */}
+                      <table className="table-fixed w-full border-collapse text-[10px] sm:text-[11px] tabular-nums tracking-tight">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            {/* 9 paired hole columns */}
+                            {Array.from({length: 9}, (_, i) => (
+                              <th key={i} className="border border-gray-300 px-0.5 py-0.5 text-center font-medium text-gray-700" data-testid={`holes-${i+1}-${i+10}`}>
+                                <div className="leading-none">{i+1}/{i+10}</div>
+                              </th>
+                            ))}
+                            {/* Totals column */}
+                            <th className="border-2 border-gray-400 px-0.5 py-0.5 text-center font-medium text-gray-700 w-12">TOT</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Single row with paired data */}
+                          <tr>
+                            {/* 9 paired hole columns - each shows 2x2 grid */}
+                            {Array.from({length: 9}, (_, i) => {
+                              const frontPar = pars[i];
+                              const backPar = pars[i + 9];
+                              const frontScore = lastRound.cappedScores[i];
+                              const backScore = lastRound.cappedScores[i + 9];
+                              const frontOver = frontScore > frontPar;
+                              const frontUnder = frontScore < frontPar;
+                              const backOver = backScore > backPar;
+                              const backUnder = backScore < backPar;
+                              
+                              return (
+                                <td key={i} className="border border-gray-300 p-0" data-testid={`paired-holes-${i+1}-${i+10}`}>
+                                  <div className="grid grid-cols-2 grid-rows-2 h-8 w-full">
+                                    {/* Top-left: Front hole par */}
+                                    <div className="bg-gray-100 border-r border-b border-gray-200 flex items-center justify-center text-gray-700 leading-none">
+                                      {frontPar}
+                                    </div>
+                                    {/* Top-right: Back hole par */}
+                                    <div className="bg-gray-100 border-b border-gray-200 flex items-center justify-center text-gray-700 leading-none">
+                                      {backPar}
+                                    </div>
+                                    {/* Bottom-left: Front hole score */}
+                                    <div className={`border-r border-gray-200 flex items-center justify-center leading-none ${
+                                      frontOver ? 'text-rose-700 font-medium' : frontUnder ? 'text-emerald-700 font-medium' : 'text-gray-900'
+                                    }`} data-testid={`hole-${i+1}-score`}>
+                                      {frontScore}
+                                    </div>
+                                    {/* Bottom-right: Back hole score */}
+                                    <div className={`flex items-center justify-center leading-none ${
+                                      backOver ? 'text-rose-700 font-medium' : backUnder ? 'text-emerald-700 font-medium' : 'text-gray-900'
+                                    }`} data-testid={`hole-${i+10}-score`}>
+                                      {backScore}
+                                    </div>
+                                  </div>
+                                </td>
+                              );
+                            })}
+                            
+                            {/* Totals column */}
+                            <td className="border-2 border-gray-400 p-0 bg-gray-50" data-testid="totals">
+                              <div className="grid grid-cols-3 grid-rows-2 h-8 w-full text-[9px]">
+                                {/* Top row: Par totals */}
+                                <div className="border-r border-b border-gray-300 flex flex-col items-center justify-center leading-none">
+                                  <div className="text-gray-600">OUT</div>
+                                  <div className="font-medium">{pars.slice(0, 9).reduce((sum: number, par: number) => sum + par, 0)}</div>
+                                </div>
+                                <div className="border-r border-b border-gray-300 flex flex-col items-center justify-center leading-none">
+                                  <div className="text-gray-600">IN</div>
+                                  <div className="font-medium">{pars.slice(9, 18).reduce((sum: number, par: number) => sum + par, 0)}</div>
+                                </div>
+                                <div className="border-b border-gray-300 flex flex-col items-center justify-center leading-none">
+                                  <div className="text-gray-600">TOT</div>
+                                  <div className="font-semibold">{pars.reduce((sum: number, par: number) => sum + par, 0)}</div>
+                                </div>
+                                {/* Bottom row: Score totals */}
+                                <div className="border-r border-gray-300 flex flex-col items-center justify-center leading-none" data-testid="front-nine-total">
+                                  <div className="text-gray-600">OUT</div>
+                                  <div className="font-medium">{lastRound.cappedScores.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                                </div>
+                                <div className="border-r border-gray-300 flex flex-col items-center justify-center leading-none" data-testid="back-nine-total">
+                                  <div className="text-gray-600">IN</div>
+                                  <div className="font-medium">{lastRound.cappedScores.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
+                                </div>
+                                <div className="flex flex-col items-center justify-center leading-none" data-testid="total-score">
+                                  <div className="text-gray-600">TOT</div>
+                                  <div className="font-semibold">{lastRound.cappedScores.reduce((sum: number, score: number) => sum + score, 0)}</div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   );
                 })()}
