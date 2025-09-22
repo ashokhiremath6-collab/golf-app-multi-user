@@ -53,6 +53,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Validate production environment variables BEFORE setting up routes/auth
+  if (app.get("env") === "production") {
+    const requiredEnvVars = ['DATABASE_URL', 'REPL_ID', 'REPLIT_DOMAINS', 'SESSION_SECRET'];
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      console.error(`Missing required environment variables for Replit authentication: ${missingVars.join(', ')}`);
+      console.error(`These variables are automatically provided by Replit in deployment environments.`);
+      process.exit(1);
+    }
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -71,17 +83,6 @@ app.use((req, res, next) => {
     await setupVite(app, server);
   } else {
     serveStatic(app);
-  }
-
-  // Validate production environment variables
-  if (app.get("env") === "production") {
-    const requiredEnvVars = ['DATABASE_URL'];
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
-    if (missingVars.length > 0) {
-      console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
-      process.exit(1);
-    }
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
