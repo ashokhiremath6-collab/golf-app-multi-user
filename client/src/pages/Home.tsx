@@ -169,9 +169,8 @@ export default function Home() {
                 <Badge variant="outline" data-testid="badge-tees">Blue Tees</Badge>
               </div>
               
-              {/* Professional Golf Scorecard */}
-              <div className="mb-4 flex-1 flex flex-col justify-center">
-                <div className="text-sm text-gray-600 mb-3 text-center">Full Scorecard:</div>
+              {/* Ultra-Compact Golf Scorecard */}
+              <div className="mb-2 flex-1 flex flex-col justify-center">
 {(() => {
                   if (!lastRound.cappedScores || lastRound.cappedScores.length !== 18) {
                     return (
