@@ -209,9 +209,10 @@ export default function Home() {
                           const par = pars[index];
                           const isOver = score > par;
                           const isUnder = score < par;
+                          const isOneOver = score === par + 1;
                           return (
                             <div key={index} className={`rounded px-0.5 py-1 border ${
-                              isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
+                              isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
                             }`} data-testid={`hole-${index + 1}-score`}>
                               <div className="font-bold text-xs">{score}</div>
                             </div>
@@ -251,9 +252,10 @@ export default function Home() {
                           const par = pars[index + 9];
                           const isOver = score > par;
                           const isUnder = score < par;
+                          const isOneOver = score === par + 1;
                           return (
                             <div key={index + 9} className={`rounded px-0.5 py-1 border ${
-                              isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
+                              isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
                             }`} data-testid={`hole-${index + 10}-score`}>
                               <div className="font-bold text-xs">{score}</div>
                             </div>
