@@ -217,6 +217,10 @@ export const insertPlayerSchema = createInsertSchema(players).omit({
 export const insertCourseSchema = createInsertSchema(courses).omit({
   id: true,
   createdAt: true,
+}).extend({
+  // Fix numeric fields to accept numbers instead of strings
+  rating: z.union([z.number(), z.string()]).transform(val => val?.toString()).optional(),
+  slope: z.union([z.number(), z.string()]).transform(val => val?.toString()).optional(),
 });
 
 export const insertHoleSchema = createInsertSchema(holes).omit({
