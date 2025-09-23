@@ -153,6 +153,37 @@ export default function CourseManagement() {
     },
   });
 
+  const ensureHolesMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      await apiRequest("POST", `/api/admin/courses/${courseId}/ensure-holes`);
+    },
+    onSuccess: (data, courseId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/courses", courseId, "holes"] });
+      toast({
+        title: "Success",
+        description: "Course holes fixed! The course now has 18 holes.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to fix course holes. Make sure you have admin permissions.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateHoleMutation = useMutation({
     mutationFn: async ({ id, ...data }: any) => {
       await apiRequest("PUT", `/api/holes/${id}`, data);
@@ -499,6 +530,17 @@ export default function CourseManagement() {
                   >
                     <i className="fas fa-eye mr-2"></i>
                     {selectedCourseId === course.id ? 'Hide' : 'View'} Holes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => ensureHolesMutation.mutate(course.id)}
+                    disabled={ensureHolesMutation.isPending}
+                    className="text-orange-600 hover:text-orange-700 hover:border-orange-300"
+                    data-testid={`button-fix-holes-${course.id}`}
+                  >
+                    <i className={`fas ${ensureHolesMutation.isPending ? 'fa-spinner fa-spin' : 'fa-tools'} mr-2`}></i>
+                    {ensureHolesMutation.isPending ? 'Fixing...' : 'Fix Holes'}
                   </Button>
                   <Button
                     variant="ghost"
