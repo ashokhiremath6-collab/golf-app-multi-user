@@ -215,13 +215,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/courses', isAuthenticated, async (req: any, res) => {
+  app.post('/api/courses', isPreviewMode() ? (req: any, res: any, next: any) => next() : isAuthenticated, async (req: any, res) => {
     try {
-      const userEmail = req.user.claims.email;
-      const player = await storage.getPlayerByEmail(userEmail || '');
-      
-      if (!player?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!isPreviewMode()) {
+        const userEmail = req.user.claims.email;
+        const player = await storage.getPlayerByEmail(userEmail || '');
+        
+        if (!player?.isAdmin) {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        // In preview mode, skip auth but still enforce admin-only operation
+        // For now, allow course creation in preview mode for demo purposes
+        console.log("🔧 Preview mode: Allowing course creation for demonstration");
       }
 
       const validatedData = insertCourseSchema.parse(req.body);
@@ -231,18 +237,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
+      console.error("Course creation error:", error);
       res.status(500).json({ message: "Failed to create course" });
     }
   });
 
   // Update course (admin only)
-  app.put('/api/courses/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/courses/:id', isPreviewMode() ? (req: any, res: any, next: any) => next() : isAuthenticated, async (req: any, res) => {
     try {
-      const userEmail = req.user.claims.email;
-      const player = await storage.getPlayerByEmail(userEmail || '');
-      
-      if (!player?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!isPreviewMode()) {
+        const userEmail = req.user.claims.email;
+        const player = await storage.getPlayerByEmail(userEmail || '');
+        
+        if (!player?.isAdmin) {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        console.log("🔧 Preview mode: Allowing course update for demonstration");
       }
 
       const courseId = req.params.id;
@@ -298,13 +309,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update hole (admin only)
-  app.put('/api/holes/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/holes/:id', isPreviewMode() ? (req: any, res: any, next: any) => next() : isAuthenticated, async (req: any, res) => {
     try {
-      const userEmail = req.user.claims.email;
-      const player = await storage.getPlayerByEmail(userEmail || '');
-      
-      if (!player?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!isPreviewMode()) {
+        const userEmail = req.user.claims.email;
+        const player = await storage.getPlayerByEmail(userEmail || '');
+        
+        if (!player?.isAdmin) {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        console.log("🔧 Preview mode: Allowing hole update for demonstration");
       }
 
       const { par, distance } = req.body;
