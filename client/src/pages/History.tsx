@@ -159,7 +159,7 @@ export default function History() {
             const isPar = score === par;
             return (
               <div key={index} className={`rounded px-0.5 py-0.5 border ${
-                isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
+                isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
               }`} data-testid={`hole-${index + 1}-score`}>
                 {isPar ? (
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-1 ring-gray-300 dark:ring-gray-500 font-bold text-xs leading-none mx-auto">
@@ -209,7 +209,7 @@ export default function History() {
             const isPar = score === par;
             return (
               <div key={index + 9} className={`rounded px-0.5 py-0.5 border ${
-                isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
+                isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
               }`} data-testid={`hole-${index + 10}-score`}>
                 {isPar ? (
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-1 ring-gray-300 dark:ring-gray-500 font-bold text-xs leading-none mx-auto">
