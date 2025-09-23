@@ -8,17 +8,8 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-// Validate all environment variables required for authentication setup
-function validateAuthEnvironment() {
-  const missingVars = [];
-  const requiredVars = ['REPL_ID', 'REPLIT_DOMAINS', 'SESSION_SECRET', 'DATABASE_URL'];
-  
-  for (const varName of requiredVars) {
-    if (!process.env[varName]) {
-      missingVars.push(varName);
-    }
-  }
-  return missingVars;
+if (!process.env.REPLIT_DOMAINS) {
+  throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
 const getOidcConfig = memoize(
@@ -77,14 +68,6 @@ async function upsertUser(
 }
 
 export async function setupAuth(app: Express) {
-  // Check for environment validation errors before proceeding - validate at call time
-  const environmentValidationErrors = validateAuthEnvironment();
-  if (environmentValidationErrors.length > 0) {
-    const errorMsg = `Missing required environment variables for Replit authentication: ${environmentValidationErrors.join(', ')}. These should be automatically provided by Replit in deployment environments.`;
-    console.error(errorMsg);
-    throw new Error(errorMsg);
-  }
-
   app.set("trust proxy", 1);
   app.use(getSession());
   app.use(passport.initialize());
