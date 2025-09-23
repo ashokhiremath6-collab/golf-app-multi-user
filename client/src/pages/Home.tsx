@@ -210,11 +210,18 @@ export default function Home() {
                           const isOver = score > par;
                           const isUnder = score < par;
                           const isOneOver = score === par + 1;
+                          const isPar = score === par;
                           return (
-                            <div key={index} className={`rounded px-0.5 py-1 border ${
+                            <div key={index} className={`rounded px-0.5 py-0.5 border ${
                               isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
                             }`} data-testid={`hole-${index + 1}-score`}>
-                              <div className="font-bold text-xs">{score}</div>
+                              {isPar ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-1 ring-gray-300 dark:ring-gray-500 font-bold text-xs leading-none mx-auto">
+                                  {score}
+                                </span>
+                              ) : (
+                                <div className="font-bold text-xs">{score}</div>
+                              )}
                             </div>
                           );
                         })}
@@ -253,11 +260,18 @@ export default function Home() {
                           const isOver = score > par;
                           const isUnder = score < par;
                           const isOneOver = score === par + 1;
+                          const isPar = score === par;
                           return (
-                            <div key={index + 9} className={`rounded px-0.5 py-1 border ${
+                            <div key={index + 9} className={`rounded px-0.5 py-0.5 border ${
                               isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-50 text-green-700' : 'bg-white'
                             }`} data-testid={`hole-${index + 10}-score`}>
-                              <div className="font-bold text-xs">{score}</div>
+                              {isPar ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-1 ring-gray-300 dark:ring-gray-500 font-bold text-xs leading-none mx-auto">
+                                  {score}
+                                </span>
+                              ) : (
+                                <div className="font-bold text-xs">{score}</div>
+                              )}
                             </div>
                           );
                         })}
