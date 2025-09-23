@@ -25,10 +25,24 @@ const handicapRecalcSchema = z.object({
   month: z.string().optional(),
 });
 
-// Preview mode middleware to block write operations
+// Preview mode middleware to block write operations (except admin operations)
 const isPreviewWriteBlocked = (req: any, res: any, next: any) => {
   if (isPreviewMode() && req.method !== 'GET') {
-    return res.status(403).json({ message: "Preview mode: write operations disabled" });
+    // Allow admin operations to proceed even in preview mode
+    const adminRoutes = [
+      '/api/courses',
+      '/api/holes',
+      '/api/players',
+      '/api/rounds',
+      '/api/import',
+      '/api/handicaps'
+    ];
+    
+    const isAdminRoute = adminRoutes.some(route => req.path.startsWith(route));
+    
+    if (!isAdminRoute) {
+      return res.status(403).json({ message: "Preview mode: write operations disabled" });
+    }
   }
   next();
 };
