@@ -173,10 +173,10 @@ export default function Home() {
               <div className="mb-4 flex-1 flex flex-col justify-center">
                 <div className="text-sm text-gray-600 mb-3 text-center">Full Scorecard:</div>
                 
-                {/* Use default par values */}
+                {/* Use correct par values */}
                 {(() => {
-                  const defaultPars = [4, 4, 3, 4, 5, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5, 3, 4];
-                  const pars = defaultPars;
+                  const correctPars = [4, 3, 4, 4, 4, 3, 5, 3, 4, 3, 4, 3, 3, 3, 4, 3, 5, 3];
+                  const pars = correctPars;
                   
                   return (
                     <div>

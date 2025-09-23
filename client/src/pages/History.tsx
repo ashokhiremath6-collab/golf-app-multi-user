@@ -120,9 +120,9 @@ export default function History() {
       );
     }
 
-    // Use default par values (will be updated to real data later)
-    const defaultPars = [4, 4, 3, 4, 5, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5, 3, 4];
-    const pars = defaultPars;
+    // Use correct par values
+    const correctPars = [4, 3, 4, 4, 4, 3, 5, 3, 4, 3, 4, 3, 3, 3, 4, 3, 5, 3];
+    const pars = correctPars;
 
     return (
       <div className="mb-2">
