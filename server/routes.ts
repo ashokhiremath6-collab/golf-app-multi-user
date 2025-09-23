@@ -6,7 +6,7 @@ import { handicapService } from "./services/handicapService";
 import { importService } from "./services/importService";
 import { calculateRoundScores } from "./services/golfCalculations";
 import { z } from "zod";
-import { insertPlayerSchema, insertCourseSchema, insertHoleSchema, insertRoundSchema } from "@shared/schema";
+import { insertPlayerSchema, insertCourseSchema, insertHoleSchema, insertRoundSchema, type InsertHole } from "@shared/schema";
 import { isPreviewMode, createPreviewResponse } from "./previewMode";
 
 // Validation schemas
@@ -336,6 +336,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating hole:', error);
       res.status(500).json({ message: "Failed to update hole" });
+    }
+  });
+
+  // Admin endpoint to ensure a course has 18 holes
+  app.post('/api/admin/courses/:courseId/ensure-holes', isAuthenticated, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const userEmail = req.user.claims.email;
+      const authenticatedPlayer = await storage.getPlayerByEmail(userEmail || '');
+      
+      if (!authenticatedPlayer?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const courseId = req.params.courseId;
+      
+      // Verify course exists
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // Check current holes count
+      const existingHoles = await storage.getHolesByCourse(courseId);
+      
+      if (existingHoles.length === 18) {
+        return res.json({ 
+          message: "Course already has 18 holes", 
+          count: 18,
+          holes: existingHoles.sort((a, b) => a.number - b.number)
+        });
+      }
+
+      // Remove any existing holes and create 18 default holes
+      await storage.deleteHolesByCourse(courseId);
+      
+      // Create 18 holes with default par layout
+      const defaultHoles: InsertHole[] = Array.from({ length: 18 }, (_, i) => {
+        // Default par layout: mix of par 3s, 4s, and 5s
+        const defaultPars = [4, 3, 4, 5, 4, 3, 4, 4, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5];
+        return {
+          courseId: courseId,
+          number: i + 1,
+          par: defaultPars[i],
+          distance: 400, // Default distance
+        };
+      });
+      
+      const newHoles = await storage.createHoles(defaultHoles);
+      
+      res.json({ 
+        message: "Successfully ensured 18 holes for course",
+        count: newHoles.length,
+        holes: newHoles.sort((a, b) => a.number - b.number)
+      });
+    } catch (error) {
+      console.error('Error ensuring course holes:', error);
+      res.status(500).json({ message: "Failed to ensure course holes" });
     }
   });
 
