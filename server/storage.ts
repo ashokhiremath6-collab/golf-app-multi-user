@@ -165,6 +165,21 @@ export class DatabaseStorage implements IStorage {
 
   async createCourse(course: InsertCourse): Promise<Course> {
     const [created] = await db.insert(courses).values(course).returning();
+    
+    // Automatically create 18 holes with default par values for the new course
+    const defaultHoles: InsertHole[] = Array.from({ length: 18 }, (_, i) => {
+      // Default par layout: mix of par 3s, 4s, and 5s
+      const defaultPars = [4, 3, 4, 5, 4, 3, 4, 4, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5];
+      return {
+        courseId: created.id,
+        number: i + 1,
+        par: defaultPars[i],
+        distance: 400, // Default distance
+      };
+    });
+    
+    await this.createHoles(defaultHoles);
+    
     return created;
   }
 
