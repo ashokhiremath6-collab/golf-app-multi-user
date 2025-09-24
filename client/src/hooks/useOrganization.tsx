@@ -56,9 +56,22 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const orgSlug = getOrgSlugFromPath(location);
     
-    if (!orgSlug || organizations.length === 0) {
+    // If no orgSlug in URL, don't set anything
+    if (!orgSlug) {
       setCurrentOrganization(null);
       setError(null);
+      return;
+    }
+
+    // If organizations are still loading, wait
+    if (organizations.length === 0 && !orgsLoading) {
+      setCurrentOrganization(null);
+      setError(`No organizations available`);
+      return;
+    }
+
+    // Wait for organizations to load before checking
+    if (organizations.length === 0) {
       return;
     }
 
@@ -70,7 +83,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       setCurrentOrganization(null);
       setError(`Organization "${orgSlug}" not found`);
     }
-  }, [location, organizations]);
+  }, [location, organizations, orgsLoading]);
 
   const value: OrganizationContextType = {
     currentOrganization,

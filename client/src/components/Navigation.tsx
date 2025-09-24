@@ -19,10 +19,12 @@ export default function Navigation() {
   
   // Get organization slug for URL building
   const orgSlug = currentOrganization?.slug || '';
+  
 
   const { data: players } = useQuery<any[]>({
     queryKey: ["/api/players"],
     retry: false,
+    enabled: !!orgSlug, // Only fetch if we have an organization
   });
 
   const currentPlayer = players?.find((p: any) => p.email === (user as any)?.email);
@@ -30,6 +32,11 @@ export default function Navigation() {
   const handleLogout = () => {
     window.location.href = '/api/logout';
   };
+
+  // Don't render navigation if we don't have an organization slug yet
+  if (!orgSlug) {
+    return null;
+  }
 
   const navItems = [
     { path: `/${orgSlug}`, label: 'Home', icon: 'fas fa-home' },
@@ -42,7 +49,6 @@ export default function Navigation() {
   ];
 
   const handleNavigation = (path: string) => {
-    console.log('Navigation attempt:', path, 'Current location:', location);
     try {
       setLocation(path);
     } catch (error) {
