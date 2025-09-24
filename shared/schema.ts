@@ -86,7 +86,7 @@ export const courses = pgTable("courses", {
 // Holes table
 export const holes = pgTable("holes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  courseId: uuid("course_id").references(() => courses.id, { onDelete: "cascade" }).notNull(),
   number: integer("number").notNull(),
   par: integer("par").notNull(),
   distance: integer("distance"),
@@ -97,8 +97,8 @@ export const holes = pgTable("holes", {
 // Rounds table
 export const rounds = pgTable("rounds", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  playerId: uuid("player_id").references(() => players.id).notNull(),
-  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  playerId: uuid("player_id").references(() => players.id, { onDelete: "cascade" }).notNull(),
+  courseId: uuid("course_id").references(() => courses.id, { onDelete: "cascade" }).notNull(),
   playedOn: date("played_on").notNull(),
   rawScores: integer("raw_scores").array().notNull(),
   cappedScores: integer("capped_scores").array().notNull(),
@@ -114,7 +114,7 @@ export const rounds = pgTable("rounds", {
 // Handicap snapshots table
 export const handicapSnapshots = pgTable("handicap_snapshots", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  playerId: uuid("player_id").references(() => players.id).notNull(),
+  playerId: uuid("player_id").references(() => players.id, { onDelete: "cascade" }).notNull(),
   month: text("month").notNull(), // YYYY-MM format
   prevHandicap: integer("prev_handicap").notNull(),
   roundsCount: integer("rounds_count").notNull(),
@@ -127,7 +127,7 @@ export const handicapSnapshots = pgTable("handicap_snapshots", {
 // Monthly leaderboard snapshots table
 export const monthlyLeaderboards = pgTable("monthly_leaderboards", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  playerId: uuid("player_id").references(() => players.id).notNull(),
+  playerId: uuid("player_id").references(() => players.id, { onDelete: "cascade" }).notNull(),
   month: text("month").notNull(), // YYYY-MM format
   playerName: text("player_name").notNull(),
   roundsCount: integer("rounds_count").notNull(),
@@ -145,14 +145,14 @@ export const monthlyLeaderboards = pgTable("monthly_leaderboards", {
 export const monthlyWinners = pgTable("monthly_winners", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   month: text("month").notNull(), // YYYY-MM format
-  winnerId: uuid("winner_id").references(() => players.id).notNull(),
+  winnerId: uuid("winner_id").references(() => players.id, { onDelete: "cascade" }).notNull(),
   winnerName: text("winner_name").notNull(),
   winnerScore: numeric("winner_score").notNull(),
-  runnerUpId: uuid("runner_up_id").references(() => players.id),
+  runnerUpId: uuid("runner_up_id").references(() => players.id, { onDelete: "set null" }),
   runnerUpName: text("runner_up_name"),
   runnerUpScore: numeric("runner_up_score"),
   announcedAt: timestamp("announced_at").defaultNow(),
-  announcedBy: uuid("announced_by").references(() => players.id),
+  announcedBy: uuid("announced_by").references(() => players.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
