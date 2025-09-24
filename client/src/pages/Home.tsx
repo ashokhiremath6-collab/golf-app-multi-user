@@ -38,31 +38,31 @@ export default function Home() {
 
   // Only fetch data if we have an organization context
   const { data: players, isLoading: playersLoading } = useQuery({
-    queryKey: ["/api/players", currentOrganization?.id],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/players`],
     enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
-    queryKey: ["/api/courses", currentOrganization?.id],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
     enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: recentRounds, isLoading: roundsLoading } = useQuery({
-    queryKey: ["/api/rounds", currentOrganization?.id],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`],
     enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
-    queryKey: ["/api/leaderboard", currentOrganization?.id],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`],
     enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: handicapSnapshots } = useQuery({
-    queryKey: ["/api/handicaps/snapshots", currentOrganization?.id],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/handicaps/snapshots`],
     enabled: !!currentOrganization?.id,
     retry: false,
   });

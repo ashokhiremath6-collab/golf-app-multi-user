@@ -155,10 +155,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = insertOrganizationSchema.parse(req.body);
-      const newOrg = await storage.createOrganization({
+      // Set createdById from authenticated user
+      const orgDataWithCreator = {
         ...validatedData,
-        createdById: userId,
-      });
+        createdById: userId
+      };
+      const newOrg = await storage.createOrganization(orgDataWithCreator);
       
       res.status(201).json(newOrg);
     } catch (error) {
@@ -259,11 +261,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Super admin access required" });
       }
 
-      const validatedData = insertOrganizationAdminSchema.parse(req.body);
-      const newAdmin = await storage.addOrganizationAdmin({
-        ...validatedData,
+      // Parse request body (without organizationId since schema omits it)
+      const bodyData = insertOrganizationAdminSchema.parse(req.body);
+      
+      // Add organizationId from route parameter (secure, can't be spoofed)
+      const validatedData = {
+        ...bodyData,
         organizationId,
-      });
+      };
+      const newAdmin = await storage.addOrganizationAdmin(validatedData);
       
       res.status(201).json(newAdmin);
     } catch (error) {
@@ -358,8 +364,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Player routes
-  app.get('/api/players', async (req, res) => {
+  app.get('/api/players', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global players list
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global player data" });
+      }
+
       const players = await storage.getAllPlayers();
       res.json(createPreviewResponse(players));
     } catch (error) {
@@ -367,12 +381,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/players/:id', async (req, res) => {
+  // Organization-scoped players endpoint
+  app.get('/api/organizations/:organizationId/players', isAuthenticated, async (req: any, res) => {
     try {
-      const player = await storage.getPlayer(req.params.id);
+      const { organizationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user has access to this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      // Super admins can access any organization for oversight
+      if (!isSuperAdmin) {
+        // For non-super admins, check org admin or player membership
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, organizationId);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+      }
+
+      const players = await storage.getAllPlayers(organizationId);
+      
+      // Return player data - all authenticated org members can see players
+      // (needed for leaderboards, handicaps, and golf functionality)
+      res.json(createPreviewResponse(players));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch players" });
+    }
+  });
+
+  app.get('/api/players/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const playerId = req.params.id;
+      
+      // Get the player to check their organization
+      const player = await storage.getPlayer(playerId);
       if (!player) {
         return res.status(404).json({ message: "Player not found" });
       }
+      
+      // Check if user has access to this player's organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      // Super admins can access any player for oversight
+      if (!isSuperAdmin) {
+        // For non-super admins, check org admin or player membership
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, player.organizationId!);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, player.organizationId!);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this player" });
+        }
+      }
+      
       res.json(createPreviewResponse(player));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch player" });
@@ -437,8 +502,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Course routes
-  app.get('/api/courses', async (req, res) => {
+  app.get('/api/courses', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global courses list
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global course data" });
+      }
+
       const courses = await storage.getAllCourses();
       res.json(courses);
     } catch (error) {
@@ -446,26 +519,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/courses/:id', async (req, res) => {
+  // Organization-scoped courses endpoint
+  app.get('/api/organizations/:organizationId/courses', isAuthenticated, async (req: any, res) => {
     try {
-      const course = await storage.getCourse(req.params.id);
+      const { organizationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user has access to this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      // Super admins can access any organization for oversight
+      if (!isSuperAdmin) {
+        // For non-super admins, check org admin or player membership
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, organizationId);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+      }
+
+      const courses = await storage.getAllCourses(organizationId);
+      res.json(courses);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+
+  app.get('/api/courses/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const courseId = req.params.id;
+      
+      // Get the course to check its organization
+      const course = await storage.getCourse(courseId);
       if (!course) {
         return res.status(404).json({ message: "Course not found" });
       }
+      
+      // Check if user has access to this course's organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      // Super admins can access any course for oversight
+      if (!isSuperAdmin) {
+        // For non-super admins, check org admin or player membership
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, course.organizationId!);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, course.organizationId!);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this course" });
+        }
+      }
+      
       res.json(course);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch course" });
     }
   });
 
-  app.get('/api/courses/:id/holes', async (req, res) => {
+  app.get('/api/courses/:id/holes', isAuthenticated, async (req: any, res) => {
     try {
-      console.log("🏌️ SERVER DEBUG - Course ID:", req.params.id);
-      const holes = await storage.getHolesByCourse(req.params.id);
-      console.log("🏌️ SERVER DEBUG - Holes from DB:", holes.slice(0, 5).map(h => ({hole: h.number, par: h.par})));
+      const userId = req.user.claims.sub;
+      const courseId = req.params.id;
+      
+      // Get the course to check its organization
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      // Check if user has access to this course's organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, course.organizationId!);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, course.organizationId!);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this course" });
+        }
+      }
+      
+      const holes = await storage.getHolesByCourse(courseId);
       res.json(holes);
     } catch (error) {
-      console.error("🏌️ SERVER ERROR:", error);
       res.status(500).json({ message: "Failed to fetch holes" });
     }
   });
@@ -665,6 +805,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       } else {
         rounds = await storage.getAllRounds(month as string | undefined);
+      }
+      
+      res.json(rounds);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch rounds" });
+    }
+  });
+
+  // Organization-scoped rounds endpoint
+  app.get('/api/organizations/:organizationId/rounds', isAuthenticated, async (req: any, res) => {
+    try {
+      const { organizationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user has access to this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      // Super admins can access any organization for oversight
+      if (!isSuperAdmin) {
+        // For non-super admins, check org admin or player membership
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, organizationId);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+      }
+
+      const { month, playerId } = req.query;
+      let rounds;
+      
+      if (playerId) {
+        rounds = await storage.getRoundsByPlayer(
+          playerId as string, 
+          month as string | undefined,
+          organizationId
+        );
+      } else {
+        rounds = await storage.getAllRounds(month as string | undefined, organizationId);
       }
       
       res.json(rounds);
@@ -896,6 +1076,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization-scoped leaderboard endpoint
+  app.get('/api/organizations/:organizationId/leaderboard', isAuthenticated, async (req: any, res) => {
+    try {
+      const { organizationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user has access to this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      // Super admins can access any organization for oversight
+      if (!isSuperAdmin) {
+        // For non-super admins, check org admin or player membership
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, organizationId);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+      }
+
+      const leaderboard = await storage.getLeaderboard(organizationId);
+      res.json(leaderboard);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
   // Monthly leaderboard endpoints
   app.get('/api/leaderboard/monthly/:month', async (req, res) => {
     try {
@@ -1107,6 +1315,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/handicaps/snapshots', async (req, res) => {
     try {
       const snapshots = await storage.getAllHandicapSnapshots();
+      res.json(createPreviewResponse(snapshots));
+    } catch (error) {
+      console.error('Error fetching handicap snapshots:', error);
+      res.status(500).json({ message: "Failed to fetch handicap snapshots" });
+    }
+  });
+
+  // Organization-scoped handicap snapshots endpoint
+  app.get('/api/organizations/:organizationId/handicaps/snapshots', isAuthenticated, async (req: any, res) => {
+    try {
+      const { organizationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user has access to this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      // Super admins can access any organization for oversight
+      if (!isSuperAdmin) {
+        // For non-super admins, check org admin or player membership
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, organizationId);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+      }
+
+      const snapshots = await storage.getAllHandicapSnapshots(organizationId);
       res.json(createPreviewResponse(snapshots));
     } catch (error) {
       console.error('Error fetching handicap snapshots:', error);

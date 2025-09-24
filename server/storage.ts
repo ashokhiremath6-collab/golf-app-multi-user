@@ -82,8 +82,8 @@ export interface IStorage {
   
   // Round operations
   getRound(id: string): Promise<Round | undefined>;
-  getRoundsByPlayer(playerId: string, month?: string): Promise<any[]>;
-  getAllRounds(month?: string): Promise<any[]>;
+  getRoundsByPlayer(playerId: string, month?: string, organizationId?: string): Promise<any[]>;
+  getAllRounds(month?: string, organizationId?: string): Promise<any[]>;
   createRound(round: InsertRound): Promise<Round>;
   updateRound(id: string, round: Partial<InsertRound>): Promise<Round>;
   deleteRound(id: string): Promise<void>;
@@ -91,11 +91,11 @@ export interface IStorage {
   // Handicap snapshot operations
   getHandicapSnapshots(playerId: string): Promise<HandicapSnapshot[]>;
   getHandicapSnapshotByMonth(playerId: string, month: string): Promise<HandicapSnapshot | undefined>;
-  getAllHandicapSnapshots(): Promise<any[]>;
+  getAllHandicapSnapshots(organizationId?: string): Promise<any[]>;
   createHandicapSnapshot(snapshot: InsertHandicapSnapshot): Promise<HandicapSnapshot>;
   
   // Leaderboard operations
-  getLeaderboard(): Promise<any[]>;
+  getLeaderboard(organizationId?: string): Promise<any[]>;
   getMonthlyLeaderboard(month: string): Promise<any[]>;
   getCumulativeLeaderboard(): Promise<any[]>;
   
@@ -286,6 +286,19 @@ export class DatabaseStorage implements IStorage {
     return player;
   }
 
+  async getPlayerByUserIdAndOrganization(userId: string, organizationId: string): Promise<Player | undefined> {
+    const [player] = await db.select().from(players)
+      .where(
+        and(
+          eq(players.linkedUserId, userId),
+          eq(players.organizationId, organizationId)
+        )
+      )
+      .orderBy(asc(players.createdAt)) // Ensure deterministic result
+      .limit(1);
+    return player;
+  }
+
   async getAllPlayers(organizationId?: string): Promise<Player[]> {
     if (organizationId) {
       return await db
@@ -449,10 +462,20 @@ export class DatabaseStorage implements IStorage {
     return round;
   }
 
-  async getRoundsByPlayer(playerId: string, month?: string): Promise<any[]> {
+  async getRoundsByPlayer(playerId: string, month?: string, organizationId?: string): Promise<any[]> {
     let rawRounds;
     
     if (month) {
+      let whereConditions = [
+        eq(rounds.playerId, playerId),
+        sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
+      ];
+      
+      // Add organization filter if provided
+      if (organizationId) {
+        whereConditions.push(eq(players.organizationId, organizationId));
+      }
+      
       rawRounds = await db
         .select({
           id: rounds.id,
@@ -477,14 +500,17 @@ export class DatabaseStorage implements IStorage {
         })
         .from(rounds)
         .leftJoin(courses, eq(rounds.courseId, courses.id))
-        .where(
-          and(
-            eq(rounds.playerId, playerId),
-            sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
-          )
-        )
+        .leftJoin(players, eq(rounds.playerId, players.id))
+        .where(and(...whereConditions))
         .orderBy(desc(rounds.playedOn));
     } else {
+      let whereConditions = [eq(rounds.playerId, playerId)];
+      
+      // Add organization filter if provided
+      if (organizationId) {
+        whereConditions.push(eq(players.organizationId, organizationId));
+      }
+      
       rawRounds = await db
         .select({
           id: rounds.id,
@@ -509,7 +535,8 @@ export class DatabaseStorage implements IStorage {
         })
         .from(rounds)
         .leftJoin(courses, eq(rounds.courseId, courses.id))
-        .where(eq(rounds.playerId, playerId))
+        .leftJoin(players, eq(rounds.playerId, players.id))
+        .where(and(...whereConditions))
         .orderBy(desc(rounds.playedOn));
     }
 
@@ -542,9 +569,16 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getAllRounds(month?: string): Promise<any[]> {
+  async getAllRounds(month?: string, organizationId?: string): Promise<any[]> {
     if (month) {
-      return await db
+      let whereConditions = [sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`];
+      
+      // Add organization filter if provided
+      if (organizationId) {
+        whereConditions.push(eq(players.organizationId, organizationId));
+      }
+      
+      let query = db
         .select({
           id: rounds.id,
           playerId: rounds.playerId,
@@ -567,14 +601,23 @@ export class DatabaseStorage implements IStorage {
           },
         })
         .from(rounds)
-        .leftJoin(courses, eq(rounds.courseId, courses.id))
-        .where(
-          sql`date_trunc('month', ${rounds.playedOn}) = ${month + '-01'}::date`
-        )
-        .orderBy(desc(rounds.playedOn));
+        .leftJoin(courses, eq(rounds.courseId, courses.id));
+        
+      // Only add players join if we need organization filtering
+      if (organizationId) {
+        query = query.leftJoin(players, eq(rounds.playerId, players.id));
+      }
+      
+      // Only use and() when we have conditions
+      if (whereConditions.length > 0) {
+        query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions));
+      }
+      
+      return await query.orderBy(desc(rounds.playedOn));
     }
 
-    return await db
+    // Build query for all rounds
+    let query = db
       .select({
         id: rounds.id,
         playerId: rounds.playerId,
@@ -597,8 +640,15 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .from(rounds)
-      .leftJoin(courses, eq(rounds.courseId, courses.id))
-      .orderBy(desc(rounds.playedOn));
+      .leftJoin(courses, eq(rounds.courseId, courses.id));
+
+    // Only add players join and organization filter if provided
+    if (organizationId) {
+      query = query.leftJoin(players, eq(rounds.playerId, players.id));
+      query = query.where(eq(players.organizationId, organizationId));
+    }
+
+    return await query.orderBy(desc(rounds.playedOn));
   }
 
   async createRound(round: InsertRound): Promise<Round> {
@@ -646,8 +696,8 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getAllHandicapSnapshots(): Promise<any[]> {
-    const result = await db
+  async getAllHandicapSnapshots(organizationId?: string): Promise<any[]> {
+    let query = db
       .select({
         id: handicapSnapshots.id,
         playerId: handicapSnapshots.playerId,
@@ -661,15 +711,20 @@ export class DatabaseStorage implements IStorage {
         createdAt: handicapSnapshots.createdAt,
       })
       .from(handicapSnapshots)
-      .leftJoin(players, eq(handicapSnapshots.playerId, players.id))
-      .orderBy(desc(handicapSnapshots.createdAt));
+      .leftJoin(players, eq(handicapSnapshots.playerId, players.id));
+
+    if (organizationId) {
+      query = query.where(eq(players.organizationId, organizationId));
+    }
+
+    const result = await query.orderBy(desc(handicapSnapshots.createdAt));
     
     return result;
   }
 
   // Leaderboard operations
-  async getLeaderboard(): Promise<any[]> {
-    const result = await db
+  async getLeaderboard(organizationId?: string): Promise<any[]> {
+    let query = db
       .select({
         playerId: players.id,
         playerName: players.name,
@@ -689,7 +744,13 @@ export class DatabaseStorage implements IStorage {
       })
       .from(players)
       .leftJoin(rounds, eq(players.id, rounds.playerId))
-      .leftJoin(courses, eq(rounds.courseId, courses.id))
+      .leftJoin(courses, eq(rounds.courseId, courses.id));
+
+    if (organizationId) {
+      query = query.where(eq(players.organizationId, organizationId));
+    }
+
+    const result = await query
       .groupBy(players.id, players.name, players.currentHandicap)
       .orderBy(sql`
         AVG(CASE 
