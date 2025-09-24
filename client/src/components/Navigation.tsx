@@ -41,6 +41,17 @@ export default function Navigation() {
     ...(isSuperAdmin ? [{ path: '/super-admin', label: 'Super Admin', icon: 'fas fa-shield-alt' }] : []),
   ];
 
+  const handleNavigation = (path: string) => {
+    console.log('Navigation attempt:', path);
+    try {
+      setLocation(path);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback: force page navigation
+      window.location.href = path;
+    }
+  };
+
   return (
     <>
       {/* Desktop Navigation */}
@@ -87,7 +98,7 @@ export default function Navigation() {
             {navItems.map((item) => (
               <button
                 key={item.path}
-                onClick={() => setLocation(item.path)}
+                onClick={() => handleNavigation(item.path)}
                 className={`py-4 px-2 border-b-2 font-medium whitespace-nowrap ${
                   location === item.path
                     ? 'border-golf-green text-golf-green'
@@ -106,10 +117,10 @@ export default function Navigation() {
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 sm:hidden z-50" data-testid="nav-mobile">
         <div className="flex justify-around py-2">
-          {navItems.filter(item => item.path !== '/admin').map((item) => (
+          {navItems.filter(item => !item.path.includes('/admin')).map((item) => (
             <button
               key={item.path}
-              onClick={() => setLocation(item.path)}
+              onClick={() => handleNavigation(item.path)}
               className={`flex flex-col items-center py-2 px-4 ${
                 location === item.path ? 'text-golf-green font-bold' : 'text-gray-700 font-semibold'
               }`}
