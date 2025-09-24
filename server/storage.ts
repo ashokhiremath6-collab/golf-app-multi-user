@@ -8,6 +8,8 @@ import {
   monthlyLeaderboards,
   monthlyWinners,
   seasonSettings,
+  organizations,
+  organizationAdmins,
   type User,
   type UpsertUser,
   type Player,
@@ -21,6 +23,10 @@ import {
   type HandicapSnapshot,
   type InsertHandicapSnapshot,
   type SeasonSettings,
+  type Organization,
+  type InsertOrganization,
+  type OrganizationAdmin,
+  type InsertOrganizationAdmin,
   insertMonthlyLeaderboardSchema,
   insertMonthlyWinnerSchema,
 } from "@shared/schema";
@@ -33,21 +39,38 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   
-  // Player operations
+  // Organization operations
+  getOrganization(id: string): Promise<Organization | undefined>;
+  getOrganizationBySlug(slug: string): Promise<Organization | undefined>;
+  getAllOrganizations(): Promise<Organization[]>;
+  createOrganization(org: InsertOrganization): Promise<Organization>;
+  updateOrganization(id: string, org: Partial<InsertOrganization>): Promise<Organization>;
+  deleteOrganization(id: string): Promise<void>;
+  
+  // Organization admin operations
+  getOrganizationAdmins(organizationId: string): Promise<any[]>;
+  addOrganizationAdmin(admin: InsertOrganizationAdmin): Promise<OrganizationAdmin>;
+  removeOrganizationAdmin(organizationId: string, userId: string): Promise<void>;
+  getUserOrganizations(userId: string): Promise<Organization[]>;
+  isUserSuperAdmin(userId: string): Promise<boolean>;
+  isUserOrganizationAdmin(userId: string, organizationId: string): Promise<boolean>;
+  
+  // Player operations (organization-scoped)
   getPlayer(id: string): Promise<Player | undefined>;
   getPlayerByEmail(email: string): Promise<Player | undefined>;
-  getAllPlayers(): Promise<Player[]>;
+  getAllPlayers(organizationId?: string): Promise<Player[]>;
   createPlayer(player: InsertPlayer): Promise<Player>;
   updatePlayer(id: string, player: Partial<InsertPlayer>): Promise<Player>;
   deletePlayer(id: string): Promise<void>;
   
-  // Course operations
+  // Course operations (organization-scoped)
   getCourse(id: string): Promise<Course | undefined>;
-  getCourseByName(name: string): Promise<Course | undefined>;
-  getAllCourses(): Promise<Course[]>;
+  getCourseByName(name: string, organizationId?: string): Promise<Course | undefined>;
+  getAllCourses(organizationId?: string): Promise<Course[]>;
   createCourse(course: InsertCourse): Promise<Course>;
   updateCourse(id: string, course: Partial<InsertCourse>): Promise<Course>;
   deleteCourse(id: string): Promise<void>;
+  copyCourseToOrganization(courseId: string, targetOrganizationId: string): Promise<Course>;
   
   // Hole operations
   getHolesByCourse(courseId: string): Promise<Hole[]>;
@@ -88,9 +111,10 @@ export interface IStorage {
   getPlayerMonthlyStats(playerId: string, month: string): Promise<any>;
   getPlayerCumulativeStats(playerId: string): Promise<any>;
   
-  // Season settings
-  getSeasonSettings(): Promise<SeasonSettings>;
-  updateSeasonSettings(settings: Partial<SeasonSettings>): Promise<SeasonSettings>;
+  // Season settings (organization-scoped)
+  getSeasonSettings(organizationId?: string): Promise<SeasonSettings>;
+  updateSeasonSettings(settings: Partial<SeasonSettings>, organizationId?: string): Promise<SeasonSettings>;
+  createSeasonSettingsForOrganization(organizationId: string): Promise<SeasonSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -115,6 +139,112 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  // Organization operations
+  async getOrganization(id: string): Promise<Organization | undefined> {
+    const [org] = await db.select().from(organizations).where(eq(organizations.id, id));
+    return org;
+  }
+
+  async getOrganizationBySlug(slug: string): Promise<Organization | undefined> {
+    const [org] = await db.select().from(organizations).where(eq(organizations.slug, slug));
+    return org;
+  }
+
+  async getAllOrganizations(): Promise<Organization[]> {
+    return await db.select().from(organizations).orderBy(asc(organizations.name));
+  }
+
+  async createOrganization(orgData: InsertOrganization): Promise<Organization> {
+    const [org] = await db.insert(organizations).values(orgData).returning();
+    
+    // Create default season settings for the new organization
+    await this.createSeasonSettingsForOrganization(org.id);
+    
+    return org;
+  }
+
+  async updateOrganization(id: string, orgData: Partial<InsertOrganization>): Promise<Organization> {
+    const [updated] = await db
+      .update(organizations)
+      .set({ ...orgData, updatedAt: new Date() })
+      .where(eq(organizations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteOrganization(id: string): Promise<void> {
+    // Note: This should cascade delete related data based on foreign key constraints
+    await db.delete(organizations).where(eq(organizations.id, id));
+  }
+
+  // Organization admin operations
+  async getOrganizationAdmins(organizationId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: organizationAdmins.id,
+        organizationId: organizationAdmins.organizationId,
+        userId: organizationAdmins.userId,
+        userEmail: users.email,
+        userName: users.email,
+        createdAt: organizationAdmins.createdAt,
+      })
+      .from(organizationAdmins)
+      .leftJoin(users, eq(organizationAdmins.userId, users.id))
+      .where(eq(organizationAdmins.organizationId, organizationId))
+      .orderBy(asc(users.email));
+  }
+
+  async addOrganizationAdmin(adminData: InsertOrganizationAdmin): Promise<OrganizationAdmin> {
+    const [admin] = await db.insert(organizationAdmins).values(adminData).returning();
+    return admin;
+  }
+
+  async removeOrganizationAdmin(organizationId: string, userId: string): Promise<void> {
+    await db
+      .delete(organizationAdmins)
+      .where(
+        and(
+          eq(organizationAdmins.organizationId, organizationId),
+          eq(organizationAdmins.userId, userId)
+        )
+      );
+  }
+
+  async getUserOrganizations(userId: string): Promise<Organization[]> {
+    return await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        slug: organizations.slug,
+        isParent: organizations.isParent,
+        createdById: organizations.createdById,
+        createdAt: organizations.createdAt,
+        updatedAt: organizations.updatedAt,
+      })
+      .from(organizationAdmins)
+      .leftJoin(organizations, eq(organizationAdmins.organizationId, organizations.id))
+      .where(eq(organizationAdmins.userId, userId))
+      .orderBy(asc(organizations.name)) as Organization[];
+  }
+
+  async isUserSuperAdmin(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    return user?.isSuperAdmin || false;
+  }
+
+  async isUserOrganizationAdmin(userId: string, organizationId: string): Promise<boolean> {
+    const [admin] = await db
+      .select()
+      .from(organizationAdmins)
+      .where(
+        and(
+          eq(organizationAdmins.userId, userId),
+          eq(organizationAdmins.organizationId, organizationId)
+        )
+      );
+    return !!admin;
+  }
+
   // Player operations
   async getPlayer(id: string): Promise<Player | undefined> {
     const [player] = await db.select().from(players).where(eq(players.id, id));
@@ -126,7 +256,14 @@ export class DatabaseStorage implements IStorage {
     return player;
   }
 
-  async getAllPlayers(): Promise<Player[]> {
+  async getAllPlayers(organizationId?: string): Promise<Player[]> {
+    if (organizationId) {
+      return await db
+        .select()
+        .from(players)
+        .where(eq(players.organizationId, organizationId))
+        .orderBy(asc(players.name));
+    }
     return await db.select().from(players).orderBy(asc(players.name));
   }
 
@@ -154,12 +291,26 @@ export class DatabaseStorage implements IStorage {
     return course;
   }
 
-  async getCourseByName(name: string): Promise<Course | undefined> {
+  async getCourseByName(name: string, organizationId?: string): Promise<Course | undefined> {
+    if (organizationId) {
+      const [course] = await db
+        .select()
+        .from(courses)
+        .where(and(eq(courses.name, name), eq(courses.organizationId, organizationId)));
+      return course;
+    }
     const [course] = await db.select().from(courses).where(eq(courses.name, name));
     return course;
   }
 
-  async getAllCourses(): Promise<Course[]> {
+  async getAllCourses(organizationId?: string): Promise<Course[]> {
+    if (organizationId) {
+      return await db
+        .select()
+        .from(courses)
+        .where(eq(courses.organizationId, organizationId))
+        .orderBy(asc(courses.name));
+    }
     return await db.select().from(courses).orderBy(asc(courses.name));
   }
 
@@ -194,6 +345,43 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCourse(id: string): Promise<void> {
     await db.delete(courses).where(eq(courses.id, id));
+  }
+
+  async copyCourseToOrganization(courseId: string, targetOrganizationId: string): Promise<Course> {
+    // Get the source course and its holes
+    const sourceCourse = await this.getCourse(courseId);
+    if (!sourceCourse) {
+      throw new Error("Source course not found");
+    }
+
+    const sourceHoles = await this.getHolesByCourse(courseId);
+
+    // Create new course for target organization
+    const { id: _, organizationId: __, createdAt: ___, ...courseData } = sourceCourse;
+    const newCourse = await this.createCourse({
+      ...courseData,
+      organizationId: targetOrganizationId,
+      rating: courseData.rating || undefined,
+      slope: courseData.slope || undefined,
+    });
+
+    // Copy holes if they exist
+    if (sourceHoles.length > 0) {
+      // First, delete the auto-created holes from createCourse
+      await this.deleteHolesByCourse(newCourse.id);
+      
+      // Create holes with same configuration as source
+      const newHoles = sourceHoles.map(hole => ({
+        courseId: newCourse.id,
+        number: hole.number,
+        par: hole.par,
+        distance: hole.distance,
+      }));
+      
+      await this.createHoles(newHoles);
+    }
+
+    return newCourse;
   }
 
   // Hole operations
@@ -485,24 +673,66 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  // Season settings
-  async getSeasonSettings(): Promise<SeasonSettings> {
+  // Season settings (organization-scoped)
+  async getSeasonSettings(organizationId?: string): Promise<SeasonSettings> {
+    if (organizationId) {
+      const [settings] = await db
+        .select()
+        .from(seasonSettings)
+        .where(eq(seasonSettings.organizationId, organizationId))
+        .limit(1);
+      
+      if (!settings) {
+        // Create default settings for this organization if none exist
+        return await this.createSeasonSettingsForOrganization(organizationId);
+      }
+      return settings;
+    }
+    
+    // Fallback for backward compatibility - get first settings record
     const [settings] = await db.select().from(seasonSettings).limit(1);
     if (!settings) {
-      // Create default settings if none exist
+      // Create default settings if none exist (this shouldn't happen in multi-tenant)
       const [created] = await db.insert(seasonSettings).values({}).returning();
       return created;
     }
     return settings;
   }
 
-  async updateSeasonSettings(settings: Partial<SeasonSettings>): Promise<SeasonSettings> {
+  async updateSeasonSettings(settings: Partial<SeasonSettings>, organizationId?: string): Promise<SeasonSettings> {
+    if (organizationId) {
+      // Find the settings for this organization
+      const existingSettings = await this.getSeasonSettings(organizationId);
+      const [updated] = await db
+        .update(seasonSettings)
+        .set(settings)
+        .where(eq(seasonSettings.id, existingSettings.id))
+        .returning();
+      return updated;
+    }
+    
+    // Fallback for backward compatibility
     const [updated] = await db
       .update(seasonSettings)
       .set(settings)
       .where(eq(seasonSettings.id, 1))
       .returning();
     return updated;
+  }
+
+  async createSeasonSettingsForOrganization(organizationId: string): Promise<SeasonSettings> {
+    const [created] = await db
+      .insert(seasonSettings)
+      .values({
+        organizationId,
+        groupName: 'Blues Golf Challenge', // Default name, can be updated
+        seasonEnd: '2026-03-31',
+        leaderboardMetric: 'avg_over_par',
+        kFactor: '0.5',
+        changeCap: '2.0',
+      })
+      .returning();
+    return created;
   }
 
   async getGroupSettings(): Promise<SeasonSettings> {

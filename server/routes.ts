@@ -6,7 +6,7 @@ import { handicapService } from "./services/handicapService";
 import { importService } from "./services/importService";
 import { calculateRoundScores } from "./services/golfCalculations";
 import { z } from "zod";
-import { insertPlayerSchema, insertCourseSchema, insertHoleSchema, insertRoundSchema, type InsertHole } from "@shared/schema";
+import { insertPlayerSchema, insertCourseSchema, insertHoleSchema, insertRoundSchema, insertOrganizationSchema, insertOrganizationAdminSchema, type InsertHole } from "@shared/schema";
 import { isPreviewMode, createPreviewResponse } from "./previewMode";
 
 // Validation schemas
@@ -101,6 +101,226 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ message: "Preview mode: auth disabled" });
     });
   }
+
+  // Organization management routes (super admin only)
+  app.get('/api/organizations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const organizations = await storage.getAllOrganizations();
+      res.json(organizations);
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      res.status(500).json({ message: "Failed to fetch organizations" });
+    }
+  });
+
+  app.get('/api/organizations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizationId = req.params.id;
+      
+      // Check if user is super admin or admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const organization = await storage.getOrganization(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+      
+      res.json(organization);
+    } catch (error) {
+      console.error("Error fetching organization:", error);
+      res.status(500).json({ message: "Failed to fetch organization" });
+    }
+  });
+
+  app.post('/api/organizations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const validatedData = insertOrganizationSchema.parse(req.body);
+      const newOrg = await storage.createOrganization({
+        ...validatedData,
+        createdById: userId,
+      });
+      
+      res.status(201).json(newOrg);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating organization:", error);
+      res.status(500).json({ message: "Failed to create organization" });
+    }
+  });
+
+  app.put('/api/organizations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizationId = req.params.id;
+      
+      // Check if user is super admin
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const validatedData = insertOrganizationSchema.partial().parse(req.body);
+      const updatedOrg = await storage.updateOrganization(organizationId, validatedData);
+      
+      res.json(updatedOrg);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating organization:", error);
+      res.status(500).json({ message: "Failed to update organization" });
+    }
+  });
+
+  app.delete('/api/organizations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizationId = req.params.id;
+      
+      // Check if user is super admin
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const organization = await storage.getOrganization(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Prevent deleting parent organization
+      if (organization.isParent) {
+        return res.status(400).json({ message: "Cannot delete parent organization" });
+      }
+
+      await storage.deleteOrganization(organizationId);
+      res.json({ message: "Organization deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting organization:", error);
+      res.status(500).json({ message: "Failed to delete organization" });
+    }
+  });
+
+  // Organization admin management routes
+  app.get('/api/organizations/:id/admins', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizationId = req.params.id;
+      
+      // Check if user is super admin or admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const admins = await storage.getOrganizationAdmins(organizationId);
+      res.json(admins);
+    } catch (error) {
+      console.error("Error fetching organization admins:", error);
+      res.status(500).json({ message: "Failed to fetch organization admins" });
+    }
+  });
+
+  app.post('/api/organizations/:id/admins', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizationId = req.params.id;
+      
+      // Check if user is super admin
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const validatedData = insertOrganizationAdminSchema.parse(req.body);
+      const newAdmin = await storage.addOrganizationAdmin({
+        ...validatedData,
+        organizationId,
+      });
+      
+      res.status(201).json(newAdmin);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error adding organization admin:", error);
+      res.status(500).json({ message: "Failed to add organization admin" });
+    }
+  });
+
+  app.delete('/api/organizations/:id/admins/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      const organizationId = req.params.id;
+      const targetUserId = req.params.userId;
+      
+      // Check if user is super admin
+      const isSuperAdmin = await storage.isUserSuperAdmin(currentUserId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      await storage.removeOrganizationAdmin(organizationId, targetUserId);
+      res.json({ message: "Organization admin removed successfully" });
+    } catch (error) {
+      console.error("Error removing organization admin:", error);
+      res.status(500).json({ message: "Failed to remove organization admin" });
+    }
+  });
+
+  // Course copying route (super admin only)
+  app.post('/api/organizations/:id/copy-course', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const targetOrganizationId = req.params.id;
+      
+      // Check if user is super admin
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const { courseId } = req.body;
+      if (!courseId) {
+        return res.status(400).json({ message: "Course ID is required" });
+      }
+
+      const copiedCourse = await storage.copyCourseToOrganization(courseId, targetOrganizationId);
+      res.status(201).json(copiedCourse);
+    } catch (error) {
+      console.error("Error copying course:", error);
+      res.status(500).json({ message: "Failed to copy course" });
+    }
+  });
 
   // Player routes
   app.get('/api/players', async (req, res) => {

@@ -54,7 +54,7 @@ export const organizations = pgTable("organizations", {
 // Organization admins junction table
 export const organizationAdmins = pgTable("organization_admins", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -62,7 +62,7 @@ export const organizationAdmins = pgTable("organization_admins", {
 // Players table for golf-specific data
 export const players = pgTable("players", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  organizationId: uuid("organization_id").references(() => organizations.id), // Nullable for existing data
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }), // Nullable for existing data
   name: text("name").notNull(),
   phone: text("phone"),
   email: text("email"),
@@ -74,7 +74,7 @@ export const players = pgTable("players", {
 // Courses table
 export const courses = pgTable("courses", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  organizationId: uuid("organization_id").references(() => organizations.id), // Nullable for existing data
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }), // Nullable for existing data
   name: text("name").notNull(),
   tees: text("tees").default('Blue'),
   parTotal: integer("par_total").notNull(),
@@ -159,7 +159,7 @@ export const monthlyWinners = pgTable("monthly_winners", {
 // Season settings table  
 export const seasonSettings = pgTable("season_settings", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  organizationId: uuid("organization_id").references(() => organizations.id), // Nullable for existing data
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }), // Nullable for existing data
   groupName: text("group_name").default('Blues Golf Challenge'),
   seasonEnd: date("season_end").default('2026-03-31'),
   leaderboardMetric: text("leaderboard_metric").default('avg_over_par'),
