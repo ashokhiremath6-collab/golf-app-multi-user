@@ -409,6 +409,15 @@ export default function OrganizationManagement() {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => window.open(`/${org.slug}`, '_blank')}
+                    data-testid={`button-visit-${org.id}`}
+                  >
+                    <i className="fas fa-external-link-alt mr-2"></i>
+                    Visit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => openAdminsDialog(org)}
                     data-testid={`button-manage-admins-${org.id}`}
                   >
