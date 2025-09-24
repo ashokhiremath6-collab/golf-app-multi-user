@@ -277,6 +277,7 @@ export const insertOrganizationSchema = createInsertSchema(organizations).omit({
 
 export const insertOrganizationAdminSchema = createInsertSchema(organizationAdmins).omit({
   id: true,
+  organizationId: true, // Backend automatically sets this from URL parameter
   createdAt: true,
 });
 
