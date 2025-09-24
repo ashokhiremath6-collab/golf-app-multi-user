@@ -13,6 +13,7 @@ import LeaderboardHistory from "@/pages/LeaderboardHistory";
 import History from "@/pages/History";
 import Handicaps from "@/pages/Handicaps";
 import Admin from "@/pages/Admin";
+import SuperAdmin from "@/pages/SuperAdmin";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/handicaps" component={Handicaps} />
           <Route path="/players/:id/rounds" component={History} />
           <Route path="/admin" component={Admin} />
+          <Route path="/super-admin" component={SuperAdmin} />
         </>
       )}
       <Route component={NotFound} />

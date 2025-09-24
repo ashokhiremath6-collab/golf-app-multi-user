@@ -322,6 +322,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User lookup route (super admin only) 
+  app.get('/api/users/lookup', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const { email } = req.query;
+      if (!email) {
+        return res.status(400).json({ message: "Email query parameter is required" });
+      }
+
+      const user = await storage.getUserByEmail(email as string);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Return only safe user data
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      });
+    } catch (error) {
+      console.error("Error looking up user:", error);
+      res.status(500).json({ message: "Failed to lookup user" });
+    }
+  });
+
   // Player routes
   app.get('/api/players', async (req, res) => {
     try {

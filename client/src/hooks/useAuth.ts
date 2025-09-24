@@ -18,6 +18,7 @@ export function useAuth() {
     user: authResponse,
     linkedPlayer: (authResponse as any)?.linkedPlayer || null,
     isLinkedToPlayer: (authResponse as any)?.isLinkedToPlayer || false,
+    isSuperAdmin: (authResponse as any)?.isSuperAdmin || false,
     isLoading,
     isAuthenticated: !!authResponse,
     isPreviewMode,
@@ -39,7 +40,7 @@ interface Player {
 
 // Helper hook to get current player using linked player data
 export function useCurrentPlayer() {
-  const { user, linkedPlayer, isLinkedToPlayer, isLoading, isPreviewMode } = useAuth();
+  const { user, linkedPlayer, isLinkedToPlayer, isLoading, isPreviewMode, isSuperAdmin } = useAuth();
 
   return {
     currentPlayer: linkedPlayer,
@@ -47,5 +48,6 @@ export function useCurrentPlayer() {
     isAuthenticated: !!user || isPreviewMode, // Allow access in preview mode
     isLinkedToPlayer,
     isPreviewMode,
+    isSuperAdmin,
   };
 }

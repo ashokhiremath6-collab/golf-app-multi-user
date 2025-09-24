@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import augustaBg from "../assets/augusta-national-bg.png";
+import { useCurrentPlayer } from "@/hooks/useAuth";
 
 export default function Navigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const { isSuperAdmin } = useCurrentPlayer();
   const { groupName } = useGroupName();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -31,6 +33,7 @@ export default function Navigation() {
     { path: '/history', label: 'History', icon: 'fas fa-history' },
     { path: '/handicaps', label: 'Handicaps', icon: 'fas fa-users' },
     ...(currentPlayer?.isAdmin ? [{ path: '/admin', label: 'Admin', icon: 'fas fa-cog' }] : []),
+    ...(isSuperAdmin ? [{ path: '/super-admin', label: 'Super Admin', icon: 'fas fa-shield-alt' }] : []),
   ];
 
   return (
