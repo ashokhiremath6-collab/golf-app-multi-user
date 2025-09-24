@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useCurrentPlayer } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ interface Hole {
 
 export default function CourseManagement() {
   const { toast } = useToast();
+  const { currentPlayer } = useCurrentPlayer();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editingHoles, setEditingHoles] = useState<string | null>(null);
@@ -253,11 +255,15 @@ export default function CourseManagement() {
       ...formData,
       rating: formData.rating ? parseFloat(formData.rating) : null,
       slope: formData.slope ? parseFloat(formData.slope) : null,
+      organizationId: currentPlayer?.organizationId, // Add organizationId for new courses
     };
 
     if (editingCourse) {
-      updateCourseMutation.mutate({ id: editingCourse.id, ...courseData });
+      // For editing, don't include organizationId as it shouldn't change
+      const { organizationId, ...updateData } = courseData;
+      updateCourseMutation.mutate({ id: editingCourse.id, ...updateData });
     } else {
+      // For creating, include organizationId
       createCourseMutation.mutate(courseData);
     }
   };
@@ -586,7 +592,7 @@ export default function CourseManagement() {
               </div>
 
               {/* Holes Display/Edit */}
-              {selectedCourseId === course.id && holes && Array.isArray(holes) && (
+              {selectedCourseId === course.id && holes && Array.isArray(holes) && holes.length > 0 && (
                 <div className="border-t border-gray-200 pt-4" data-testid={`holes-display-${course.id}`}>
                   <div className="flex items-center justify-between mb-4">
                     <h5 className="font-medium text-gray-900">Course Layout</h5>
