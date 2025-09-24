@@ -4,8 +4,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { OrganizationProvider, useOrganization } from "@/hooks/useOrganization";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
+import OrganizationSelector from "@/pages/OrganizationSelector";
 import Home from "@/pages/Home";
 import NewRound from "@/pages/NewRound";
 import Leaderboard from "@/pages/Leaderboard";
@@ -14,6 +16,50 @@ import History from "@/pages/History";
 import Handicaps from "@/pages/Handicaps";
 import Admin from "@/pages/Admin";
 import SuperAdmin from "@/pages/SuperAdmin";
+import Navigation from "@/components/Navigation";
+
+function OrganizationApp() {
+  const { currentOrganization, error } = useOrganization();
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Organization Not Found</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Return to Organizations
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return <OrganizationSelector />;
+  }
+
+  // Show organization-specific app with navigation
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <Switch>
+        <Route path="/:orgSlug" component={Home} />
+        <Route path="/:orgSlug/rounds/new" component={NewRound} />
+        <Route path="/:orgSlug/leaderboard" component={Leaderboard} />
+        <Route path="/:orgSlug/leaderboard-history" component={LeaderboardHistory} />
+        <Route path="/:orgSlug/history" component={History} />
+        <Route path="/:orgSlug/handicaps" component={Handicaps} />
+        <Route path="/:orgSlug/players/:id/rounds" component={History} />
+        <Route path="/:orgSlug/admin" component={Admin} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
+  );
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -35,17 +81,11 @@ function Router() {
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/rounds/new" component={NewRound} />
-          <Route path="/leaderboard" component={Leaderboard} />
-          <Route path="/leaderboard-history" component={LeaderboardHistory} />
-          <Route path="/history" component={History} />
-          <Route path="/handicaps" component={Handicaps} />
-          <Route path="/players/:id/rounds" component={History} />
-          <Route path="/admin" component={Admin} />
+        <OrganizationProvider>
           <Route path="/super-admin" component={SuperAdmin} />
-        </>
+          <Route path="/" component={OrganizationApp} />
+          <Route path="/:orgSlug*" component={OrganizationApp} />
+        </OrganizationProvider>
       )}
       <Route component={NotFound} />
     </Switch>

@@ -7,13 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import augustaBg from "../assets/augusta-national-bg.png";
 import { useCurrentPlayer } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
 
 export default function Navigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const { isSuperAdmin } = useCurrentPlayer();
+  const { currentOrganization } = useOrganization();
   const { groupName } = useGroupName();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Get organization slug for URL building
+  const orgSlug = currentOrganization?.slug || '';
 
   const { data: players } = useQuery<any[]>({
     queryKey: ["/api/players"],
@@ -27,12 +32,12 @@ export default function Navigation() {
   };
 
   const navItems = [
-    { path: '/', label: 'Home', icon: 'fas fa-home' },
-    { path: '/rounds/new', label: 'New Round', icon: 'fas fa-plus' },
-    { path: '/leaderboard', label: 'Leaderboard', icon: 'fas fa-trophy' },
-    { path: '/history', label: 'History', icon: 'fas fa-history' },
-    { path: '/handicaps', label: 'Handicaps', icon: 'fas fa-users' },
-    ...(currentPlayer?.isAdmin ? [{ path: '/admin', label: 'Admin', icon: 'fas fa-cog' }] : []),
+    { path: `/${orgSlug}`, label: 'Home', icon: 'fas fa-home' },
+    { path: `/${orgSlug}/rounds/new`, label: 'New Round', icon: 'fas fa-plus' },
+    { path: `/${orgSlug}/leaderboard`, label: 'Leaderboard', icon: 'fas fa-trophy' },
+    { path: `/${orgSlug}/history`, label: 'History', icon: 'fas fa-history' },
+    { path: `/${orgSlug}/handicaps`, label: 'Handicaps', icon: 'fas fa-users' },
+    ...(currentPlayer?.isAdmin ? [{ path: `/${orgSlug}/admin`, label: 'Admin', icon: 'fas fa-cog' }] : []),
     ...(isSuperAdmin ? [{ path: '/super-admin', label: 'Super Admin', icon: 'fas fa-shield-alt' }] : []),
   ];
 
