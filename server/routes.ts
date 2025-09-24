@@ -793,8 +793,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Round routes
-  app.get('/api/rounds', async (req, res) => {
+  app.get('/api/rounds', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global rounds data
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global rounds data" });
+      }
+
       const { month, playerId } = req.query;
       let rounds;
       
@@ -1067,8 +1075,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leaderboard route
-  app.get('/api/leaderboard', async (req, res) => {
+  app.get('/api/leaderboard', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global leaderboard data
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global leaderboard data" });
+      }
+
       const leaderboard = await storage.getLeaderboard();
       res.json(leaderboard);
     } catch (error) {
@@ -1105,8 +1121,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Monthly leaderboard endpoints
-  app.get('/api/leaderboard/monthly/:month', async (req, res) => {
+  app.get('/api/leaderboard/monthly/:month', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global monthly leaderboard data
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global leaderboard data" });
+      }
+
       const { month } = req.params;
       const leaderboard = await storage.getMonthlyLeaderboard(month);
       res.json(leaderboard);
@@ -1115,8 +1139,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/leaderboard/cumulative', async (req, res) => {
+  app.get('/api/leaderboard/cumulative', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global cumulative leaderboard data
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global leaderboard data" });
+      }
+
       const leaderboard = await storage.getCumulativeLeaderboard();
       res.json(leaderboard);
     } catch (error) {
@@ -1125,8 +1157,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leaderboard history
-  app.get('/api/leaderboard/history', async (req, res) => {
+  app.get('/api/leaderboard/history', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global leaderboard history
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global leaderboard data" });
+      }
+
       const history = await storage.getLeaderboardHistory();
       res.json(history);
     } catch (error) {
@@ -1134,8 +1174,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/leaderboard/history/:month', async (req, res) => {
+  app.get('/api/leaderboard/history/:month', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global leaderboard history
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global leaderboard data" });
+      }
+
       const { month } = req.params;
       const snapshot = await storage.getMonthlyLeaderboardSnapshot(month);
       res.json(snapshot);
@@ -1210,9 +1258,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Player statistics endpoints
-  app.get('/api/players/:playerId/stats/monthly/:month', async (req, res) => {
+  app.get('/api/players/:playerId/stats/monthly/:month', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const { playerId, month } = req.params;
+      
+      // Get the player to check their organization
+      const player = await storage.getPlayer(playerId);
+      if (!player) {
+        return res.status(404).json({ message: "Player not found" });
+      }
+      
+      // Check if user has access to this player's organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, player.organizationId!);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, player.organizationId!);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this player's stats" });
+        }
+      }
+      
       const stats = await storage.getPlayerMonthlyStats(playerId, month);
       res.json(stats);
     } catch (error) {
@@ -1220,9 +1289,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/players/:playerId/stats/cumulative', async (req, res) => {
+  app.get('/api/players/:playerId/stats/cumulative', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const { playerId } = req.params;
+      
+      // Get the player to check their organization
+      const player = await storage.getPlayer(playerId);
+      if (!player) {
+        return res.status(404).json({ message: "Player not found" });
+      }
+      
+      // Check if user has access to this player's organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, player.organizationId!);
+        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, player.organizationId!);
+        const isPlayerInOrg = !!playerInThisOrg;
+        
+        if (!isOrgAdmin && !isPlayerInOrg) {
+          return res.status(403).json({ message: "Access denied to this player's stats" });
+        }
+      }
+      
       const stats = await storage.getPlayerCumulativeStats(playerId);
       res.json(stats);
     } catch (error) {
@@ -1312,8 +1402,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all handicap snapshots
-  app.get('/api/handicaps/snapshots', async (req, res) => {
+  app.get('/api/handicaps/snapshots', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
+      // Only super admins can access global handicap snapshots
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required for global handicap data" });
+      }
+
       const snapshots = await storage.getAllHandicapSnapshots();
       res.json(createPreviewResponse(snapshots));
     } catch (error) {
