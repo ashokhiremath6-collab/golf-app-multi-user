@@ -73,7 +73,7 @@ export default function Navigation() {
             <div className="flex items-center">
               <i className="fas fa-golf-ball text-golf-green text-3xl mr-4" data-testid="icon-logo"></i>
               <h1 className="text-2xl font-bold text-gray-900" data-testid="text-app-name">
-                {groupName}
+                {currentOrganization?.name || groupName}
               </h1>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function Navigation() {
               data-testid={`nav-mobile-${item.path.replace('/', '') || 'home'}`}
             >
               <i className={`${item.icon} text-lg mb-1`}></i>
-              <span className="text-xs font-bold text-gray-800">{item.path === '/rounds/new' ? 'New Round' : item.label.split(' ')[0]}</span>
+              <span className="text-xs font-bold text-gray-800">{item.path === `/${orgSlug}/rounds/new` ? 'New Round' : item.label.split(' ')[0]}</span>
             </button>
           ))}
         </div>
