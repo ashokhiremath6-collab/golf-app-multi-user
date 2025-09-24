@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,13 +75,10 @@ export default function Home() {
 
   if (isLoading || playersLoading || coursesLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="animate-pulse space-y-6">
-            <div className="bg-white rounded-xl h-48"></div>
-            <div className="bg-white rounded-xl h-32"></div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="animate-pulse space-y-6">
+          <div className="bg-white rounded-xl h-48"></div>
+          <div className="bg-white rounded-xl h-32"></div>
         </div>
       </div>
     );
@@ -102,9 +98,7 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
+    <>
       {/* Preview Mode Banner */}
       {isPreviewMode && (
         <div className="bg-blue-600 text-white px-4 py-2 text-center">
@@ -435,6 +429,6 @@ export default function Home() {
         )}
 
       </main>
-    </div>
+    </>
   );
 }
