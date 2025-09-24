@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import Navigation from "@/components/Navigation";
 import ScoreGrid from "@/components/ScoreGrid";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -118,12 +117,9 @@ export default function NewRound() {
 
   if (isLoading || coursesLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="animate-pulse">
-            <div className="bg-white rounded-xl h-96"></div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="animate-pulse">
+          <div className="bg-white rounded-xl h-96"></div>
         </div>
       </div>
     );
@@ -214,9 +210,7 @@ export default function NewRound() {
   const totals = calculateTotals();
 
   return (
-    <div className="bg-gray-50">
-      <Navigation />
-      
+    <>
       {/* Preview Mode Banner */}
       {isPreviewMode && (
         <div className="bg-blue-600 text-white px-4 py-2 text-center">
@@ -379,6 +373,6 @@ export default function NewRound() {
           </CardContent>
         </Card>
       </main>
-    </div>
+    </>
   );
 }
