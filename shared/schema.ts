@@ -35,16 +35,37 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  isSuperAdmin: boolean("is_super_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Organizations table for multi-tenancy
+export const organizations = pgTable("organizations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").unique().notNull(), // URL-friendly identifier
+  isParent: boolean("is_parent").default(false), // True for the main "Blues Golf Challenge" organization
+  createdById: varchar("created_by_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Organization admins junction table
+export const organizationAdmins = pgTable("organization_admins", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Players table for golf-specific data
 export const players = pgTable("players", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: uuid("organization_id").references(() => organizations.id), // Nullable for existing data
   name: text("name").notNull(),
   phone: text("phone"),
-  email: text("email").unique(),
+  email: text("email"),
   currentHandicap: integer("current_handicap").notNull().default(0),
   isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
@@ -53,7 +74,8 @@ export const players = pgTable("players", {
 // Courses table
 export const courses = pgTable("courses", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").unique().notNull(),
+  organizationId: uuid("organization_id").references(() => organizations.id), // Nullable for existing data
+  name: text("name").notNull(),
   tees: text("tees").default('Blue'),
   parTotal: integer("par_total").notNull(),
   rating: numeric("rating"),
@@ -134,9 +156,10 @@ export const monthlyWinners = pgTable("monthly_winners", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Season settings table
+// Season settings table  
 export const seasonSettings = pgTable("season_settings", {
-  id: integer("id").primaryKey().default(1),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  organizationId: uuid("organization_id").references(() => organizations.id), // Nullable for existing data
   groupName: text("group_name").default('Blues Golf Challenge'),
   seasonEnd: date("season_end").default('2026-03-31'),
   leaderboardMetric: text("leaderboard_metric").default('avg_over_par'),
@@ -145,7 +168,38 @@ export const seasonSettings = pgTable("season_settings", {
 });
 
 // Relations
-export const playersRelations = relations(players, ({ many }) => ({
+export const organizationsRelations = relations(organizations, ({ one, many }) => ({
+  createdBy: one(users, {
+    fields: [organizations.createdById],
+    references: [users.id],
+  }),
+  admins: many(organizationAdmins),
+  players: many(players),
+  courses: many(courses),
+  seasonSettings: many(seasonSettings),
+}));
+
+export const organizationAdminsRelations = relations(organizationAdmins, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [organizationAdmins.organizationId],
+    references: [organizations.id],
+  }),
+  user: one(users, {
+    fields: [organizationAdmins.userId],
+    references: [users.id],
+  }),
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  createdOrganizations: many(organizations),
+  organizationAdmins: many(organizationAdmins),
+}));
+
+export const playersRelations = relations(players, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [players.organizationId],
+    references: [organizations.id],
+  }),
   rounds: many(rounds),
   handicapSnapshots: many(handicapSnapshots),
   monthlyLeaderboards: many(monthlyLeaderboards),
@@ -153,7 +207,11 @@ export const playersRelations = relations(players, ({ many }) => ({
   monthlyRunnerUps: many(monthlyWinners, { relationName: 'runnerUp' }),
 }));
 
-export const coursesRelations = relations(courses, ({ many }) => ({
+export const coursesRelations = relations(courses, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [courses.organizationId],
+    references: [organizations.id],
+  }),
   holes: many(holes),
   rounds: many(rounds),
 }));
@@ -209,6 +267,17 @@ export const monthlyWinnersRelations = relations(monthlyWinners, ({ one }) => ({
 }));
 
 // Zod schemas
+export const insertOrganizationSchema = createInsertSchema(organizations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrganizationAdminSchema = createInsertSchema(organizationAdmins).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertPlayerSchema = createInsertSchema(players).omit({
   id: true,
   createdAt: true,
@@ -255,6 +324,10 @@ export const insertHandicapSnapshotSchema = createInsertSchema(handicapSnapshots
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type Organization = typeof organizations.$inferSelect;
+export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+export type OrganizationAdmin = typeof organizationAdmins.$inferSelect;
+export type InsertOrganizationAdmin = z.infer<typeof insertOrganizationAdminSchema>;
 export type Player = typeof players.$inferSelect;
 export type InsertPlayer = z.infer<typeof insertPlayerSchema>;
 export type Course = typeof courses.$inferSelect;
