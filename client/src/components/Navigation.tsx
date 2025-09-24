@@ -42,7 +42,7 @@ export default function Navigation() {
   ];
 
   const handleNavigation = (path: string) => {
-    console.log('Navigation attempt:', path);
+    console.log('Navigation attempt:', path, 'Current location:', location);
     try {
       setLocation(path);
     } catch (error) {
@@ -50,6 +50,20 @@ export default function Navigation() {
       // Fallback: force page navigation
       window.location.href = path;
     }
+  };
+
+  // Helper function to check if a path is active
+  const isActivePath = (itemPath: string) => {
+    // Handle exact matches
+    if (location === itemPath) return true;
+    
+    // Handle root path specially - only match exact root
+    if (itemPath === `/${orgSlug}` && location === `/${orgSlug}`) return true;
+    
+    // For other paths, check if current location starts with the item path
+    if (itemPath !== `/${orgSlug}` && location.startsWith(itemPath)) return true;
+    
+    return false;
   };
 
   return (
@@ -100,8 +114,8 @@ export default function Navigation() {
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
                 className={`py-4 px-2 border-b-2 font-medium whitespace-nowrap ${
-                  location === item.path
-                    ? 'border-golf-green text-golf-green'
+                  isActivePath(item.path)
+                    ? 'border-golf-green text-golf-green font-bold'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
                 data-testid={`nav-link-${item.path.replace('/', '') || 'home'}`}
@@ -122,7 +136,7 @@ export default function Navigation() {
               key={item.path}
               onClick={() => handleNavigation(item.path)}
               className={`flex flex-col items-center py-2 px-4 ${
-                location === item.path ? 'text-golf-green font-bold' : 'text-gray-700 font-semibold'
+                isActivePath(item.path) ? 'text-golf-green font-bold' : 'text-gray-700 font-semibold'
               }`}
               data-testid={`nav-mobile-${item.path.replace('/', '') || 'home'}`}
             >
