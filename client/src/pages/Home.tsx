@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { useLocation } from "wouter";
 export default function Home() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
+  const { currentOrganization } = useOrganization();
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -34,42 +36,48 @@ export default function Home() {
     }
   }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
+  // Only fetch data if we have an organization context
   const { data: players, isLoading: playersLoading } = useQuery({
-    queryKey: ["/api/players"],
+    queryKey: ["/api/players", currentOrganization?.id],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
-    queryKey: ["/api/courses"],
+    queryKey: ["/api/courses", currentOrganization?.id],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: recentRounds, isLoading: roundsLoading } = useQuery({
-    queryKey: ["/api/rounds"],
+    queryKey: ["/api/rounds", currentOrganization?.id],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
-    queryKey: ["/api/leaderboard"],
+    queryKey: ["/api/leaderboard", currentOrganization?.id],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   const { data: handicapSnapshots } = useQuery({
-    queryKey: ["/api/handicaps/snapshots"],
+    queryKey: ["/api/handicaps/snapshots", currentOrganization?.id],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
   // Fetch monthly stats
   const { data: monthlyStats, isLoading: monthlyLoading } = useQuery({
-    queryKey: ["/api/players", currentPlayer?.id, "stats", "monthly", selectedMonth],
-    enabled: !!currentPlayer,
+    queryKey: ["/api/players", currentPlayer?.id, "stats", "monthly", selectedMonth, currentOrganization?.id],
+    enabled: !!currentPlayer && !!currentOrganization?.id,
     retry: false,
   });
 
   // Fetch cumulative stats
   const { data: cumulativeStats, isLoading: cumulativeLoading } = useQuery({
-    queryKey: ["/api/players", currentPlayer?.id, "stats", "cumulative"],
-    enabled: !!currentPlayer,
+    queryKey: ["/api/players", currentPlayer?.id, "stats", "cumulative", currentOrganization?.id],
+    enabled: !!currentPlayer && !!currentOrganization?.id,
     retry: false,
   });
 
