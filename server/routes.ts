@@ -337,9 +337,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email query parameter is required" });
       }
 
-      const user = await storage.getUserByEmail(email as string);
+      let user = await storage.getUserByEmail(email as string);
+      
+      // If user doesn't exist, create a new user
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        user = await storage.createUserFromEmail(email as string);
       }
 
       // Return only safe user data

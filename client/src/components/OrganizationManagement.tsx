@@ -274,16 +274,13 @@ export default function OrganizationManagement() {
     }
 
     try {
-      // Look up user by email to get the actual user ID
+      // Look up user by email to get the actual user ID (or create if doesn't exist)
       const response = await fetch(`/api/users/lookup?email=${encodeURIComponent(newAdminEmail)}`, {
         credentials: 'include',
       });
       
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('User not found');
-        }
-        throw new Error('Failed to lookup user');
+        throw new Error(`Failed to lookup/create user: ${response.status}`);
       }
       
       const userData = await response.json();
@@ -295,7 +292,7 @@ export default function OrganizationManagement() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "User not found. Please ensure the user has an account in the system.",
+        description: error.message || "Failed to add administrator. Please try again.",
         variant: "destructive",
       });
     }
@@ -608,7 +605,7 @@ export default function OrganizationManagement() {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  The user must already have an account in the system.
+                  If the user doesn't exist, a new account will be created automatically.
                 </p>
               </div>
             </div>
