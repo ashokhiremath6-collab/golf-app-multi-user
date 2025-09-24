@@ -269,6 +269,7 @@ export const monthlyWinnersRelations = relations(monthlyWinners, ({ one }) => ({
 // Zod schemas
 export const insertOrganizationSchema = createInsertSchema(organizations).omit({
   id: true,
+  createdById: true, // Backend automatically sets this from authenticated user
   createdAt: true,
   updatedAt: true,
 });
