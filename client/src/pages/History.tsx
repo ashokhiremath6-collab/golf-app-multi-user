@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganization } from "@/hooks/useOrganization";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function History() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
+  const { currentOrganization } = useOrganization();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("self");
   const [selectedRoundId, setSelectedRoundId] = useState<string>("");
 
@@ -30,7 +32,8 @@ export default function History() {
   }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
   const { data: players } = useQuery({
-    queryKey: ["/api/players"],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/players`],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
@@ -38,14 +41,23 @@ export default function History() {
   const roundsPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
   
   const { data: rounds, isLoading: roundsLoading } = useQuery({
-    queryKey: ["/api/rounds", { playerId: roundsPlayerId }],
-    queryFn: ({ queryKey }) => {
-      const [, params] = queryKey as [string, { playerId?: string }];
+    queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`, { playerId: roundsPlayerId }],
+    queryFn: async ({ queryKey }) => {
+      const [endpoint, params] = queryKey as [string, { playerId?: string }];
       const searchParams = new URLSearchParams();
       if (params.playerId) searchParams.set('playerId', params.playerId);
-      return fetch(`/api/rounds?${searchParams.toString()}`, { credentials: 'include' }).then(res => res.json());
+      
+      const response = await fetch(`${endpoint}?${searchParams.toString()}`, { 
+        credentials: 'include' 
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
     },
-    enabled: !!roundsPlayerId,
+    enabled: !!roundsPlayerId && !!currentOrganization?.id,
     retry: false,
   });
 

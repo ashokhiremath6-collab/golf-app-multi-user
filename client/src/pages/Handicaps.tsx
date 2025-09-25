@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganization } from "@/hooks/useOrganization";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ import {
 export default function Handicaps() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useCurrentPlayer();
+  const { currentOrganization } = useOrganization();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -34,7 +36,8 @@ export default function Handicaps() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: players, isLoading: playersLoading } = useQuery({
-    queryKey: ["/api/players"],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/players`],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
