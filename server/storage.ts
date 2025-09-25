@@ -287,10 +287,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPlayerByUserIdAndOrganization(userId: string, organizationId: string): Promise<Player | undefined> {
+    // Get user email first, then find player by email and organization
+    const user = await this.getUser(userId);
+    if (!user?.email) return undefined;
+    
     const [player] = await db.select().from(players)
       .where(
         and(
-          eq(players.linkedUserId, userId),
+          eq(players.email, user.email),
           eq(players.organizationId, organizationId)
         )
       )
