@@ -22,9 +22,9 @@ export default function Navigation() {
   
 
   const { data: players } = useQuery<any[]>({
-    queryKey: ["/api/players"],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/players`],
     retry: false,
-    enabled: !!orgSlug, // Only fetch if we have an organization
+    enabled: !!currentOrganization?.id, // Only fetch if we have an organization
   });
 
   const currentPlayer = players?.find((p: any) => p.email === (user as any)?.email);
@@ -33,20 +33,23 @@ export default function Navigation() {
     window.location.href = '/api/logout';
   };
 
-  // Don't render navigation if we don't have an organization slug yet
-  if (!orgSlug) {
-    return null;
-  }
+  // If no organization slug, show Super Admin only navigation
+  const isGlobalContext = !orgSlug;
 
-  const navItems = [
-    { path: `/${orgSlug}`, label: 'Home', icon: 'fas fa-home' },
-    { path: `/${orgSlug}/rounds/new`, label: 'New Round', icon: 'fas fa-plus' },
-    { path: `/${orgSlug}/leaderboard`, label: 'Leaderboard', icon: 'fas fa-trophy' },
-    { path: `/${orgSlug}/history`, label: 'History', icon: 'fas fa-history' },
-    { path: `/${orgSlug}/handicaps`, label: 'Handicaps', icon: 'fas fa-users' },
-    ...(currentPlayer?.isAdmin ? [{ path: `/${orgSlug}/admin`, label: 'Admin', icon: 'fas fa-cog' }] : []),
-    ...(isSuperAdmin ? [{ path: '/super-admin', label: 'Super Admin', icon: 'fas fa-shield-alt' }] : []),
-  ];
+  const navItems = isGlobalContext 
+    ? [
+        // Global navigation - only Super Admin when no organization
+        ...(isSuperAdmin ? [{ path: '/super-admin', label: 'Super Admin', icon: 'fas fa-shield-alt' }] : []),
+      ]
+    : [
+        // Organization navigation
+        { path: `/${orgSlug}`, label: 'Home', icon: 'fas fa-home' },
+        { path: `/${orgSlug}/rounds/new`, label: 'New Round', icon: 'fas fa-plus' },
+        { path: `/${orgSlug}/leaderboard`, label: 'Leaderboard', icon: 'fas fa-trophy' },
+        { path: `/${orgSlug}/history`, label: 'History', icon: 'fas fa-history' },
+        { path: `/${orgSlug}/handicaps`, label: 'Handicaps', icon: 'fas fa-users' },
+        ...(currentPlayer?.isAdmin ? [{ path: `/${orgSlug}/admin`, label: 'Admin', icon: 'fas fa-cog' }] : []),
+      ];
 
   const handleNavigation = (path: string) => {
     try {

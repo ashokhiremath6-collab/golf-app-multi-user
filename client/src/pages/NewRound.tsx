@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -30,6 +31,7 @@ interface Course {
 export default function NewRound() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
+  const { currentOrganization } = useOrganization();
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
@@ -51,7 +53,8 @@ export default function NewRound() {
   }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
-    queryKey: ["/api/courses"],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
+    enabled: !!currentOrganization?.id,
     retry: false,
     staleTime: 0, // Force refresh of course data
     gcTime: 0, // Don't cache course data
@@ -60,8 +63,8 @@ export default function NewRound() {
   });
 
   const { data: holes, isLoading: holesLoading, refetch: refetchHoles } = useQuery<Hole[]>({
-    queryKey: ["/api/courses", selectedCourseId, "holes"],
-    enabled: !!selectedCourseId,
+    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, selectedCourseId, "holes"],
+    enabled: !!selectedCourseId && !!currentOrganization?.id,
     retry: false,
     staleTime: 0, // Force refresh of hole data
     gcTime: 0, // Don't cache hole data
@@ -76,16 +79,16 @@ export default function NewRound() {
     enabled: !!selectedCourseId, 
     holesLoading, 
     holesCount: holes?.length,
-    queryKey: ["/api/courses", selectedCourseId, "holes"]
+    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, selectedCourseId, "holes"]
   });
 
   const createRoundMutation = useMutation({
     mutationFn: async (roundData: any) => {
-      await apiRequest("POST", "/api/rounds", roundData);
+      await apiRequest("POST", `/api/organizations/${currentOrganization?.id}/rounds`, roundData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rounds"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`] });
       setRoundSubmitted(true);
       toast({
         title: "Success",
@@ -249,11 +252,11 @@ export default function NewRound() {
                 setSelectedCourseId(courseId);
                 setScores(Array(18).fill(0));
                 setRoundSubmitted(false);
-                // Force complete cache clear
-                queryClient.removeQueries({ queryKey: ["/api/courses"] });
-                queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
-                queryClient.removeQueries({ queryKey: ["/api/courses", courseId, "holes"] });
-                queryClient.invalidateQueries({ queryKey: ["/api/courses", courseId, "holes"] });
+                // Force complete cache clear for organization-scoped data
+                queryClient.removeQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`] });
+                queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`] });
+                queryClient.removeQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, courseId, "holes"] });
+                queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, courseId, "holes"] });
               }}>
                 <SelectTrigger data-testid="select-course">
                   <SelectValue placeholder="Choose a course" />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/Navigation";
@@ -18,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function Admin() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
+  const { currentOrganization } = useOrganization();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -34,8 +36,11 @@ export default function Admin() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Use global courses if no organization is selected, otherwise use organization-scoped
   const { data: courses } = useQuery({
-    queryKey: ["/api/courses"],
+    queryKey: currentOrganization?.id 
+      ? [`/api/organizations/${currentOrganization.id}/courses`]
+      : ["/api/courses"],
     retry: false,
   });
 
