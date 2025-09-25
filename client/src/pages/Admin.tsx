@@ -36,11 +36,10 @@ export default function Admin() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Use global courses if no organization is selected, otherwise use organization-scoped
+  // Use organization-scoped courses endpoint
   const { data: courses } = useQuery({
-    queryKey: currentOrganization?.id 
-      ? [`/api/organizations/${currentOrganization.id}/courses`]
-      : ["/api/courses"],
+    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
+    enabled: !!currentOrganization?.id,
     retry: false,
   });
 
