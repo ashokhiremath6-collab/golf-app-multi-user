@@ -60,7 +60,7 @@ export default function NewRound() {
     }
   }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
-  const { data: courses, isLoading: coursesLoading } = useQuery({
+  const { data: courses, isLoading: coursesLoading, error: coursesError } = useQuery({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
     enabled: !!currentOrganization?.id,
     retry: false,
@@ -69,6 +69,14 @@ export default function NewRound() {
     refetchOnMount: "always", // Always refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when window gets focus
   });
+  
+  console.log("🏌️ COURSES QUERY DEBUG:", { 
+    courses, 
+    coursesLoading, 
+    coursesError, 
+    coursesLength: Array.isArray(courses) ? courses.length : 0,
+    enabled: !!currentOrganization?.id 
+  }); // DEBUG: Check courses data
 
   const { data: holes, isLoading: holesLoading, refetch: refetchHoles } = useQuery<Hole[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, selectedCourseId, "holes"],

@@ -47,7 +47,6 @@ function OrganizationApp() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       <Switch>
-        <Route path="/:orgSlug" component={Home} />
         <Route path="/:orgSlug/rounds/new" component={NewRound} />
         <Route path="/:orgSlug/leaderboard" component={Leaderboard} />
         <Route path="/:orgSlug/leaderboard-history" component={LeaderboardHistory} />
@@ -55,6 +54,7 @@ function OrganizationApp() {
         <Route path="/:orgSlug/handicaps" component={Handicaps} />
         <Route path="/:orgSlug/players/:id/rounds" component={History} />
         <Route path="/:orgSlug/admin" component={Admin} />
+        <Route path="/:orgSlug" component={Home} />
         <Route component={NotFound} />
       </Switch>
     </div>
