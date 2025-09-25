@@ -82,7 +82,7 @@ const nonRedirectingAuth = async (req: any, res: any, next: any) => {
 
 // Enhanced auth middleware that prioritizes org tokens
 const enhancedAuth = async (req: any, res: any, next: any) => {
-  const orgToken = req.cookies.orgToken || req.headers['x-org-token'];
+  const orgToken = req.cookies?.orgToken || req.headers['x-org-token'];
   
   // First priority: Try org token if present
   if (orgToken) {
@@ -107,12 +107,9 @@ const enhancedAuth = async (req: any, res: any, next: any) => {
   
   // Second priority: Check Replit session without triggering redirects
   if (checkReplitSession(req)) {
-    // Valid Replit session exists, suggest org token acquisition
-    return res.status(401).json({ 
-      message: "Organization session required", 
-      code: "ORG_SESSION_REQUIRED",
-      canAcquire: true 
-    });
+    // Valid Replit session exists, allow request to proceed
+    req.user = req.session?.passport?.user ?? { claims: { sub: 'replit-session' } };
+    return next();
   }
   
   // No valid auth, request login
