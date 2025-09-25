@@ -4,11 +4,15 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
-## September 25, 2025 - Organization Tabs Fixed
-- **Issue**: Organization tabs (Leaderboard, History, Handicaps) were showing blank screens due to calling incorrect API endpoints
-- **Resolution**: Updated all frontend pages to use organization-scoped endpoints instead of global endpoints
-- **Status**: ✅ All organization tabs now operational with proper data loading
-- **Technical Details**: Fixed React Query configurations in Leaderboard.tsx, History.tsx, and Handicaps.tsx to use organization-scoped API endpoints with proper authentication context
+## September 25, 2025 - Organization Tabs Fixed ✅
+- **Issue**: Organization tabs (Leaderboard, History, Handicaps, New Round, Admin) were showing blank screens due to calling incorrect API endpoints. Player name displayed user's name instead of organization player name. Super Admin tab appeared inappropriately in organization context.
+- **Resolution**: Comprehensive frontend fixes to use organization-scoped endpoints throughout the application
+- **Status**: ✅ All issues resolved - organization tabs fully operational
+- **Technical Details**: 
+  - Navigation component: Uses organization-scoped player data, shows correct player names, hides Super Admin tab in organization context
+  - All organization pages: Updated to use organization-scoped API endpoints with proper authentication
+  - Cache invalidation: Fixed to maintain organization data isolation
+  - Admin page: Handles both global and organization contexts appropriately
 
 # User Preferences
 
