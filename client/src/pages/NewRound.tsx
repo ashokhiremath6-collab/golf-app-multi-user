@@ -29,17 +29,9 @@ interface Course {
 }
 
 export default function NewRound() {
-  console.log("🚨 NEW ROUND COMPONENT MOUNTING!"); // DEBUG: Check if component executes
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
   const { currentOrganization } = useOrganization();
-  
-  console.log("🏢 ORGANIZATION CONTEXT:", { 
-    currentOrganization, 
-    orgId: currentOrganization?.id,
-    orgName: currentOrganization?.name,
-    orgSlug: currentOrganization?.slug 
-  }); // DEBUG: Check organization state
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
@@ -60,42 +52,14 @@ export default function NewRound() {
     }
   }, [isAuthenticated, isLoading, isPreviewMode, toast]);
 
-  const { data: courses, isLoading: coursesLoading, error: coursesError } = useQuery({
+  const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
     enabled: !!currentOrganization?.id,
-    retry: false,
-    staleTime: 0, // Force refresh of course data
-    gcTime: 0, // Don't cache course data
-    refetchOnMount: "always", // Always refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window gets focus
   });
-  
-  console.log("🏌️ COURSES QUERY DEBUG:", { 
-    courses, 
-    coursesLoading, 
-    coursesError, 
-    coursesLength: Array.isArray(courses) ? courses.length : 0,
-    enabled: !!currentOrganization?.id 
-  }); // DEBUG: Check courses data
 
-  const { data: holes, isLoading: holesLoading, refetch: refetchHoles } = useQuery<Hole[]>({
+  const { data: holes, isLoading: holesLoading } = useQuery<Hole[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, selectedCourseId, "holes"],
     enabled: !!selectedCourseId && !!currentOrganization?.id,
-    retry: false,
-    staleTime: 0, // Force refresh of hole data
-    gcTime: 0, // Don't cache hole data
-    refetchOnMount: "always", // Always refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window gets focus
-  });
-
-  // DEBUG: Log state changes after variables are declared
-  console.log("🏌️ DEBUG STATE:", { selectedCourseId, holesLoading, holes: holes?.length });
-  console.log("🏌️ QUERY DEBUG:", { 
-    selectedCourseId, 
-    enabled: !!selectedCourseId, 
-    holesLoading, 
-    holesCount: holes?.length,
-    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, selectedCourseId, "holes"]
   });
 
   const createRoundMutation = useMutation({
@@ -264,15 +228,9 @@ export default function NewRound() {
                 Select Course
               </label>
               <Select value={selectedCourseId} onValueChange={(courseId) => {
-                console.log("🏌️ COURSE SELECTED:", courseId); // DEBUG
                 setSelectedCourseId(courseId);
                 setScores(Array(18).fill(0));
                 setRoundSubmitted(false);
-                // Force complete cache clear for organization-scoped data
-                queryClient.removeQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`] });
-                queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`] });
-                queryClient.removeQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, courseId, "holes"] });
-                queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, courseId, "holes"] });
               }}>
                 <SelectTrigger data-testid="select-course">
                   <SelectValue placeholder="Choose a course" />
@@ -322,14 +280,11 @@ export default function NewRound() {
                 {/* Score Entry */}
                 <div className="mb-4">
                   {!holesLoading && holes && (
-                    <>
-                      {console.log("🏌️ HOLES DATA DEBUG - Course:", selectedCourseId, "Data:", holes?.slice(0, 5)?.map(h => ({hole: h.number, par: h.par})))} {/* DEBUG */}
-                      <ScoreGrid
-                        holes={holes}
-                        scores={scores}
-                        onScoreChange={handleScoreChange}
-                      />
-                    </>
+                    <ScoreGrid
+                      holes={holes}
+                      scores={scores}
+                      onScoreChange={handleScoreChange}
+                    />
                   )}
                 </div>
 
