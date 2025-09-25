@@ -8,6 +8,8 @@ import { calculateRoundScores } from "./services/golfCalculations";
 import { z } from "zod";
 import { insertPlayerSchema, insertCourseSchema, insertHoleSchema, insertRoundSchema, insertOrganizationSchema, insertOrganizationAdminSchema, type InsertHole } from "@shared/schema";
 import { isPreviewMode, createPreviewResponse } from "./previewMode";
+import jwt from "jsonwebtoken";
+import type { Request, Response, NextFunction } from "express";
 
 // Validation schemas
 const createRoundSchema = insertRoundSchema.extend({
@@ -45,6 +47,80 @@ const isPreviewWriteBlocked = (req: any, res: any, next: any) => {
     }
   }
   next();
+};
+
+// Organization session management
+const ORG_SESSION_SECRET = process.env.ORG_SESSION_SECRET || 'your-org-session-secret-key';
+const ORG_SESSION_EXPIRY = '2h'; // 2 hours
+
+
+// Internal function to check Replit session without triggering redirects
+const checkReplitSession = (req: any): boolean => {
+  try {
+    // Check if session exists and has valid user data
+    return !!(req.session?.passport?.user?.claims?.sub);
+  } catch (error) {
+    return false;
+  }
+};
+
+// Non-redirecting Replit auth for session issuance
+const nonRedirectingAuth = async (req: any, res: any, next: any) => {
+  if (checkReplitSession(req)) {
+    // Extract user data from session for compatibility
+    req.user = req.session.passport.user;
+    return next();
+  }
+  
+  // Return structured error instead of redirect
+  return res.status(401).json({ 
+    message: "Authentication required", 
+    code: "AUTH_REQUIRED",
+    redirectToLogin: true 
+  });
+};
+
+// Enhanced auth middleware that prioritizes org tokens
+const enhancedAuth = async (req: any, res: any, next: any) => {
+  const orgToken = req.cookies.orgToken || req.headers['x-org-token'];
+  
+  // First priority: Try org token if present
+  if (orgToken) {
+    try {
+      const decoded = jwt.verify(orgToken, ORG_SESSION_SECRET) as any;
+      const orgId = req.params.organizationId || req.params.id || req.path.split('/')[3];
+      
+      if (decoded.orgId === orgId && decoded.exp > Date.now() / 1000) {
+        req.orgSession = decoded;
+        req.user = { claims: { sub: decoded.userId, email: decoded.email } };
+        return next();
+      }
+    } catch (error) {
+      // Token invalid/expired, signal need for refresh
+      return res.status(401).json({ 
+        message: "Organization session expired", 
+        code: "ORG_TOKEN_EXPIRED",
+        requiresRefresh: true 
+      });
+    }
+  }
+  
+  // Second priority: Check Replit session without triggering redirects
+  if (checkReplitSession(req)) {
+    // Valid Replit session exists, suggest org token acquisition
+    return res.status(401).json({ 
+      message: "Organization session required", 
+      code: "ORG_SESSION_REQUIRED",
+      canAcquire: true 
+    });
+  }
+  
+  // No valid auth, request login
+  return res.status(401).json({ 
+    message: "Authentication required", 
+    code: "AUTH_REQUIRED",
+    redirectToLogin: true 
+  });
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -102,8 +178,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
+  // Organization session endpoints
+  app.post('/api/organizations/:id/session', nonRedirectingAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email;
+      const organizationId = req.params.id;
+      
+      // Verify user has access to this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      const player = await storage.getPlayerByUserIdAndOrganization(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin && !player) {
+        return res.status(403).json({ message: "Access denied to this organization" });
+      }
+      
+      // Verify organization exists
+      const organization = await storage.getOrganization(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+      
+      // Create organization session token
+      const orgSessionData = {
+        userId,
+        email: userEmail,
+        orgId: organizationId,
+        orgSlug: organization.slug,
+        isAdmin: isSuperAdmin || isOrgAdmin,
+        playerId: player?.id || null,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (2 * 60 * 60) // 2 hours
+      };
+      
+      const orgToken = jwt.sign(orgSessionData, ORG_SESSION_SECRET, { expiresIn: ORG_SESSION_EXPIRY });
+      
+      // Set httpOnly cookie for security
+      res.cookie('orgToken', orgToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 2 * 60 * 60 * 1000 // 2 hours
+      });
+      
+      res.json({
+        success: true,
+        sessionData: {
+          orgId: organizationId,
+          orgSlug: organization.slug,
+          orgName: organization.name,
+          isAdmin: orgSessionData.isAdmin,
+          playerId: orgSessionData.playerId,
+          expiresAt: orgSessionData.exp * 1000
+        }
+      });
+    } catch (error) {
+      console.error("Error creating organization session:", error);
+      res.status(500).json({ message: "Failed to create organization session" });
+    }
+  });
+
+  app.delete('/api/organizations/:id/session', (req, res) => {
+    // Clear organization session
+    res.clearCookie('orgToken');
+    res.json({ success: true, message: "Organization session cleared" });
+  });
+
+  app.get('/api/organizations/:id/session/verify', enhancedAuth, async (req: any, res) => {
+    try {
+      const organizationId = req.params.id;
+      
+      if (req.orgSession) {
+        // Return org session data if valid
+        res.json({
+          valid: true,
+          sessionData: {
+            orgId: req.orgSession.orgId,
+            orgSlug: req.orgSession.orgSlug,
+            isAdmin: req.orgSession.isAdmin,
+            playerId: req.orgSession.playerId,
+            expiresAt: req.orgSession.exp * 1000
+          }
+        });
+      } else {
+        res.json({ valid: false, message: "No valid organization session" });
+      }
+    } catch (error) {
+      console.error("Error verifying organization session:", error);
+      res.status(500).json({ message: "Failed to verify organization session" });
+    }
+  });
+
   // Organization management routes (super admin only)
-  app.get('/api/organizations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations', nonRedirectingAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const isSuperAdmin = await storage.isUserSuperAdmin(userId);
@@ -120,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/organizations/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations/:id', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const organizationId = req.params.id;
@@ -145,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/organizations', isAuthenticated, async (req: any, res) => {
+  app.post('/api/organizations', nonRedirectingAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const isSuperAdmin = await storage.isUserSuperAdmin(userId);
@@ -172,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/organizations/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/organizations/:id', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const organizationId = req.params.id;
@@ -197,7 +365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/organizations/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/organizations/:id', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const organizationId = req.params.id;
@@ -228,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization admin management routes
-  app.get('/api/organizations/:id/admins', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations/:id/admins', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const organizationId = req.params.id;
@@ -249,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/organizations/:id/admins', isAuthenticated, async (req: any, res) => {
+  app.post('/api/organizations/:id/admins', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const organizationId = req.params.id;
@@ -281,7 +449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/organizations/:id/admins/:userId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/organizations/:id/admins/:userId', enhancedAuth, async (req: any, res) => {
     try {
       const currentUserId = req.user.claims.sub;
       const organizationId = req.params.id;
@@ -303,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Course copying route (super admin only)
-  app.post('/api/organizations/:id/copy-course', isAuthenticated, async (req: any, res) => {
+  app.post('/api/organizations/:id/copy-course', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const targetOrganizationId = req.params.id;
@@ -382,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization-scoped players endpoint
-  app.get('/api/organizations/:organizationId/players', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations/:organizationId/players', enhancedAuth, async (req: any, res) => {
     try {
       const { organizationId } = req.params;
       const userId = req.user.claims.sub;
@@ -520,7 +688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization-scoped courses endpoint
-  app.get('/api/organizations/:organizationId/courses', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations/:organizationId/courses', enhancedAuth, async (req: any, res) => {
     try {
       const { organizationId } = req.params;
       const userId = req.user.claims.sub;
@@ -822,7 +990,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization-scoped rounds endpoint
-  app.get('/api/organizations/:organizationId/rounds', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations/:organizationId/rounds', enhancedAuth, async (req: any, res) => {
     try {
       const { organizationId } = req.params;
       const userId = req.user.claims.sub;
@@ -1093,7 +1261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization-scoped leaderboard endpoint
-  app.get('/api/organizations/:organizationId/leaderboard', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations/:organizationId/leaderboard', enhancedAuth, async (req: any, res) => {
     try {
       const { organizationId } = req.params;
       const userId = req.user.claims.sub;
@@ -1421,7 +1589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization-scoped handicap snapshots endpoint
-  app.get('/api/organizations/:organizationId/handicaps/snapshots', isAuthenticated, async (req: any, res) => {
+  app.get('/api/organizations/:organizationId/handicaps/snapshots', enhancedAuth, async (req: any, res) => {
     try {
       const { organizationId } = req.params;
       const userId = req.user.claims.sub;

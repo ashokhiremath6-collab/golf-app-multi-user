@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useOrgSession } from "@/hooks/useOrgSession";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -32,34 +33,37 @@ export default function NewRound() {
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
   const { currentOrganization } = useOrganization();
+  const { isValid: hasOrgSession, isLoading: orgSessionLoading, handleAuthError } = useOrgSession();
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
   const [roundSubmitted, setRoundSubmitted] = useState<boolean>(false);
 
-  // Redirect to login if not authenticated (but not in preview mode)
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isPreviewMode) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, isPreviewMode, toast]);
+  // Show graceful auth handling instead of hard redirects
+  const isAuthReady = isPreviewMode || (isAuthenticated && hasOrgSession);
+  const isAuthLoading = isLoading || orgSessionLoading;
 
-  const { data: courses, isLoading: coursesLoading } = useQuery({
+  const { data: courses, isLoading: coursesLoading, error: coursesError } = useQuery({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
-    enabled: !!currentOrganization?.id,
+    enabled: !!currentOrganization?.id && isAuthReady,
+    retry: (failureCount, error) => {
+      // Use org session to handle auth errors gracefully
+      if (handleAuthError(error)) {
+        return failureCount < 2; // Retry up to 2 times after session refresh
+      }
+      return failureCount < 3;
+    },
   });
 
-  const { data: holes, isLoading: holesLoading } = useQuery<Hole[]>({
+  const { data: holes, isLoading: holesLoading, error: holesError } = useQuery<Hole[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, selectedCourseId, "holes"],
-    enabled: !!selectedCourseId && !!currentOrganization?.id,
+    enabled: !!selectedCourseId && !!currentOrganization?.id && isAuthReady,
+    retry: (failureCount, error) => {
+      if (handleAuthError(error)) {
+        return failureCount < 2;
+      }
+      return failureCount < 3;
+    },
   });
 
   const createRoundMutation = useMutation({
@@ -79,7 +83,8 @@ export default function NewRound() {
       }, 3000);
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (isUnauthorizedError(error) && !handleAuthError(error)) {
+        // Only redirect if org session handler couldn't resolve it
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -91,19 +96,40 @@ export default function NewRound() {
         return;
       }
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to save round. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  if (isLoading || coursesLoading) {
+  if (isAuthLoading || coursesLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="animate-pulse">
           <div className="bg-white rounded-xl h-96"></div>
         </div>
+      </div>
+    );
+  }
+
+  // Show auth error state instead of blank screen
+  if (!isAuthReady) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-yellow-600 mb-4">
+              <i className="fas fa-clock text-4xl"></i>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Connecting to Organization
+            </h2>
+            <p className="text-gray-600">
+              Please wait while we verify your access to this organization...
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
