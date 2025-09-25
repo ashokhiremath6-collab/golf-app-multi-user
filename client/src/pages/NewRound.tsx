@@ -29,9 +29,17 @@ interface Course {
 }
 
 export default function NewRound() {
+  console.log("🚨 NEW ROUND COMPONENT MOUNTING!"); // DEBUG: Check if component executes
   const { toast } = useToast();
   const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
   const { currentOrganization } = useOrganization();
+  
+  console.log("🏢 ORGANIZATION CONTEXT:", { 
+    currentOrganization, 
+    orgId: currentOrganization?.id,
+    orgName: currentOrganization?.name,
+    orgSlug: currentOrganization?.slug 
+  }); // DEBUG: Check organization state
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
