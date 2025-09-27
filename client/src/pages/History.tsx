@@ -52,7 +52,7 @@ export default function History() {
     enabled: !!currentOrganization?.id,
   });
 
-  const { data: courses } = useQuery({
+  const { data: courses } = useQuery<any[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
     enabled: !!currentOrganization?.id,
   });
