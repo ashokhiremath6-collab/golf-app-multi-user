@@ -62,7 +62,7 @@ function OrganizationApp() {
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   // Show loading screen while checking authentication
   if (isLoading) {
@@ -76,9 +76,13 @@ function Router() {
     );
   }
 
+  // If we have any indication of authentication, show the org app
+  // This handles the race condition where auth endpoint fails initially but user is actually authenticated
+  const hasAnyAuth = isAuthenticated || !!user;
+
   return (
     <Switch>
-      {!isAuthenticated ? (
+      {!hasAnyAuth ? (
         <Route path="/" component={Landing} />
       ) : (
         <OrganizationProvider>

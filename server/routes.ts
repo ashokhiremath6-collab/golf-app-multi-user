@@ -135,9 +135,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Auth routes - handle both normal and preview modes
-  app.get('/api/auth/user', isPreviewMode() ? (req: any, res: any) => res.json(null) : isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     if (isPreviewMode()) {
       return res.json(null);
+    }
+    
+    // Check for any valid authentication (Replit session or org token)
+    const hasReplitSession = checkReplitSession(req);
+    const orgToken = req.cookies?.orgToken || req.headers['x-org-token'];
+    let hasValidOrgToken = false;
+    
+    if (orgToken) {
+      try {
+        const decoded = jwt.verify(orgToken, ORG_SESSION_SECRET) as any;
+        hasValidOrgToken = decoded.exp > Date.now() / 1000;
+      } catch (error) {
+        hasValidOrgToken = false;
+      }
+    }
+    
+    if (!hasReplitSession && !hasValidOrgToken) {
+      return res.status(401).json({ 
+        message: "Authentication required", 
+        code: "AUTH_REQUIRED",
+        redirectToLogin: true 
+      });
+    }
+    
+    // Set user data based on available auth method
+    if (hasReplitSession) {
+      req.user = req.session?.passport?.user ?? { claims: { sub: 'replit-session' } };
+    } else if (hasValidOrgToken) {
+      const decoded = jwt.verify(orgToken, ORG_SESSION_SECRET) as any;
+      req.user = { claims: { sub: decoded.userId, email: decoded.email } };
     }
     
     try {
