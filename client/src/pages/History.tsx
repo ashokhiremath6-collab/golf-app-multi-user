@@ -1,449 +1,346 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useCurrentPlayer } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import Navigation from "@/components/Navigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, TrendingUp, TrendingDown, Minus, Eye, BarChart3, History as HistoryIcon } from "lucide-react";
+import { format } from "date-fns";
+
+interface Round {
+  id: string;
+  playerId: string;
+  playerName: string;
+  courseId: string;
+  courseName: string;
+  courseTees: string;
+  playedAt: string;
+  totalStrokes: number;
+  overPar: number;
+  grossScore: number;
+  netScore: number | null;
+  handicapAtTime: number | null;
+  scores: number[];
+  courseParTotal: number;
+}
+
+interface Player {
+  id: string;
+  name: string;
+  email: string | null;
+  handicap: number | null;
+  isAdmin: boolean;
+}
 
 export default function History() {
-  const { toast } = useToast();
-  const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
   const { currentOrganization } = useOrganization();
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("self");
-  const [selectedRoundId, setSelectedRoundId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState('all');
+  const [selectedPlayer, setSelectedPlayer] = useState<string>('all');
+  const [selectedCourse, setSelectedCourse] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
-  // Redirect to login if not authenticated (but not in preview mode)
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isPreviewMode) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, isPreviewMode, toast]);
+  // Organization-scoped data queries
+  const { data: rounds, isLoading: roundsLoading } = useQuery<Round[]>({
+    queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`],
+    enabled: !!currentOrganization?.id,
+  });
 
-  const { data: players } = useQuery({
+  const { data: players, isLoading: playersLoading } = useQuery<Player[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/players`],
     enabled: !!currentOrganization?.id,
-    retry: false,
   });
 
-  // Construct proper query parameters for rounds API
-  const roundsPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
-  
-  const { data: rounds, isLoading: roundsLoading } = useQuery({
-    queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`, { playerId: roundsPlayerId }],
-    queryFn: async ({ queryKey }) => {
-      const [endpoint, params] = queryKey as [string, { playerId?: string }];
-      const searchParams = new URLSearchParams();
-      if (params.playerId) searchParams.set('playerId', params.playerId);
-      
-      const response = await fetch(`${endpoint}?${searchParams.toString()}`, { 
-        credentials: 'include' 
-      });
-      
-      if (!response.ok) {
-        throw new Error(`${response.status}: ${response.statusText}`);
-      }
-      
-      return response.json();
-    },
-    enabled: !!roundsPlayerId && !!currentOrganization?.id,
-    retry: false,
+  const { data: courses } = useQuery({
+    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
+    enabled: !!currentOrganization?.id,
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="animate-pulse">
-            <div className="bg-white rounded-xl h-96"></div>
+  // Filter rounds based on selected criteria
+  const filteredRounds = rounds?.filter(round => {
+    if (selectedPlayer !== 'all' && round.playerId !== selectedPlayer) return false;
+    if (selectedCourse !== 'all' && round.courseId !== selectedCourse) return false;
+    return true;
+  }).sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()) || [];
+
+  // Get recent rounds (last 30 days)
+  const recentRounds = rounds?.filter(round => {
+    const roundDate = new Date(round.playedAt);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return roundDate >= thirtyDaysAgo;
+  }).sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()) || [];
+
+  const getScoreBadgeVariant = (overPar: number) => {
+    if (overPar < 0) return "default"; // Under par
+    if (overPar === 0) return "secondary"; // Par
+    if (overPar <= 5) return "outline"; // Slightly over
+    return "destructive"; // Way over par
+  };
+
+  const getTrendIcon = (overPar: number) => {
+    if (overPar < 0) return <TrendingDown className="h-4 w-4 text-green-600" />;
+    if (overPar === 0) return <Minus className="h-4 w-4 text-gray-500" />;
+    return <TrendingUp className="h-4 w-4 text-red-500" />;
+  };
+
+  const formatScore = (overPar: number) => {
+    if (overPar === 0) return "E";
+    return overPar > 0 ? `+${overPar}` : `${overPar}`;
+  };
+
+  const RoundCard = ({ round }: { round: Round }) => (
+    <Card className="hover:shadow-md transition-shadow" data-testid={`round-card-${round.id}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-gray-900" data-testid={`text-player-name-${round.id}`}>
+                {round.playerName}
+              </h3>
+              {getTrendIcon(round.overPar)}
+            </div>
+            <p className="text-sm text-gray-600" data-testid={`text-course-name-${round.id}`}>
+              {round.courseName} - {round.courseTees}
+            </p>
+            <p className="text-xs text-gray-500" data-testid={`text-played-date-${round.id}`}>
+              {format(new Date(round.playedAt), 'MMMM d, yyyy')}
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant={getScoreBadgeVariant(round.overPar)} data-testid={`badge-score-${round.id}`}>
+                {formatScore(round.overPar)}
+              </Badge>
+            </div>
+            <p className="text-sm text-gray-600" data-testid={`text-total-strokes-${round.id}`}>
+              {round.totalStrokes} strokes
+            </p>
+            {round.handicapAtTime && (
+              <p className="text-xs text-gray-500" data-testid={`text-handicap-${round.id}`}>
+                HCP: {round.handicapAtTime}
+              </p>
+            )}
           </div>
         </div>
+        <div className="grid grid-cols-9 gap-1 text-xs">
+          {round.scores.map((score, index) => {
+            const holeNumber = index + 1;
+            const holePar = Math.floor(round.courseParTotal / 18); // Simplified par calculation
+            const overUnder = score - holePar;
+            return (
+              <div
+                key={holeNumber}
+                className={`text-center p-1 rounded ${
+                  overUnder < 0 ? 'bg-green-100 text-green-800' :
+                  overUnder === 0 ? 'bg-gray-100 text-gray-800' :
+                  overUnder === 1 ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}
+                data-testid={`hole-score-${round.id}-${holeNumber}`}
+              >
+                <div className="text-[10px] text-gray-500">{holeNumber}</div>
+                <div className="font-semibold">{score}</div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const RoundListItem = ({ round }: { round: Round }) => (
+    <div 
+      className="flex items-center justify-between p-4 bg-white rounded-lg border hover:shadow-sm transition-shadow"
+      data-testid={`round-list-${round.id}`}
+    >
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {getTrendIcon(round.overPar)}
+          <Badge variant={getScoreBadgeVariant(round.overPar)} data-testid={`list-badge-${round.id}`}>
+            {formatScore(round.overPar)}
+          </Badge>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-900" data-testid={`list-player-${round.id}`}>
+            {round.playerName}
+          </h3>
+          <p className="text-sm text-gray-600" data-testid={`list-course-${round.id}`}>
+            {round.courseName} - {round.courseTees}
+          </p>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="font-semibold text-gray-900" data-testid={`list-strokes-${round.id}`}>
+          {round.totalStrokes} strokes
+        </p>
+        <p className="text-sm text-gray-600" data-testid={`list-date-${round.id}`}>
+          {format(new Date(round.playedAt), 'MMM d, yyyy')}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (!currentOrganization) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">No Organization Selected</h2>
+              <p className="text-gray-600">Please select an organization to view round history.</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const displayPlayerId = selectedPlayerId === "self" ? currentPlayer?.id : selectedPlayerId;
-  const displayPlayer = selectedPlayerId === "self" ? currentPlayer : (players as any[])?.find((p: any) => p.id === selectedPlayerId);
-
-  // Get rounds for the selected player and handle round selection
-  const lastRound = rounds && (rounds as any[]).length > 0 ? (rounds as any[])[0] : null;
-  
-  // Reset selected round when player changes or set to last round by default
-  useEffect(() => {
-    if (rounds && (rounds as any[]).length > 0) {
-      if (!selectedRoundId || !(rounds as any[]).find((r: any) => r.id === selectedRoundId)) {
-        setSelectedRoundId((rounds as any[])[0].id); // Default to most recent round
-      }
-    }
-  }, [rounds, selectedRoundId]);
-  
-  // Find the selected round
-  const selectedRound = selectedRoundId && rounds ? (rounds as any[]).find((r: any) => r.id === selectedRoundId) : lastRound;
-  
-  const calculateSummary = () => {
-    if (!rounds || (rounds as any[]).length === 0) {
-      return { roundsPlayed: 0, avgGross: 0, avgNet: 0, avgOverPar: 0, avgDTH: 0 };
-    }
-
-    const roundsPlayed = (rounds as any[]).length;
-    const avgGross = (rounds as any[]).reduce((sum: number, round: any) => sum + round.grossCapped, 0) / roundsPlayed;
-    const avgNet = (rounds as any[]).reduce((sum: number, round: any) => sum + round.net, 0) / roundsPlayed;
-    const avgOverPar = (rounds as any[]).reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / roundsPlayed;
-    
-    // Calculate DTH (Difference to Handicap) using slope-adjusted values when available
-    const avgDTH = (rounds as any[]).reduce((sum: number, round: any) => {
-      // Use slope-adjusted DTH if available, otherwise fall back to original calculation
-      const dth = round.slopeAdjustedDTH !== undefined 
-        ? round.slopeAdjustedDTH 
-        : parseFloat(round.overPar) - round.courseHandicap;
-      return sum + dth;
-    }, 0) / roundsPlayed;
-
-    return {
-      roundsPlayed,
-      avgGross: Math.round(avgGross),
-      avgNet: Math.round(avgNet),
-      avgOverPar: avgOverPar.toFixed(1),
-      avgDTH: avgDTH.toFixed(1),
-    };
-  };
-
-  const summary = calculateSummary();
-
-  // Render compact scorecard component
-  const renderScorecard = (round: any) => {
-    if (!round.cappedScores || round.cappedScores.length !== 18) {
-      return (
-        <div className="text-xs text-gray-500 text-center py-2">
-          Scorecard data not available
-        </div>
-      );
-    }
-
-    // Use correct par values
-    const correctPars = [4, 3, 4, 4, 4, 3, 5, 3, 4, 3, 4, 3, 3, 3, 4, 3, 5, 3];
-    const pars = correctPars;
-
-    return (
-      <div className="mb-2">
-        {/* Header with hole numbers */}
-        <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-          <div className="text-2xs text-gray-600 py-1">Hole</div>
-          {Array.from({length: 9}, (_, i) => (
-            <div key={i} className="text-2xs text-gray-600 py-1">{i + 1}</div>
-          ))}
-          <div className="text-2xs text-gray-600 py-1">OUT</div>
-        </div>
-        
-        {/* Par row */}
-        <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-          <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
-          {pars.slice(0, 9).map((par: number, index: number) => (
-            <div key={index} className="bg-gray-100 rounded px-0.5 py-1 border" data-testid={`hole-${index + 1}-par`}>
-              <div className="font-medium text-xs">{par}</div>
-            </div>
-          ))}
-          <div className="bg-gray-100 rounded px-0.5 py-1 border font-medium" data-testid="front-nine-par">
-            <div className="font-medium text-xs">{pars.slice(0, 9).reduce((sum: number, par: number) => sum + par, 0)}</div>
-          </div>
-        </div>
-        
-        {/* Front 9 scores */}
-        <div className="grid gap-0.5 text-center text-xs font-mono mb-2" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-          <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
-          {round.cappedScores.slice(0, 9).map((score: number, index: number) => {
-            const par = pars[index];
-            const isOver = score > par;
-            const isUnder = score < par;
-            const isOneOver = score === par + 1;
-            const isPar = score === par;
-            return (
-              <div key={index} className={`rounded px-0.5 py-0.5 border ${
-                isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
-              }`} data-testid={`hole-${index + 1}-score`}>
-                {isPar ? (
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 dark:ring-gray-500 font-bold text-xs leading-none mx-auto -translate-y-0.5">
-                    {score}
-                  </span>
-                ) : (
-                  <div className="font-bold text-xs">{score}</div>
-                )}
-              </div>
-            );
-          })}
-          <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold" data-testid="front-nine-total">
-            <div className="font-bold text-xs">{round.cappedScores.slice(0, 9).reduce((sum: number, score: number) => sum + score, 0)}</div>
-          </div>
-        </div>
-        
-        {/* Back 9 hole numbers */}
-        <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-          <div className="text-2xs text-gray-600 py-1">Hole</div>
-          {Array.from({length: 9}, (_, i) => (
-            <div key={i + 9} className="text-2xs text-gray-600 py-1">{i + 10}</div>
-          ))}
-          <div className="text-2xs text-gray-600 py-1">IN</div>
-        </div>
-        
-        {/* Back 9 par row */}
-        <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-          <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
-          {pars.slice(9, 18).map((par: number, index: number) => (
-            <div key={index + 9} className="bg-gray-100 rounded px-0.5 py-1 border" data-testid={`hole-${index + 10}-par`}>
-              <div className="font-medium text-xs">{par}</div>
-            </div>
-          ))}
-          <div className="bg-gray-100 rounded px-0.5 py-1 border font-medium" data-testid="back-nine-par">
-            <div className="font-medium text-xs">{pars.slice(9, 18).reduce((sum: number, par: number) => sum + par, 0)}</div>
-          </div>
-        </div>
-        
-        {/* Back 9 scores */}
-        <div className="grid gap-0.5 text-center text-xs font-mono" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-          <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
-          {round.cappedScores.slice(9, 18).map((score: number, index: number) => {
-            const par = pars[index + 9];
-            const isOver = score > par;
-            const isUnder = score < par;
-            const isOneOver = score === par + 1;
-            const isPar = score === par;
-            return (
-              <div key={index + 9} className={`rounded px-0.5 py-0.5 border ${
-                isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
-              }`} data-testid={`hole-${index + 10}-score`}>
-                {isPar ? (
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 dark:ring-gray-500 font-bold text-xs leading-none mx-auto -translate-y-0.5">
-                    {score}
-                  </span>
-                ) : (
-                  <div className="font-bold text-xs">{score}</div>
-                )}
-              </div>
-            );
-          })}
-          <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold" data-testid="back-nine-total">
-            <div className="font-bold text-xs">{round.cappedScores.slice(9, 18).reduce((sum: number, score: number) => sum + score, 0)}</div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
-      {/* Preview Mode Banner */}
-      {isPreviewMode && (
-        <div className="bg-blue-600 text-white px-4 py-2 text-center">
-          <div className="max-w-7xl mx-auto">
-            <span className="font-medium">Preview Mode:</span> View-only access - data modifications are disabled
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900" data-testid="text-history-title">
+            {currentOrganization.name} Round History
+          </h1>
+          <p className="text-gray-600 mt-2" data-testid="text-history-description">
+            Complete record of all rounds played in this organization
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex flex-wrap gap-4 items-center">
+            <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
+              <SelectTrigger className="w-48" data-testid="select-player">
+                <SelectValue placeholder="Filter by player" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" data-testid="option-all-players">All Players</SelectItem>
+                {players?.map((player) => (
+                  <SelectItem key={player.id} value={player.id} data-testid={`option-player-${player.id}`}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <SelectTrigger className="w-48" data-testid="select-course">
+                <SelectValue placeholder="Filter by course" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" data-testid="option-all-courses">All Courses</SelectItem>
+                {courses?.map((course: any) => (
+                  <SelectItem key={course.id} value={course.id} data-testid={`option-course-${course.id}`}>
+                    {course.name} - {course.tees}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              data-testid="button-list-view"
+            >
+              <HistoryIcon className="h-4 w-4 mr-1" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              data-testid="button-grid-view"
+            >
+              <BarChart3 className="h-4 w-4 mr-1" />
+              Cards
+            </Button>
           </div>
         </div>
-      )}
-      
-      <main className="max-w-7xl mx-auto px-4 py-3">
-        <Card data-testid="card-history">
-          <CardContent className="pt-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4" data-testid="text-history-title">
-              Player History
-            </h2>
 
-            {/* Player Selection Dropdown */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Player
-              </label>
-              <Select 
-                value={selectedPlayerId} 
-                onValueChange={setSelectedPlayerId}
-                data-testid="select-player"
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose a player" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="self" data-testid="select-player-self">
-                    Your History
-                  </SelectItem>
-                  {(players as any[])?.filter((p: any) => p.id !== currentPlayer?.id).map((player: any) => (
-                    <SelectItem 
-                      key={player.id} 
-                      value={player.id}
-                      data-testid={`select-player-${player.id}`}
-                    >
-                      {player.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="all" data-testid="tab-all-rounds">All Rounds</TabsTrigger>
+            <TabsTrigger value="recent" data-testid="tab-recent-rounds">Recent (30 days)</TabsTrigger>
+          </TabsList>
 
-            {/* Round Selection Dropdown */}
-            {rounds && (rounds as any[]).length > 0 && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Round
-                </label>
-                <Select 
-                  value={selectedRoundId} 
-                  onValueChange={setSelectedRoundId}
-                  data-testid="select-round"
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Choose a round" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(rounds as any[]).map((round: any, index: number) => (
-                      <SelectItem 
-                        key={round.id} 
-                        value={round.id}
-                        data-testid={`select-round-${round.id}`}
-                      >
-                        {round.courseName || 'Unknown Course'} {round.course?.slope && `(Slope ${round.course.slope})`} - {new Date(round.playedOn).toLocaleDateString()} (Net {round.net})
-                      </SelectItem>
+          <TabsContent value="all" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HistoryIcon className="h-5 w-5" />
+                  All Rounds ({filteredRounds.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {roundsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Selected Player's Last Round and Summary */}
-            {roundsLoading ? (
-              <div className="space-y-4">
-                <div className="animate-pulse border border-gray-200 rounded-lg p-4">
-                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                  <div className="h-32 bg-gray-200 rounded"></div>
-                </div>
-              </div>
-            ) : selectedRound ? (
-              <div className="space-y-4">
-                {/* Compact Player Info */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900" data-testid="text-selected-player-name">
-                      {displayPlayer?.name || 'Unknown Player'}
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      Handicap: <span className="font-medium">{displayPlayer?.currentHandicap || 0}</span>
-                      {selectedRound.slopeAdjustedCourseHandicap !== undefined && selectedRound.slopeAdjustedCourseHandicap !== selectedRound.courseHandicap && (
-                        <> | Course Hcp: <span className="font-medium">{selectedRound.slopeAdjustedCourseHandicap}</span></>
-                      )}
+                  </div>
+                ) : filteredRounds.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600" data-testid="text-no-rounds">
+                      No rounds found for the selected criteria.
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs text-gray-600">Selected Round</div>
-                    <div className="font-medium text-sm">{selectedRound.courseName}</div>
-                    {selectedRound.course?.slope && (
-                      <div className="text-xs text-gray-500">Slope: {selectedRound.course.slope}</div>
+                ) : (
+                  <div className={viewMode === 'grid' ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
+                    {filteredRounds.map((round) => 
+                      viewMode === 'grid' ? (
+                        <RoundCard key={round.id} round={round} />
+                      ) : (
+                        <RoundListItem key={round.id} round={round} />
+                      )
                     )}
-                    <div className="text-xs text-gray-500">{new Date(selectedRound.playedOn).toLocaleDateString()}</div>
                   </div>
-                </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                {/* Compact Last Round & Summary Combined */}
-                <Card className="bg-gray-50">
-                  <CardContent className="pt-4">
-                    {renderScorecard(selectedRound)}
-                    
-                    {/* Combined Stats - Last Round + Season Summary */}
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-4 gap-3 text-center">
-                        <div>
-                          <div className="font-bold text-base" data-testid="text-last-gross">
-                            {selectedRound.grossCapped}
-                          </div>
-                          <div className="text-2xs text-gray-600">Round Gross</div>
-                        </div>
-                        <div>
-                          <div className="font-bold text-base text-golf-blue" data-testid="text-last-net">
-                            {selectedRound.net}
-                          </div>
-                          <div className="text-2xs text-gray-600">Round Net</div>
-                        </div>
-                        <div>
-                          <div className="font-bold text-base text-golf-gold" data-testid="text-last-over-par">
-                            +{parseFloat(selectedRound.overPar).toFixed(0)}
-                          </div>
-                          <div className="text-2xs text-gray-600">Round Over</div>
-                        </div>
-                        <div>
-                          <div className="font-bold text-base text-purple-600" data-testid="text-last-dth">
-                            {(() => {
-                              const dth = selectedRound.slopeAdjustedDTH !== undefined 
-                                ? selectedRound.slopeAdjustedDTH 
-                                : parseFloat(selectedRound.overPar) - selectedRound.courseHandicap;
-                              return (dth >= 0 ? '+' : '') + dth.toFixed(0);
-                            })()} 
-                          </div>
-                          <div className="text-2xs text-gray-600">Round DTH</div>
-                        </div>
-                      </div>
-                      
-                      {/* Season Averages */}
-                      <div className="border-t pt-3">
-                        <div className="text-xs font-medium text-gray-700 mb-2 text-center">Season Averages</div>
-                        <div className="grid grid-cols-5 gap-2 text-center">
-                          <div>
-                            <div className="text-lg font-black text-gray-900" data-testid="text-summary-rounds">
-                              {summary.roundsPlayed}
-                            </div>
-                            <div className="text-2xs font-semibold text-gray-700">Rounds</div>
-                          </div>
-                          <div>
-                            <div className="text-lg font-black text-golf-green" data-testid="text-summary-avg-gross">
-                              {summary.avgGross}
-                            </div>
-                            <div className="text-2xs font-semibold text-gray-700">Avg Gross</div>
-                          </div>
-                          <div>
-                            <div className="text-lg font-black text-golf-blue" data-testid="text-summary-avg-net">
-                              {summary.avgNet}
-                            </div>
-                            <div className="text-2xs font-semibold text-gray-700">Avg Net</div>
-                          </div>
-                          <div>
-                            <div className="text-lg font-black text-golf-gold" data-testid="text-summary-avg-over-par">
-                              +{summary.avgOverPar}
-                            </div>
-                            <div className="text-2xs font-semibold text-gray-700">Avg Over</div>
-                          </div>
-                          <div>
-                            <div className="text-lg font-black text-purple-600" data-testid="text-summary-avg-dth">
-                              {Number(summary.avgDTH) >= 0 ? '+' : ''}{summary.avgDTH}
-                            </div>
-                            <div className="text-2xs font-semibold text-gray-700">Avg DTH</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <div className="text-center py-8" data-testid="empty-state-rounds">
-                <i className="fas fa-golf-ball text-4xl text-gray-300 mb-4"></i>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No rounds found</h3>
-                <p className="text-gray-500">
-                  {displayPlayer?.name || 'This player'} hasn't played any rounds yet
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+          <TabsContent value="recent" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Recent Rounds ({recentRounds.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {roundsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : recentRounds.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600" data-testid="text-no-recent-rounds">
+                      No rounds played in the last 30 days.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={viewMode === 'grid' ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
+                    {recentRounds.map((round) => 
+                      viewMode === 'grid' ? (
+                        <RoundCard key={round.id} round={round} />
+                      ) : (
+                        <RoundListItem key={round.id} round={round} />
+                      )
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

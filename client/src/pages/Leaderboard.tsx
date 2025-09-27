@@ -48,7 +48,7 @@ export default function Leaderboard() {
   });
 
   // Organization-scoped rounds for monthly filtering
-  const { data: rounds } = useQuery({
+  const { data: rounds } = useQuery<any[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`],
     enabled: !!currentOrganization?.id && activeTab === 'monthly',
   });
