@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Golf, MapPin, Calendar, Save, RotateCcw } from "lucide-react";
+import { Target, MapPin, Calendar, Save, RotateCcw } from "lucide-react";
 
 interface Hole {
   id: string;
@@ -259,7 +259,7 @@ export default function NewRound() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Golf className="h-5 w-5" />
+                <Target className="h-5 w-5" />
                 Round Summary
               </CardTitle>
             </CardHeader>
