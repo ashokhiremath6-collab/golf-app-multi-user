@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export function useAuth() {
   // Always call both queries to maintain hook order
-  const { data: authResponse, isLoading } = useQuery({
+  const { data: authResponse, isLoading, error } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
@@ -14,7 +14,8 @@ export function useAuth() {
 
   const isPreviewMode = (previewStatus as any)?.preview || false;
 
-  // For authentication issues, be more lenient - consider authenticated if preview mode OR if we're not explicitly getting auth errors
+  // Only consider authenticated if we have actual user data or preview mode
+  // Don't treat 401 errors as authenticated - that would allow unauthenticated users access
   const isAuthenticated = !!authResponse || isPreviewMode;
 
   return {
