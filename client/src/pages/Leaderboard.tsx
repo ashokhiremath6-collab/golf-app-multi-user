@@ -1,21 +1,33 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useCurrentPlayer } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import Navigation from "@/components/Navigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, History, Trophy } from "lucide-react";
-import { Link } from "wouter";
+import { Trophy, Medal, Award, Calendar } from "lucide-react";
+
+interface LeaderboardEntry {
+  playerId: string;
+  playerName: string;
+  position: number;
+  roundsPlayed: number;
+  avgOverPar: number;
+  handicap: number | null;
+  totalStrokes: number;
+  bestRound: number | null;
+  recentForm: string;
+}
+
+interface MonthlyWinner {
+  playerId: string;
+  playerName: string;
+  monthYear: string;
+  avgOverPar: number;
+  roundsPlayed: number;
+}
 
 export default function Leaderboard() {
-  const { toast } = useToast();
-  const { currentPlayer, isAuthenticated, isLoading } = useCurrentPlayer();
   const { currentOrganization } = useOrganization();
   const [activeTab, setActiveTab] = useState('cumulative');
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -23,48 +35,22 @@ export default function Leaderboard() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
-  const { data: cumulativeLeaderboard, isLoading: cumulativeLoading } = useQuery({
+  // Organization-scoped leaderboard data
+  const { data: leaderboard, isLoading: leaderboardLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`],
     enabled: !!currentOrganization?.id,
-    retry: false,
   });
 
-  // Use the same leaderboard endpoint and filter by month on frontend
-  const { data: allLeaderboardData, isLoading: monthlyLoading } = useQuery({
-    queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`],
+  // Organization-scoped monthly winners
+  const { data: monthlyWinners, isLoading: winnersLoading } = useQuery<MonthlyWinner[]>({
+    queryKey: [`/api/organizations/${currentOrganization?.id}/monthly-winners`],
     enabled: !!currentOrganization?.id,
-    retry: false,
   });
 
-  // Filter leaderboard data by selected month for monthly view
-  const monthlyLeaderboard = React.useMemo(() => {
-    if (!allLeaderboardData || activeTab !== 'monthly') return allLeaderboardData;
-    
-    // For now, return the same data - proper monthly filtering would require
-    // round data with date information to filter by month
-    return allLeaderboardData;
-  }, [allLeaderboardData, selectedMonth, activeTab]);
-
-  // Monthly winners - use global endpoint but filter to organization
-  const { data: monthlyWinners } = useQuery({
-    queryKey: [`/api/monthly-winners`],
-    enabled: !!currentOrganization?.id,
-    retry: false,
+  // Organization-scoped rounds for monthly filtering
+  const { data: rounds } = useQuery({
+    queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`],
+    enabled: !!currentOrganization?.id && activeTab === 'monthly',
   });
 
   const getCurrentMonthName = () => {
@@ -73,256 +59,293 @@ export default function Leaderboard() {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  const getMonthOptions = () => {
-    const options = [];
-    const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      options.push({ value, label });
-    }
-    return options;
+  const getMonthlyLeaderboard = () => {
+    if (!rounds || !selectedMonth) return [];
+    
+    // Filter rounds by selected month and calculate monthly stats
+    const [year, month] = selectedMonth.split('-');
+    const monthlyRounds = rounds.filter((round: any) => {
+      const roundDate = new Date(round.playedAt);
+      return roundDate.getFullYear() === parseInt(year) && 
+             roundDate.getMonth() === parseInt(month) - 1;
+    });
+
+    // Group by player and calculate monthly averages
+    const playerStats = new Map();
+    monthlyRounds.forEach((round: any) => {
+      if (!playerStats.has(round.playerId)) {
+        playerStats.set(round.playerId, {
+          playerId: round.playerId,
+          playerName: round.playerName,
+          rounds: [],
+          totalStrokes: 0,
+          totalOverPar: 0,
+        });
+      }
+      const stats = playerStats.get(round.playerId);
+      stats.rounds.push(round);
+      stats.totalStrokes += round.totalStrokes;
+      stats.totalOverPar += round.overPar;
+    });
+
+    // Convert to leaderboard format and sort
+    return Array.from(playerStats.values())
+      .map((stats: any) => ({
+        playerId: stats.playerId,
+        playerName: stats.playerName,
+        position: 0, // Will be set after sorting
+        roundsPlayed: stats.rounds.length,
+        avgOverPar: stats.totalOverPar / stats.rounds.length,
+        handicap: null, // Would need current handicap data
+        totalStrokes: stats.totalStrokes,
+        bestRound: Math.min(...stats.rounds.map((r: any) => r.totalStrokes)),
+        recentForm: "stable"
+      }))
+      .sort((a, b) => a.avgOverPar - b.avgOverPar)
+      .map((entry, index) => ({ ...entry, position: index + 1 }));
   };
 
-  const leaderboard = activeTab === 'cumulative' ? cumulativeLeaderboard : monthlyLeaderboard;
-  const leaderboardLoading = activeTab === 'cumulative' ? cumulativeLoading : monthlyLoading;
+  const getPositionIcon = (position: number) => {
+    switch (position) {
+      case 1: return <Trophy className="h-5 w-5 text-yellow-500" data-testid="icon-trophy-first" />;
+      case 2: return <Medal className="h-5 w-5 text-gray-400" data-testid="icon-medal-second" />;
+      case 3: return <Award className="h-5 w-5 text-amber-600" data-testid="icon-award-third" />;
+      default: return <span className="h-5 w-5 flex items-center justify-center text-sm font-bold text-gray-600" data-testid={`text-position-${position}`}>{position}</span>;
+    }
+  };
 
-  if (isLoading || leaderboardLoading) {
+  const formatOverPar = (overPar: number) => {
+    if (overPar === 0) return "E";
+    return overPar > 0 ? `+${overPar.toFixed(1)}` : overPar.toFixed(1);
+  };
+
+  if (!currentOrganization) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="animate-pulse">
-            <div className="bg-white rounded-xl h-96"></div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">No Organization Selected</h2>
+              <p className="text-gray-600">Please select an organization to view the leaderboard.</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Calculate summary stats for current leaderboard
-  const totalRounds = Array.isArray(leaderboard) ? leaderboard.reduce((sum: number, player: any) => sum + (player.roundsCount || 0), 0) : 0;
-  const avgOverParAll = Array.isArray(leaderboard) && leaderboard.length > 0 
-    ? (leaderboard.reduce((sum: number, player: any) => sum + parseFloat(player.avgOverPar || 0), 0) / leaderboard.length).toFixed(1)
-    : '0.0';
-  const avgDTHAll = Array.isArray(leaderboard) && leaderboard.length > 0 
-    ? (leaderboard.reduce((sum: number, player: any) => sum + parseFloat(player.avgDTH || 0), 0) / leaderboard.length).toFixed(1)
-    : '0.0';
-
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return { icon: 'fas fa-trophy', color: 'text-golf-gold' };
-    if (rank === 2) return { icon: 'fas fa-medal', color: 'text-gray-400' };
-    if (rank === 3) return { icon: 'fas fa-medal', color: 'text-orange-600' };
-    return { icon: '', color: '' };
-  };
-
-  const renderLeaderboardContent = (data: any, totalRounds: number, avgOverParAll: string, avgDTHAll: string) => {
-    if (!Array.isArray(data) || data.length === 0) {
-      return (
-        <div className="text-center py-8 text-gray-500">
-          No rounds found for this period
-        </div>
-      );
-    }
-
-    return (
-      <>
-        {/* Summary Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6 text-center">
-          <div>
-            <div className="text-lg font-black text-gray-900" data-testid="text-total-rounds">
-              {totalRounds}
-            </div>
-            <div className="text-xs font-semibold text-gray-600">Total Rounds</div>
-          </div>
-          <div>
-            <div className="text-lg font-black text-golf-green" data-testid="text-avg-net">
-              {(data.reduce((sum: number, p: any) => sum + parseFloat(p.avgNet || 0), 0) / data.length).toFixed(1)}
-            </div>
-            <div className="text-xs font-semibold text-gray-600">Avg Net</div>
-          </div>
-          <div>
-            <div className="text-lg font-black text-golf-gold" data-testid="text-avg-over-par">
-              +{avgOverParAll}
-            </div>
-            <div className="text-xs font-semibold text-gray-600">Avg Over</div>
-          </div>
-          <div>
-            <div className="text-lg font-black text-purple-600" data-testid="text-avg-dth">
-              {Number(avgDTHAll) >= 0 ? '+' : ''}{avgDTHAll}
-            </div>
-            <div className="text-xs font-semibold text-gray-600">Avg DTH</div>
-          </div>
-        </div>
-        
-        {/* Leaderboard Table */}
-        <div className="w-full">
-          <table className="w-full" data-testid="table-leaderboard">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">
-                  Rank
-                </th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Player
-                </th>
-                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
-                  Rounds
-                </th>
-                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">
-                  Avg Net
-                </th>
-                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
-                  DTH
-                </th>
-                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">
-                  HCP
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {data.map((player: any, index: number) => {
-                const rank = index + 1;
-                const rankInfo = getRankIcon(rank);
-                const isCurrentPlayer = currentPlayer && player.playerId === currentPlayer.id;
-
-                return (
-                  <tr 
-                    key={player.playerId} 
-                    className={`hover:bg-gray-50 ${isCurrentPlayer ? 'bg-green-50 border border-golf-green' : ''}`}
-                    data-testid={`row-player-${player.playerId}`}
-                  >
-                    <td className="px-2 py-4">
-                      <div className="flex items-center justify-center">
-                        <span className={`text-lg font-bold ${rankInfo.color || 'text-gray-500'}`} data-testid={`text-rank-${rank}`}>
-                          {rank}
-                        </span>
-                        {rankInfo.icon && (
-                          <i className={`${rankInfo.icon} ${rankInfo.color} ml-1 text-sm`} data-testid={`icon-rank-${rank}`}></i>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-2 py-4">
-                      <div className="font-medium text-gray-900 text-sm" data-testid={`text-player-name-${player.playerId}`}>
-                        {player.playerName}
-                        {isCurrentPlayer && (
-                          <Badge variant="secondary" className="ml-2 text-xs">
-                            You
-                          </Badge>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-2 py-4 text-center">
-                      <span className="text-sm text-gray-900 font-semibold" data-testid={`text-rounds-${player.playerId}`}>
-                        {player.roundsCount || 0}
-                      </span>
-                    </td>
-                    <td className="px-2 py-4 text-center">
-                      <span className="text-sm font-black text-golf-blue" data-testid={`text-avg-net-${player.playerId}`}>
-                        {parseFloat(player.avgNet || 0).toFixed(1)}
-                      </span>
-                    </td>
-                    <td className="px-2 py-4 text-center">
-                      <span className="text-sm font-black text-purple-600" data-testid={`text-avg-dth-${player.playerId}`}>
-                        {Number(player.avgDTH || 0) >= 0 ? '+' : ''}{parseFloat(player.avgDTH || 0).toFixed(1)}
-                      </span>
-                    </td>
-                    <td className="px-2 py-4 text-center">
-                      <span className="text-sm text-gray-700 font-semibold" data-testid={`text-handicap-${player.playerId}`}>
-                        {player.currentHandicap}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </>
-    );
-  };
+  const displayData = activeTab === 'monthly' ? getMonthlyLeaderboard() : leaderboard || [];
+  const isLoading = leaderboardLoading || (activeTab === 'monthly' && !rounds);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
-      <main className="max-w-7xl mx-auto px-4 py-3">
-        <Card data-testid="card-leaderboard">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900" data-testid="text-leaderboard-title">
-                  Golf Leaderboards
-                </h2>
-                <div className="text-xs text-gray-600" data-testid="text-season-info">
-                  2024-25 Season
-                </div>
-              </div>
-              <Link href="/leaderboard-history">
-                <Button variant="outline" size="sm" data-testid="button-view-history">
-                  <History className="h-4 w-4 mr-2" />
-                  View History
-                </Button>
-              </Link>
-            </div>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900" data-testid="text-leaderboard-title">
+            {currentOrganization.name} Leaderboard
+          </h1>
+          <p className="text-gray-600 mt-2" data-testid="text-leaderboard-description">
+            Current season standings and performance metrics
+          </p>
+        </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
-                  <TabsTrigger value="cumulative" data-testid="tab-cumulative">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    Season Total
-                  </TabsTrigger>
-                  <TabsTrigger value="monthly" data-testid="tab-monthly">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Monthly
-                  </TabsTrigger>
-                </TabsList>
-                
-                {activeTab === 'monthly' && (
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-sm text-gray-600">Month:</span>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="w-48" data-testid="select-month">
-                        <SelectValue placeholder="Select month" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getMonthOptions().map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="cumulative" data-testid="tab-cumulative">Season Total</TabsTrigger>
+            <TabsTrigger value="monthly" data-testid="tab-monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="winners" data-testid="tab-winners">Past Winners</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="cumulative" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Season Leaderboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(10)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : displayData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600" data-testid="text-no-data">No rounds recorded yet for this organization.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {displayData.map((entry) => (
+                      <div
+                        key={entry.playerId}
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border hover:shadow-sm transition-shadow"
+                        data-testid={`leaderboard-entry-${entry.playerId}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          {getPositionIcon(entry.position)}
+                          <div>
+                            <h3 className="font-semibold text-gray-900" data-testid={`text-player-name-${entry.playerId}`}>
+                              {entry.playerName}
+                            </h3>
+                            <p className="text-sm text-gray-600" data-testid={`text-rounds-played-${entry.playerId}`}>
+                              {entry.roundsPlayed} rounds played
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-gray-900" data-testid={`text-avg-over-par-${entry.playerId}`}>
+                            {formatOverPar(entry.avgOverPar)}
+                          </div>
+                          {entry.handicap && (
+                            <Badge variant="outline" className="text-xs" data-testid={`badge-handicap-${entry.playerId}`}>
+                              HCP {entry.handicap}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="cumulative">
-                <div className="text-right mb-4">
-                  <div className="text-xs text-gray-600">
-                    Cumulative season standings
-                  </div>
-                  <div className="text-xs text-gray-500">Ends Mar 31, 2026</div>
+          <TabsContent value="monthly" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Monthly Leaderboard
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="w-48" data-testid="select-month">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 12}, (_, i) => {
+                        const date = new Date();
+                        date.setMonth(date.getMonth() - i);
+                        const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                        return (
+                          <SelectItem key={value} value={value} data-testid={`option-month-${value}`}>
+                            {label}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
-                {renderLeaderboardContent(cumulativeLeaderboard, totalRounds, avgOverParAll, avgDTHAll)}
-              </TabsContent>
-
-              <TabsContent value="monthly">
-                <div className="text-right mb-4">
-                  <div className="text-xs text-gray-600">
-                    {getCurrentMonthName()} leaderboard
+              </CardHeader>
+              <CardContent>
+                <h3 className="text-lg font-semibold mb-4" data-testid="text-monthly-title">
+                  {getCurrentMonthName()} Results
+                </h3>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
+                    ))}
                   </div>
-                  <div className="text-xs text-gray-500">Monthly standings</div>
-                </div>
-                {renderLeaderboardContent(monthlyLeaderboard, totalRounds, avgOverParAll, avgDTHAll)}
-              </TabsContent>
-            </Tabs>
+                ) : displayData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600" data-testid="text-no-monthly-data">
+                      No rounds recorded for {getCurrentMonthName()}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {displayData.map((entry) => (
+                      <div
+                        key={entry.playerId}
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border hover:shadow-sm transition-shadow"
+                        data-testid={`monthly-entry-${entry.playerId}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          {getPositionIcon(entry.position)}
+                          <div>
+                            <h3 className="font-semibold text-gray-900" data-testid={`text-monthly-player-${entry.playerId}`}>
+                              {entry.playerName}
+                            </h3>
+                            <p className="text-sm text-gray-600" data-testid={`text-monthly-rounds-${entry.playerId}`}>
+                              {entry.roundsPlayed} rounds this month
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-gray-900" data-testid={`text-monthly-avg-${entry.playerId}`}>
+                            {formatOverPar(entry.avgOverPar)}
+                          </div>
+                          {entry.bestRound && (
+                            <p className="text-xs text-gray-600" data-testid={`text-best-round-${entry.playerId}`}>
+                              Best: {entry.bestRound}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          </CardContent>
-        </Card>
-      </main>
+          <TabsContent value="winners" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Monthly Winners
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {winnersLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : !monthlyWinners || monthlyWinners.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600" data-testid="text-no-winners">No monthly winners recorded yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {monthlyWinners.map((winner, index) => (
+                      <Card key={`${winner.playerId}-${winner.monthYear}`} className="bg-gradient-to-br from-yellow-50 to-yellow-100">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Trophy className="h-6 w-6 text-yellow-600" />
+                            <div>
+                              <h4 className="font-bold text-gray-900" data-testid={`text-winner-name-${index}`}>
+                                {winner.playerName}
+                              </h4>
+                              <p className="text-sm text-gray-600" data-testid={`text-winner-month-${index}`}>
+                                {winner.monthYear}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-yellow-700" data-testid={`text-winner-score-${index}`}>
+                              {formatOverPar(winner.avgOverPar)}
+                            </p>
+                            <p className="text-xs text-gray-600" data-testid={`text-winner-rounds-${index}`}>
+                              {winner.roundsPlayed} rounds
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
