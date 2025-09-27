@@ -92,7 +92,7 @@ export default function Admin() {
     enabled: !!currentOrganization?.id,
   });
 
-  const { data: rounds } = useQuery({
+  const { data: rounds } = useQuery<any[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`],
     enabled: !!currentOrganization?.id,
   });
@@ -164,7 +164,7 @@ export default function Admin() {
       toast({ title: "Error", description: "Player name is required.", variant: "destructive" });
       return;
     }
-    addPlayerMutation.mutate({ name: newPlayerName.trim(), email: newPlayerEmail.trim() || null });
+    addPlayerMutation.mutate({ name: newPlayerName.trim(), email: newPlayerEmail.trim() || "" });
   };
 
   const handleAddCourse = () => {
