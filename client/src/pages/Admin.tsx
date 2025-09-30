@@ -197,6 +197,54 @@ export default function Admin() {
     },
   });
 
+  const addTestRoundMutation = useMutation({
+    mutationFn: async (roundData: { playerId: string; courseId: string; rawScores: number[]; courseHandicap: number; date: string }) => {
+      await apiRequest("POST", `/api/organizations/${currentOrganization?.id}/rounds`, roundData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
+      toast({ title: "Test Round Added", description: "A test round has been successfully created." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create test round.", variant: "destructive" });
+    },
+  });
+
+  const handleAddTestRound = () => {
+    if (!players || players.length === 0) {
+      toast({ title: "Error", description: "No players available. Add a player first.", variant: "destructive" });
+      return;
+    }
+    if (!courses || courses.length === 0) {
+      toast({ title: "Error", description: "No courses available. Add a course first.", variant: "destructive" });
+      return;
+    }
+
+    // Select random player and course
+    const randomPlayer = players[Math.floor(Math.random() * players.length)];
+    const randomCourse = courses[Math.floor(Math.random() * courses.length)];
+    
+    // Generate realistic random scores (par to par+3 for each hole)
+    const rawScores = Array.from({ length: 18 }, () => {
+      const basePar = 4; // Assume average par 4
+      return basePar + Math.floor(Math.random() * 4); // Random score between par and par+3
+    });
+    
+    // Generate random course handicap (0-18 range for realism)
+    const courseHandicap = Math.floor(Math.random() * 19);
+    
+    // Use today's date
+    const date = new Date().toISOString();
+    
+    addTestRoundMutation.mutate({
+      playerId: randomPlayer.id,
+      courseId: randomCourse.id,
+      rawScores,
+      courseHandicap,
+      date,
+    });
+  };
+
   const handleAddPlayer = () => {
     if (!newPlayerName.trim()) {
       toast({ title: "Error", description: "Player name is required.", variant: "destructive" });
@@ -470,9 +518,13 @@ export default function Admin() {
                         <option key={player.id} value={player.id}>{player.name}</option>
                       ))}
                     </select>
-                    <Button data-testid="button-add-test-round">
+                    <Button 
+                      onClick={handleAddTestRound}
+                      disabled={addTestRoundMutation.isPending}
+                      data-testid="button-add-test-round"
+                    >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Test Round
+                      {addTestRoundMutation.isPending ? "Adding..." : "Add Test Round"}
                     </Button>
                   </div>
                 </div>

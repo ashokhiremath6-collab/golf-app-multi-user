@@ -1090,6 +1090,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization-scoped round creation endpoint
+  app.post('/api/organizations/:organizationId/rounds', enhancedAuth, async (req: any, res) => {
+    try {
+      const { organizationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Organization admin access required" });
+      }
+
+      const validatedData = createRoundSchema.parse(req.body);
+      
+      // Verify player belongs to this organization
+      const targetPlayer = await storage.getPlayer(validatedData.playerId);
+      if (!targetPlayer) {
+        return res.status(404).json({ message: "Player not found" });
+      }
+      if (targetPlayer.organizationId !== organizationId) {
+        return res.status(403).json({ message: "Player does not belong to this organization" });
+      }
+
+      // Verify course belongs to this organization
+      const course = await storage.getCourse(validatedData.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      if (course.organizationId !== organizationId) {
+        return res.status(403).json({ message: "Course does not belong to this organization" });
+      }
+
+      const holes = await storage.getHolesByCourse(course.id);
+      if (holes.length !== 18) {
+        return res.status(400).json({ message: "Course must have 18 holes configured" });
+      }
+
+      const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
+      
+      // Calculate round scores
+      const scoreCalculation = calculateRoundScores(
+        validatedData.rawScores,
+        holePars,
+        validatedData.courseHandicap,
+        course.parTotal
+      );
+
+      // Create complete round data
+      const roundData = {
+        ...validatedData,
+        playerId: validatedData.playerId,
+        cappedScores: scoreCalculation.cappedScores,
+        grossCapped: scoreCalculation.grossCapped,
+        net: scoreCalculation.net,
+        overPar: scoreCalculation.overPar.toString(),
+        source: 'admin' as const,
+      };
+
+      const newRound = await storage.createRound(roundData);
+      res.status(201).json(createPreviewResponse(newRound));
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating round:", error);
+      res.status(500).json({ message: "Failed to create round" });
+    }
+  });
+
   // Organization-scoped round update endpoint
   app.put('/api/organizations/:organizationId/rounds/:roundId', enhancedAuth, async (req: any, res) => {
     try {
