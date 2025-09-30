@@ -2,13 +2,10 @@
 -- PRODUCTION DATABASE MIGRATION SCRIPT
 -- Add 5 Global Golf Courses with Complete 18-Hole Data
 -- ============================================================================
--- This script will:
--- 1. Make all existing courses global (organization_id = NULL)
--- 2. Insert 5 new courses with exact data from development
--- 3. Insert all 90 holes (18 holes per course) with complete par and distance data
+-- INSTRUCTIONS FOR REPLIT SQL CONSOLE:
+-- 1. Select ALL statements below (from UPDATE to final SELECT)
+-- 2. Run them together - Replit will automatically wrap in a transaction
 -- ============================================================================
-
-BEGIN;
 
 -- Step 1: Make all existing courses global
 UPDATE courses SET organization_id = NULL;
@@ -101,8 +98,6 @@ LEFT JOIN holes h ON c.id = h.course_id
 WHERE c.organization_id IS NULL
 GROUP BY c.id, c.name, c.par_total, c.slope, c.rating
 ORDER BY c.name;
-
-COMMIT;
 
 -- ============================================================================
 -- EXPECTED RESULTS:

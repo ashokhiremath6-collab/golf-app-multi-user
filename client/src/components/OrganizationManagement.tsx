@@ -173,6 +173,10 @@ export default function OrganizationManagement() {
       queryClient.invalidateQueries({ 
         queryKey: ["/api/organizations", selectedOrg?.id, "admins"] 
       });
+      // Also invalidate players cache so Navigation component sees the updated admin status
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/organizations/${selectedOrg?.id}/players`] 
+      });
       setNewAdminEmail("");
       toast({
         title: "Success",
@@ -195,6 +199,10 @@ export default function OrganizationManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ 
         queryKey: ["/api/organizations", selectedOrg?.id, "admins"] 
+      });
+      // Also invalidate players cache so Navigation component sees the updated admin status
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/organizations/${selectedOrg?.id}/players`] 
       });
       toast({
         title: "Success",
