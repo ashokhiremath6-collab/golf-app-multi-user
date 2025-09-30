@@ -31,13 +31,17 @@ app.use(cors({
   maxAge: 86400 // Cache preflight requests for 24 hours
 }));
 
-// Additional middleware to ensure CORS headers on all responses (including 304)
+// Additional middleware to ensure CORS and security headers on all responses
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
+  
+  // Prevent CORB (Cross-Origin Read Blocking) by setting proper headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  
   next();
 });
 
@@ -52,6 +56,8 @@ app.use((req, res, next) => {
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
+    // Ensure proper Content-Type for JSON responses to prevent CORB
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
