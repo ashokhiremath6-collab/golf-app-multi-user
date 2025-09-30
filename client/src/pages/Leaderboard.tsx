@@ -114,7 +114,8 @@ export default function Leaderboard() {
     }
   };
 
-  const formatOverPar = (overPar: number) => {
+  const formatOverPar = (overPar: number | null | undefined) => {
+    if (overPar == null) return "N/A";
     if (overPar === 0) return "E";
     return overPar > 0 ? `+${overPar.toFixed(1)}` : overPar.toFixed(1);
   };
