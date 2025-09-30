@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { readFileSync } from "fs";
@@ -19,6 +20,15 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const app = express();
+
+// CORS configuration - Allow all origins in development with credentials
+app.use(cors({
+  origin: true, // Allow all origins
+  credentials: true, // Allow cookies and authorization headers
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-org-token']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
