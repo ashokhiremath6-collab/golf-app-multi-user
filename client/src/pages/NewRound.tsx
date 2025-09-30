@@ -45,6 +45,13 @@ export default function NewRound() {
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Debug logging
+  console.log('[NewRound] Rendering with:', {
+    hasOrganization: !!currentOrganization,
+    orgId: currentOrganization?.id,
+    orgName: currentOrganization?.name
+  });
+
   // Organization-scoped queries
   const { data: courses, isLoading: coursesLoading } = useQuery<Course[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
