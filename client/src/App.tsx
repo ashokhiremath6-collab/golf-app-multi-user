@@ -87,6 +87,7 @@ function Router() {
       ) : (
         <OrganizationProvider>
           <Route path="/super-admin" component={SuperAdmin} />
+          <Route path="/" component={OrganizationSelector} />
           <Route path="/:orgSlug*" component={OrganizationApp} />
         </OrganizationProvider>
       )}
