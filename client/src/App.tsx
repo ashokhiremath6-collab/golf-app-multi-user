@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -19,7 +19,20 @@ import SuperAdmin from "@/pages/SuperAdmin";
 import Navigation from "@/components/Navigation";
 
 function OrganizationApp() {
-  const { currentOrganization, error } = useOrganization();
+  const { currentOrganization, error, isLoading } = useOrganization();
+  const [location] = useLocation();
+
+  // Show loading state while organization is being determined
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-golf-green mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading organization...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -38,23 +51,39 @@ function OrganizationApp() {
     );
   }
 
+  // If we're on an org path but organization hasn't loaded yet, show loading
+  const hasOrgPath = location.split('/')[1] && !['super-admin', 'api', ''].includes(location.split('/')[1]);
+  if (hasOrgPath && !currentOrganization) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-golf-green mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading organization...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentOrganization) {
     return <OrganizationSelector />;
   }
 
   // Show organization-specific app with navigation
+  // Use full paths with org slug for simple routing
+  const orgSlug = currentOrganization.slug;
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       <Switch>
-        <Route path="/:orgSlug/rounds/new" component={NewRound} />
-        <Route path="/:orgSlug/leaderboard" component={Leaderboard} />
-        <Route path="/:orgSlug/leaderboard-history" component={LeaderboardHistory} />
-        <Route path="/:orgSlug/history" component={History} />
-        <Route path="/:orgSlug/handicaps" component={Handicaps} />
-        <Route path="/:orgSlug/players/:id/rounds" component={History} />
-        <Route path="/:orgSlug/admin" component={Admin} />
-        <Route path="/:orgSlug" component={Home} />
+        <Route path={`/${orgSlug}/rounds/new`} component={NewRound} />
+        <Route path={`/${orgSlug}/leaderboard`} component={Leaderboard} />
+        <Route path={`/${orgSlug}/leaderboard-history`} component={LeaderboardHistory} />
+        <Route path={`/${orgSlug}/history`} component={History} />
+        <Route path={`/${orgSlug}/handicaps`} component={Handicaps} />
+        <Route path={`/${orgSlug}/players/:id/rounds`} component={History} />
+        <Route path={`/${orgSlug}/admin`} component={Admin} />
+        <Route path={`/${orgSlug}`} component={Home} />
         <Route component={NotFound} />
       </Switch>
     </div>
