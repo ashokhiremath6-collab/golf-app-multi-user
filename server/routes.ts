@@ -607,6 +607,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization-scoped player creation endpoint
+  app.post('/api/organizations/:organizationId/players', enhancedAuth, async (req: any, res) => {
+    try {
+      const { organizationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Organization admin access required" });
+      }
+
+      // Parse and validate request body (omit organizationId from schema)
+      const bodyData = insertPlayerSchema.omit({ organizationId: true }).parse(req.body);
+      
+      // Add organizationId from route parameter (secure, can't be spoofed)
+      const validatedData = {
+        ...bodyData,
+        organizationId
+      };
+      
+      const newPlayer = await storage.createPlayer(validatedData);
+      res.status(200).json(createPreviewResponse(newPlayer));
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating player:", error);
+      res.status(500).json({ message: "Failed to create player" });
+    }
+  });
+
   app.get('/api/players/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
