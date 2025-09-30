@@ -26,8 +26,20 @@ app.use(cors({
   origin: true, // Allow all origins
   credentials: true, // Allow cookies and authorization headers
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-org-token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-org-token'],
+  exposedHeaders: ['Content-Type', 'Content-Length'],
+  maxAge: 86400 // Cache preflight requests for 24 hours
 }));
+
+// Additional middleware to ensure CORS headers on all responses (including 304)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
