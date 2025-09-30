@@ -748,7 +748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Organization-scoped courses endpoint
+  // Organization-scoped courses endpoint (returns global courses for authenticated users)
   app.get('/api/organizations/:organizationId/courses', enhancedAuth, async (req: any, res) => {
     try {
       const { organizationId } = req.params;
@@ -769,7 +769,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const courses = await storage.getAllCourses(organizationId);
+      // Return ALL courses globally (courses are now shared across organizations)
+      const courses = await storage.getAllCourses();
       res.json(courses);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch courses" });
@@ -1115,13 +1116,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Player does not belong to this organization" });
       }
 
-      // Verify course belongs to this organization
+      // Get course (courses are now global, available to all organizations)
       const course = await storage.getCourse(validatedData.courseId);
       if (!course) {
         return res.status(404).json({ message: "Course not found" });
-      }
-      if (course.organizationId !== organizationId) {
-        return res.status(403).json({ message: "Course does not belong to this organization" });
       }
 
       const holes = await storage.getHolesByCourse(course.id);
