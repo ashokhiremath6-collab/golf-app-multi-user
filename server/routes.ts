@@ -1090,6 +1090,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization-scoped round update endpoint
+  app.put('/api/organizations/:organizationId/rounds/:roundId', enhancedAuth, async (req: any, res) => {
+    try {
+      const { organizationId, roundId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Organization admin access required" });
+      }
+
+      const existingRound = await storage.getRound(roundId);
+      if (!existingRound) {
+        return res.status(404).json({ message: "Round not found" });
+      }
+
+      // Verify round belongs to this organization
+      const player = await storage.getPlayer(existingRound.playerId);
+      if (player?.organizationId !== organizationId) {
+        return res.status(403).json({ message: "Round does not belong to this organization" });
+      }
+
+      // Validate rawScores and courseHandicap
+      const { rawScores, courseHandicap } = req.body;
+      if (!Array.isArray(rawScores) || rawScores.length !== 18) {
+        return res.status(400).json({ message: "Must provide exactly 18 scores" });
+      }
+
+      if (!rawScores.every(score => Number.isInteger(score) && score >= 1 && score <= 10)) {
+        return res.status(400).json({ message: "All scores must be integers between 1 and 10" });
+      }
+
+      const updatedHandicap = courseHandicap !== undefined ? courseHandicap : existingRound.courseHandicap;
+      if (typeof updatedHandicap !== 'number' || updatedHandicap < 0 || updatedHandicap > 54) {
+        return res.status(400).json({ message: "Course handicap must be a number between 0 and 54" });
+      }
+
+      // Get course and holes for recalculation
+      const course = await storage.getCourse(existingRound.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      const holes = await storage.getHolesByCourse(course.id);
+      if (holes.length !== 18) {
+        return res.status(400).json({ message: "Course must have 18 holes configured" });
+      }
+
+      const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
+      
+      // Recalculate round scores
+      const scoreCalculation = calculateRoundScores(
+        rawScores,
+        holePars,
+        updatedHandicap,
+        course.parTotal
+      );
+
+      // Update round with recalculated values
+      const updatedRound = await storage.updateRound(roundId, {
+        rawScores: rawScores,
+        courseHandicap: updatedHandicap,
+        cappedScores: scoreCalculation.cappedScores,
+        grossCapped: scoreCalculation.grossCapped,
+        net: scoreCalculation.net,
+        overPar: scoreCalculation.overPar.toString(),
+      } as any);
+
+      res.json(createPreviewResponse(updatedRound));
+    } catch (error) {
+      console.error("Error updating round:", error);
+      res.status(500).json({ message: "Failed to update round" });
+    }
+  });
+
+  // Organization-scoped round deletion endpoint
+  app.delete('/api/organizations/:organizationId/rounds/:roundId', enhancedAuth, async (req: any, res) => {
+    try {
+      const { organizationId, roundId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Organization admin access required" });
+      }
+
+      const existingRound = await storage.getRound(roundId);
+      if (!existingRound) {
+        return res.status(404).json({ message: "Round not found" });
+      }
+
+      // Verify round belongs to this organization
+      const player = await storage.getPlayer(existingRound.playerId);
+      if (player?.organizationId !== organizationId) {
+        return res.status(403).json({ message: "Round does not belong to this organization" });
+      }
+
+      await storage.deleteRound(roundId);
+      res.json({ message: "Round deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting round:", error);
+      res.status(500).json({ message: "Failed to delete round" });
+    }
+  });
+
   app.post('/api/rounds', isAuthenticated, async (req: any, res) => {
     try {
       const validatedData = createRoundSchema.parse(req.body);

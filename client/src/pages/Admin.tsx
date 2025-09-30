@@ -66,6 +66,9 @@ export default function Admin() {
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEditRoundOpen, setIsEditRoundOpen] = useState(false);
+  const [isDeleteRoundOpen, setIsDeleteRoundOpen] = useState(false);
+  const [selectedRound, setSelectedRound] = useState<any>(null);
 
   // Form states
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -73,6 +76,8 @@ export default function Admin() {
   const [newCourseName, setNewCourseName] = useState('');
   const [newCourseTees, setNewCourseTees] = useState('');
   const [newCourseParTotal, setNewCourseParTotal] = useState(72);
+  const [editRoundScores, setEditRoundScores] = useState<number[]>([]);
+  const [editRoundHandicap, setEditRoundHandicap] = useState(0);
   const [newCourseRating, setNewCourseRating] = useState('');
   const [newCourseSlope, setNewCourseSlope] = useState('');
 
@@ -159,6 +164,39 @@ export default function Admin() {
     },
   });
 
+  const editRoundMutation = useMutation({
+    mutationFn: async ({ roundId, rawScores, courseHandicap }: { roundId: string; rawScores: number[]; courseHandicap: number }) => {
+      await apiRequest("PUT", `/api/organizations/${currentOrganization?.id}/rounds/${roundId}`, { 
+        rawScores, 
+        courseHandicap 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
+      toast({ title: "Round Updated", description: "Round has been successfully updated." });
+      setIsEditRoundOpen(false);
+      setSelectedRound(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update round.", variant: "destructive" });
+    },
+  });
+
+  const deleteRoundMutation = useMutation({
+    mutationFn: async (roundId: string) => {
+      await apiRequest("DELETE", `/api/organizations/${currentOrganization?.id}/rounds/${roundId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
+      toast({ title: "Round Deleted", description: "Round has been successfully deleted." });
+      setIsDeleteRoundOpen(false);
+      setSelectedRound(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete round.", variant: "destructive" });
+    },
+  });
+
   const handleAddPlayer = () => {
     if (!newPlayerName.trim()) {
       toast({ title: "Error", description: "Player name is required.", variant: "destructive" });
@@ -186,6 +224,38 @@ export default function Admin() {
 
   const handleToggleAdmin = (playerId: string, currentIsAdmin: boolean) => {
     toggleAdminMutation.mutate({ playerId, isAdmin: !currentIsAdmin });
+  };
+
+  const handleEditRound = (round: any) => {
+    setSelectedRound(round);
+    setEditRoundScores(round.rawScores || []);
+    setEditRoundHandicap(round.courseHandicap || 0);
+    setIsEditRoundOpen(true);
+  };
+
+  const handleDeleteRound = (round: any) => {
+    setSelectedRound(round);
+    setIsDeleteRoundOpen(true);
+  };
+
+  const handleSaveRoundEdit = () => {
+    if (!selectedRound) return;
+    
+    if (editRoundScores.length !== 18) {
+      toast({ title: "Error", description: "Must provide exactly 18 scores.", variant: "destructive" });
+      return;
+    }
+    
+    editRoundMutation.mutate({
+      roundId: selectedRound.id,
+      rawScores: editRoundScores,
+      courseHandicap: editRoundHandicap
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!selectedRound) return;
+    deleteRoundMutation.mutate(selectedRound.id);
   };
 
   if (!currentOrganization) {
@@ -384,10 +454,28 @@ export default function Admin() {
           <TabsContent value="rounds" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Manage Rounds
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Manage Rounds
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <select
+                      className="px-3 py-2 border rounded-md text-sm"
+                      defaultValue="all"
+                      data-testid="select-player-filter"
+                    >
+                      <option value="all">All Players</option>
+                      {players?.map(player => (
+                        <option key={player.id} value={player.id}>{player.name}</option>
+                      ))}
+                    </select>
+                    <Button data-testid="button-add-test-round">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Test Round
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {!rounds || rounds.length === 0 ? (
@@ -395,31 +483,66 @@ export default function Admin() {
                     <p className="text-gray-600">No rounds recorded yet.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {rounds?.slice(0, 20).map((round: any) => (
-                      <div
-                        key={round.id}
-                        className="flex items-center justify-between p-4 bg-white rounded-lg border"
-                        data-testid={`round-admin-${round.id}`}
-                      >
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {players?.find(p => p.id === round.playerId)?.name || 'Unknown Player'}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {courses?.find(c => c.id === round.courseId)?.name || 'Unknown Course'}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(round.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">
-                            Score: {round.totalStrokes}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700">PLAYER</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700">COURSE</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700">DATE</th>
+                          <th className="text-center py-3 px-4 font-semibold text-gray-700">GROSS</th>
+                          <th className="text-center py-3 px-4 font-semibold text-gray-700">NET</th>
+                          <th className="text-center py-3 px-4 font-semibold text-gray-700">OVER PAR</th>
+                          <th className="text-center py-3 px-4 font-semibold text-gray-700">STATUS</th>
+                          <th className="text-center py-3 px-4 font-semibold text-gray-700">ACTIONS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rounds?.slice(0, 20).map((round: any) => {
+                          const player = players?.find(p => p.id === round.playerId);
+                          const course = courses?.find(c => c.id === round.courseId);
+                          const overPar = parseFloat(round.overPar || '0');
+                          const overParDisplay = overPar === 0 ? 'E' : 
+                            overPar > 0 ? `+${overPar.toFixed(0)}` : overPar.toFixed(0);
+                          
+                          return (
+                            <tr key={round.id} className="border-b hover:bg-gray-50" data-testid={`round-row-${round.id}`}>
+                              <td className="py-3 px-4">{player?.name || 'Unknown'}</td>
+                              <td className="py-3 px-4">{course?.name || 'Unknown Course'}</td>
+                              <td className="py-3 px-4">{new Date(round.date).toLocaleDateString()}</td>
+                              <td className="text-center py-3 px-4 font-semibold">{round.totalStrokes || round.grossCapped}</td>
+                              <td className="text-center py-3 px-4 font-semibold text-blue-600">{round.net}</td>
+                              <td className="text-center py-3 px-4 font-semibold text-yellow-600">{overParDisplay}</td>
+                              <td className="text-center py-3 px-4">
+                                <Badge variant="default" className="bg-blue-500">ok</Badge>
+                              </td>
+                              <td className="text-center py-3 px-4">
+                                <div className="flex justify-center gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-blue-600 hover:text-blue-700"
+                                    onClick={() => handleEditRound(round)}
+                                    data-testid={`button-edit-round-${round.id}`}
+                                  >
+                                    EDIT
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => handleDeleteRound(round)}
+                                    data-testid={`button-delete-round-${round.id}`}
+                                  >
+                                    DEL
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </CardContent>
@@ -706,6 +829,119 @@ export default function Admin() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Round Dialog */}
+        <Dialog open={isEditRoundOpen} onOpenChange={setIsEditRoundOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Round</DialogTitle>
+              <DialogDescription>
+                Update the scores for this round. All 18 hole scores are required.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {selectedRound && (
+                <div className="bg-gray-50 p-3 rounded-md text-sm">
+                  <div><strong>Player:</strong> {players?.find(p => p.id === selectedRound.playerId)?.name}</div>
+                  <div><strong>Course:</strong> {courses?.find(c => c.id === selectedRound.courseId)?.name}</div>
+                  <div><strong>Date:</strong> {new Date(selectedRound.date).toLocaleDateString()}</div>
+                </div>
+              )}
+              
+              <div>
+                <Label htmlFor="edit-handicap">Course Handicap</Label>
+                <Input
+                  id="edit-handicap"
+                  type="number"
+                  value={editRoundHandicap}
+                  onChange={(e) => setEditRoundHandicap(parseInt(e.target.value) || 0)}
+                  min="0"
+                  max="54"
+                  data-testid="input-edit-handicap"
+                />
+              </div>
+
+              <div>
+                <Label>Scores (18 holes)</Label>
+                <div className="grid grid-cols-6 gap-2 mt-2">
+                  {Array.from({ length: 18 }, (_, i) => (
+                    <div key={i}>
+                      <Label htmlFor={`hole-${i}`} className="text-xs">H{i + 1}</Label>
+                      <Input
+                        id={`hole-${i}`}
+                        type="number"
+                        value={editRoundScores[i] || ''}
+                        onChange={(e) => {
+                          const newScores = [...editRoundScores];
+                          newScores[i] = parseInt(e.target.value) || 0;
+                          setEditRoundScores(newScores);
+                        }}
+                        min="1"
+                        max="10"
+                        className="text-center"
+                        data-testid={`input-edit-score-${i}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditRoundOpen(false)}
+                  data-testid="button-cancel-edit"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveRoundEdit}
+                  disabled={editRoundMutation.isPending}
+                  data-testid="button-save-edit"
+                >
+                  {editRoundMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Round Dialog */}
+        <Dialog open={isDeleteRoundOpen} onOpenChange={setIsDeleteRoundOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Round</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this round? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedRound && (
+              <div className="bg-gray-50 p-3 rounded-md text-sm">
+                <div><strong>Player:</strong> {players?.find(p => p.id === selectedRound.playerId)?.name}</div>
+                <div><strong>Course:</strong> {courses?.find(c => c.id === selectedRound.courseId)?.name}</div>
+                <div><strong>Date:</strong> {new Date(selectedRound.date).toLocaleDateString()}</div>
+                <div><strong>Score:</strong> {selectedRound.totalStrokes || selectedRound.grossCapped}</div>
+              </div>
+            )}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteRoundOpen(false)}
+                data-testid="button-cancel-delete"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+                disabled={deleteRoundMutation.isPending}
+                data-testid="button-confirm-delete"
+              >
+                {deleteRoundMutation.isPending ? "Deleting..." : "Delete Round"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
