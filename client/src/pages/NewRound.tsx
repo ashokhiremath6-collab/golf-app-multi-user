@@ -57,8 +57,8 @@ export default function NewRound() {
   });
 
   const { data: holes, isLoading: holesLoading } = useQuery<Hole[]>({
-    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`, selectedCourseId, "holes"],
-    enabled: !!selectedCourseId && !!currentOrganization?.id,
+    queryKey: [`/api/courses/${selectedCourseId}/holes`],
+    enabled: !!selectedCourseId,
   });
 
   // Get selected course and player details
