@@ -165,14 +165,24 @@ export default function NewRound() {
     return "bg-red-100 text-red-800 border-red-200"; // Triple bogey or worse
   };
 
-  if (!currentOrganization) {
+  // Show loading state while organization or data loads
+  if (!currentOrganization || coursesLoading || playersLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">No Organization Selected</h2>
-              <p className="text-gray-600">Please select an organization to add a new round.</p>
+              {!currentOrganization ? (
+                <>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">No Organization Selected</h2>
+                  <p className="text-gray-600">Please select an organization to add a new round.</p>
+                </>
+              ) : (
+                <>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-golf-green mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading course and player data...</p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
