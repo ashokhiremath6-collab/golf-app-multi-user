@@ -1,0 +1,120 @@
+COURSE 1: BPGC (Blue Tees)
+Slope Rating: 120
+Course Rating: Not set
+
+Front 9:
+Hole 1: Par 5, 476 yards
+Hole 2: Par 3, 160 yards
+Hole 3: Par 4, 289 yards
+Hole 4: Par 5, 476 yards
+Hole 5: Par 4, 358 yards
+Hole 6: Par 3, 186 yards
+Hole 7: Par 4, 347 yards
+Hole 8: Par 3, 189 yards
+Hole 9: Par 4, 443 yards
+
+Back 9:
+Hole 10: Par 3, 140 yards
+Hole 11: Par 4, 378 yards
+Hole 12: Par 4, 312 yards
+Hole 13: Par 3, 195 yards
+Hole 14: Par 4, 443 yards
+Hole 15: Par 4, 394 yards
+Hole 16: Par 5, 476 yards
+Hole 17: Par 3, 207 yards
+Hole 18: Par 5, 398 yards
+
+Total: Par 69, 6,467 yards
+
+COURSE 2: Kharghar Valley Golf Course (Blue Tees)
+Slope Rating: 123
+Course Rating: Not set
+
+Front 9:
+Hole 1: Par 5, 540 yards
+Hole 2: Par 4, 346 yards
+Hole 3: Par 3, 200 yards
+Hole 4: Par 4, 398 yards
+Hole 5: Par 4, 427 yards
+Hole 6: Par 4, 477 yards
+Hole 7: Par 4, 440 yards
+Hole 8: Par 5, 606 yards
+Hole 9: Par 3, 145 yards
+
+Back 9:
+Hole 10: Par 4, 427 yards
+Hole 11: Par 3, 143 yards
+Hole 12: Par 4, 295 yards
+Hole 13: Par 4, 333 yards
+Hole 14: Par 5, 496 yards
+Hole 15: Par 4, 320 yards
+Hole 16: Par 5, 500 yards
+Hole 17: Par 3, 196 yards
+Hole 18: Par 4, 423 yards
+
+Total: Par 72, 7,272 yards
+
+COURSE 3: Test Course Auto-Holes (Blue Tees)
+Slope Rating: 113
+Course Rating: 72.0
+
+All 18 holes: Par 4, 400 yards (except holes 2, 6, 11, 16 are Par 3 and holes 4, 13, 18 are Par 5)
+
+Total: Par 72, 7,200 yards
+
+COURSE 4: US Club (Blue Tees)
+Slope Rating: 110
+Course Rating: Not set
+
+Front 9:
+Hole 1: Par 5, 450 yards
+Hole 2: Par 3, 230 yards
+Hole 3: Par 3, 160 yards
+Hole 4: Par 4, 426 yards
+Hole 5: Par 4, 384 yards
+Hole 6: Par 4, 373 yards
+Hole 7: Par 4, 340 yards
+Hole 8: Par 3, 180 yards
+Hole 9: Par 4, 320 yards
+
+Back 9:
+Hole 10: Par 3, 170 yards
+Hole 11: Par 3, 175 yards
+Hole 12: Par 4, 365 yards
+Hole 13: Par 4, 250 yards
+Hole 14: Par 4, 278 yards
+Hole 15: Par 4, 389 yards
+Hole 16: Par 5, 464 yards
+Hole 17: Par 4, 307 yards
+Hole 18: Par 5, 525 yards
+
+Total: Par 70, 5,786 yards
+
+COURSE 5: Willingdon Sports Club (Blue Tees)
+Slope Rating: 110
+Course Rating: Not set
+
+Front 9:
+Hole 1: Par 4, 364 yards
+Hole 2: Par 3, 176 yards
+Hole 3: Par 4, 284 yards
+Hole 4: Par 4, 261 yards
+Hole 5: Par 4, 235 yards
+Hole 6: Par 3, 149 yards
+Hole 7: Par 5, 434 yards
+Hole 8: Par 3, 197 yards
+Hole 9: Par 4, 142 yards
+
+Back 9:
+Hole 10: Par 3, 190 yards
+Hole 11: Par 4, 252 yards
+Hole 12: Par 3, 176 yards
+Hole 13: Par 3, 206 yards
+Hole 14: Par 3, 183 yards
+Hole 15: Par 4, 228 yards
+Hole 16: Par 3, 180 yards
+Hole 17: Par 5, 487 yards
+Hole 18: Par 3, 123 yards
+
+Total: Par 63, 4,267 yards
+
