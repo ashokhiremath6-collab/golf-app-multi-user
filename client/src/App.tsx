@@ -68,24 +68,30 @@ function OrganizationApp() {
     return <OrganizationSelector />;
   }
 
-  // Show organization-specific app with navigation
-  // Use full paths with org slug for simple routing
+  // Determine which page to render based on the current location
   const orgSlug = currentOrganization.slug;
+  let PageComponent = Home;
+  
+  if (location === `/${orgSlug}/rounds/new`) {
+    PageComponent = NewRound;
+  } else if (location === `/${orgSlug}/leaderboard`) {
+    PageComponent = Leaderboard;
+  } else if (location === `/${orgSlug}/leaderboard-history`) {
+    PageComponent = LeaderboardHistory;
+  } else if (location === `/${orgSlug}/history`) {
+    PageComponent = History;
+  } else if (location === `/${orgSlug}/handicaps`) {
+    PageComponent = Handicaps;
+  } else if (location.startsWith(`/${orgSlug}/players/`) && location.endsWith('/rounds')) {
+    PageComponent = History;
+  } else if (location === `/${orgSlug}/admin`) {
+    PageComponent = Admin;
+  }
   
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <Switch>
-        <Route path={`/${orgSlug}/rounds/new`} component={NewRound} />
-        <Route path={`/${orgSlug}/leaderboard`} component={Leaderboard} />
-        <Route path={`/${orgSlug}/leaderboard-history`} component={LeaderboardHistory} />
-        <Route path={`/${orgSlug}/history`} component={History} />
-        <Route path={`/${orgSlug}/handicaps`} component={Handicaps} />
-        <Route path={`/${orgSlug}/players/:id/rounds`} component={History} />
-        <Route path={`/${orgSlug}/admin`} component={Admin} />
-        <Route path={`/${orgSlug}`} component={Home} />
-        <Route component={NotFound} />
-      </Switch>
+      <PageComponent />
     </div>
   );
 }
@@ -109,19 +115,33 @@ function Router() {
   // This handles the race condition where auth endpoint fails initially but user is actually authenticated
   const hasAnyAuth = isAuthenticated || !!user;
 
-  return (
-    <Switch>
-      {!hasAnyAuth ? (
+  if (!hasAnyAuth) {
+    return (
+      <Switch>
         <Route path="/" component={Landing} />
-      ) : (
-        <OrganizationProvider>
-          <Route path="/super-admin" component={SuperAdmin} />
-          <Route path="/" component={OrganizationSelector} />
-          <Route path="/:orgSlug*" component={OrganizationApp} />
-        </OrganizationProvider>
-      )}
-      <Route component={NotFound} />
-    </Switch>
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+
+  // Wrap authenticated routes with OrganizationProvider outside of Switch
+  // This is critical: Switch only inspects direct child routes!
+  return (
+    <OrganizationProvider>
+      <Switch>
+        <Route path="/super-admin" component={SuperAdmin} />
+        <Route path="/:orgSlug/rounds/new" component={OrganizationApp} />
+        <Route path="/:orgSlug/leaderboard" component={OrganizationApp} />
+        <Route path="/:orgSlug/leaderboard-history" component={OrganizationApp} />
+        <Route path="/:orgSlug/history" component={OrganizationApp} />
+        <Route path="/:orgSlug/handicaps" component={OrganizationApp} />
+        <Route path="/:orgSlug/players/:id/rounds" component={OrganizationApp} />
+        <Route path="/:orgSlug/admin" component={OrganizationApp} />
+        <Route path="/:orgSlug" component={OrganizationApp} />
+        <Route path="/" component={OrganizationSelector} />
+        <Route component={NotFound} />
+      </Switch>
+    </OrganizationProvider>
   );
 }
 
