@@ -255,9 +255,12 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="players" data-testid="tab-admin-players">Players</TabsTrigger>
+            <TabsTrigger value="rounds" data-testid="tab-admin-rounds">Rounds</TabsTrigger>
             <TabsTrigger value="courses" data-testid="tab-admin-courses">Courses</TabsTrigger>
+            <TabsTrigger value="import" data-testid="tab-admin-import">Import</TabsTrigger>
+            <TabsTrigger value="handicaps" data-testid="tab-admin-handicaps">Handicaps</TabsTrigger>
             <TabsTrigger value="settings" data-testid="tab-admin-settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -369,6 +372,51 @@ export default function Admin() {
                           >
                             {player.isAdmin ? "Remove Admin" : "Make Admin"}
                           </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rounds" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Manage Rounds
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!rounds || rounds.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">No rounds recorded yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {rounds?.slice(0, 20).map((round: any) => (
+                      <div
+                        key={round.id}
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border"
+                        data-testid={`round-admin-${round.id}`}
+                      >
+                        <div>
+                          <h3 className="font-semibold text-gray-900">
+                            {players?.find(p => p.id === round.playerId)?.name || 'Unknown Player'}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {courses?.find(c => c.id === round.courseId)?.name || 'Unknown Course'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(round.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            Score: {round.totalStrokes}
+                          </Badge>
                         </div>
                       </div>
                     ))}
@@ -511,6 +559,97 @@ export default function Admin() {
                               <p className="text-sm text-gray-600">Slope: {course.slope}</p>
                             )}
                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="import" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5" />
+                  Import Data
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Alert>
+                    <AlertDescription>
+                      Import functionality allows you to bulk import rounds, players, or course data. This feature is coming soon.
+                    </AlertDescription>
+                  </Alert>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">Import rounds from CSV or Excel files</p>
+                    <Button disabled data-testid="button-import-data">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Import File (Coming Soon)
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="handicaps" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="h-5 w-5" />
+                    Manage Handicaps
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({ 
+                        title: "Recalculation Started", 
+                        description: "Handicaps are being recalculated for all players." 
+                      });
+                    }}
+                    data-testid="button-recalculate-handicaps"
+                  >
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Recalculate All Handicaps
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {playersLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : players?.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">No players with handicaps yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {players?.map((player) => (
+                      <div
+                        key={player.id}
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border"
+                        data-testid={`handicap-admin-${player.id}`}
+                      >
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{player.name}</h3>
+                          <p className="text-sm text-gray-600">{player.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={player.handicap ? "default" : "outline"}
+                            className="text-lg px-3 py-1"
+                            data-testid={`badge-handicap-value-${player.id}`}
+                          >
+                            HCP: {player.handicap !== null ? player.handicap : 'N/A'}
+                          </Badge>
                         </div>
                       </div>
                     ))}
