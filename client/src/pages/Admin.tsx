@@ -295,13 +295,13 @@ export default function Admin() {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="playerEmail">Email</Label>
+                          <Label htmlFor="playerEmail">Email *</Label>
                           <Input
                             id="playerEmail"
                             type="email"
                             value={newPlayerEmail}
                             onChange={(e) => setNewPlayerEmail(e.target.value)}
-                            placeholder="Enter email (optional)"
+                            placeholder="Enter email"
                             data-testid="input-player-email"
                           />
                         </div>
