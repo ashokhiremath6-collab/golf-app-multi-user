@@ -45,29 +45,6 @@ export default function NewRound() {
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // TEMPORARY: Return simple test UI to verify routing works
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4" data-testid="text-new-round-title">
-          🎯 New Round Page - TEST
-        </h1>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-lg mb-2">Organization: <strong>{currentOrganization?.name || 'Loading...'}</strong></p>
-          <p className="text-sm text-gray-600">ID: {currentOrganization?.id || 'No ID'}</p>
-          <p className="text-sm text-gray-600 mt-4">This is a test to verify the route is working. If you see this, the route works!</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Debug logging
-  console.log('[NewRound] Rendering with:', {
-    hasOrganization: !!currentOrganization,
-    orgId: currentOrganization?.id,
-    orgName: currentOrganization?.name
-  });
-
   // Organization-scoped queries
   const { data: courses, isLoading: coursesLoading } = useQuery<Course[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
