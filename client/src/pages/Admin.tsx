@@ -72,6 +72,13 @@ export default function Admin() {
   const [isEditHandicapOpen, setIsEditHandicapOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [editHandicapValue, setEditHandicapValue] = useState('');
+  
+  // Scorecard dialog states
+  const [isScorecardOpen, setIsScorecardOpen] = useState(false);
+  const [scorecardPlayer, setScorecardPlayer] = useState('');
+  const [scorecardCourse, setScorecardCourse] = useState('');
+  const [scorecardDate, setScorecardDate] = useState(new Date().toISOString().split('T')[0]);
+  const [holeScores, setHoleScores] = useState<number[]>(Array(18).fill(4));
 
   // Form states
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -224,6 +231,7 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
       toast({ title: "Test Round Added", description: "A test round has been successfully created." });
+      setIsScorecardOpen(false);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to create test round.", variant: "destructive" });
@@ -240,31 +248,60 @@ export default function Admin() {
       return;
     }
 
-    // Select random player and course
-    const randomPlayer = players[Math.floor(Math.random() * players.length)];
-    const randomCourse = courses[Math.floor(Math.random() * courses.length)];
-    
-    // Generate realistic random scores (par to par+3 for each hole)
-    const rawScores = Array.from({ length: 18 }, () => {
-      const basePar = 4; // Assume average par 4
-      return basePar + Math.floor(Math.random() * 4); // Random score between par and par+3
-    });
-    
-    // Generate random course handicap (0-18 range for realism)
-    const courseHandicap = Math.floor(Math.random() * 19);
-    
-    // Use today's date in YYYY-MM-DD format
-    const today = new Date();
-    const playedOn = today.toISOString().split('T')[0];
-    
+    // Reset form and open scorecard dialog
+    setScorecardPlayer('');
+    setScorecardCourse('');
+    setScorecardDate(new Date().toISOString().split('T')[0]);
+    setHoleScores(Array(18).fill(4));
+    setIsScorecardOpen(true);
+  };
+
+  const handleSubmitScorecard = () => {
+    if (!scorecardPlayer) {
+      toast({ title: "Error", description: "Please select a player.", variant: "destructive" });
+      return;
+    }
+    if (!scorecardCourse) {
+      toast({ title: "Error", description: "Please select a course.", variant: "destructive" });
+      return;
+    }
+    if (!scorecardDate) {
+      toast({ title: "Error", description: "Please select a date.", variant: "destructive" });
+      return;
+    }
+
+    // Validate hole scores
+    if (holeScores.length !== 18) {
+      toast({ title: "Error", description: "All 18 holes must have scores.", variant: "destructive" });
+      return;
+    }
+    const invalidScores = holeScores.some(score => score < 1 || score > 10 || !Number.isInteger(score));
+    if (invalidScores) {
+      toast({ title: "Error", description: "All scores must be between 1 and 10.", variant: "destructive" });
+      return;
+    }
+
+    // Find selected player to get their current handicap
+    const player = players?.find(p => p.id === scorecardPlayer);
+    const courseHandicap = player?.handicap || 0;
+
     addTestRoundMutation.mutate({
-      playerId: randomPlayer.id,
-      courseId: randomCourse.id,
-      rawScores,
+      playerId: scorecardPlayer,
+      courseId: scorecardCourse,
+      rawScores: holeScores,
       courseHandicap,
-      playedOn,
+      playedOn: scorecardDate,
       source: 'admin',
     });
+  };
+
+  const handleScoreChange = (holeIndex: number, value: string) => {
+    const score = parseInt(value) || 0;
+    if (score >= 1 && score <= 10) {
+      const newScores = [...holeScores];
+      newScores[holeIndex] = score;
+      setHoleScores(newScores);
+    }
   };
 
   const handleAddPlayer = () => {
@@ -1093,6 +1130,104 @@ export default function Admin() {
                   data-testid="button-save-handicap"
                 >
                   {updateHandicapMutation.isPending ? "Saving..." : "Save Handicap"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Scorecard Dialog for Test Round */}
+        <Dialog open={isScorecardOpen} onOpenChange={setIsScorecardOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add Test Round - Scorecard</DialogTitle>
+              <DialogDescription>
+                Fill in the scorecard details to create a test round
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Player, Course, and Date Selection */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="scorecard-player">Player</Label>
+                  <select
+                    id="scorecard-player"
+                    value={scorecardPlayer}
+                    onChange={(e) => setScorecardPlayer(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                    data-testid="select-scorecard-player"
+                  >
+                    <option value="">Select Player</option>
+                    {players?.map(player => (
+                      <option key={player.id} value={player.id}>{player.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="scorecard-course">Course</Label>
+                  <select
+                    id="scorecard-course"
+                    value={scorecardCourse}
+                    onChange={(e) => setScorecardCourse(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                    data-testid="select-scorecard-course"
+                  >
+                    <option value="">Select Course</option>
+                    {courses?.map(course => (
+                      <option key={course.id} value={course.id}>{course.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="scorecard-date">Date</Label>
+                  <Input
+                    id="scorecard-date"
+                    type="date"
+                    value={scorecardDate}
+                    onChange={(e) => setScorecardDate(e.target.value)}
+                    data-testid="input-scorecard-date"
+                  />
+                </div>
+              </div>
+
+              {/* 18-Hole Scorecard */}
+              <div>
+                <Label className="text-lg font-semibold mb-3 block">Hole Scores (1-10)</Label>
+                <div className="grid grid-cols-9 gap-2">
+                  {holeScores.map((score, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <Label className="text-xs mb-1">Hole {index + 1}</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={score}
+                        onChange={(e) => handleScoreChange(index, e.target.value)}
+                        className="w-full text-center"
+                        data-testid={`input-hole-${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-500 mt-2" data-testid="text-total-strokes">
+                  Total Strokes: {holeScores.reduce((a, b) => a + b, 0)}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsScorecardOpen(false)}
+                  data-testid="button-cancel-scorecard"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitScorecard}
+                  disabled={addTestRoundMutation.isPending}
+                  data-testid="button-submit-scorecard"
+                >
+                  {addTestRoundMutation.isPending ? "Creating..." : "Create Round"}
                 </Button>
               </div>
             </div>
