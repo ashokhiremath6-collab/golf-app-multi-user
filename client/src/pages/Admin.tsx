@@ -69,6 +69,9 @@ export default function Admin() {
   const [isEditRoundOpen, setIsEditRoundOpen] = useState(false);
   const [isDeleteRoundOpen, setIsDeleteRoundOpen] = useState(false);
   const [selectedRound, setSelectedRound] = useState<any>(null);
+  const [isEditHandicapOpen, setIsEditHandicapOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [editHandicapValue, setEditHandicapValue] = useState('');
 
   // Form states
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -148,6 +151,23 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update admin status.", variant: "destructive" });
+    },
+  });
+
+  const updateHandicapMutation = useMutation({
+    mutationFn: async ({ playerId, handicap }: { playerId: string; handicap: number | null }) => {
+      await apiRequest("PATCH", `/api/organizations/${currentOrganization?.id}/players/${playerId}`, { handicap });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/players`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/handicaps`] });
+      toast({ title: "Handicap Updated", description: "Player handicap has been updated successfully." });
+      setIsEditHandicapOpen(false);
+      setSelectedPlayer(null);
+      setEditHandicapValue('');
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update handicap.", variant: "destructive" });
     },
   });
 
@@ -304,6 +324,29 @@ export default function Admin() {
   const handleConfirmDelete = () => {
     if (!selectedRound) return;
     deleteRoundMutation.mutate(selectedRound.id);
+  };
+
+  const handleEditHandicap = (player: Player) => {
+    setSelectedPlayer(player);
+    setEditHandicapValue(player.handicap?.toString() || '');
+    setIsEditHandicapOpen(true);
+  };
+
+  const handleSaveHandicap = () => {
+    if (!selectedPlayer) return;
+    
+    const handicapValue = editHandicapValue.trim() === '' ? null : parseFloat(editHandicapValue);
+    
+    if (handicapValue !== null && (isNaN(handicapValue) || handicapValue < 0 || handicapValue > 54)) {
+      toast({ 
+        title: "Invalid Handicap", 
+        description: "Handicap must be a number between 0 and 54, or leave blank for no handicap.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    updateHandicapMutation.mutate({ playerId: selectedPlayer.id, handicap: handicapValue });
   };
 
   if (!currentOrganization) {
@@ -825,6 +868,14 @@ export default function Admin() {
                           >
                             HCP: {player.handicap !== null ? player.handicap : 'N/A'}
                           </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditHandicap(player)}
+                            data-testid={`button-edit-handicap-${player.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -991,6 +1042,57 @@ export default function Admin() {
               >
                 {deleteRoundMutation.isPending ? "Deleting..." : "Delete Round"}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Handicap Dialog */}
+        <Dialog open={isEditHandicapOpen} onOpenChange={setIsEditHandicapOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Player Handicap</DialogTitle>
+              <DialogDescription>
+                Manually set or update the handicap for {selectedPlayer?.name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-player-handicap">Handicap Index</Label>
+                <Input
+                  id="edit-player-handicap"
+                  type="number"
+                  step="0.1"
+                  value={editHandicapValue}
+                  onChange={(e) => setEditHandicapValue(e.target.value)}
+                  placeholder="Enter handicap (0-54) or leave blank"
+                  min="0"
+                  max="54"
+                  data-testid="input-edit-player-handicap"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Leave blank to remove handicap, or enter a value between 0 and 54
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditHandicapOpen(false);
+                    setSelectedPlayer(null);
+                    setEditHandicapValue('');
+                  }}
+                  data-testid="button-cancel-handicap-edit"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveHandicap}
+                  disabled={updateHandicapMutation.isPending}
+                  data-testid="button-save-handicap"
+                >
+                  {updateHandicapMutation.isPending ? "Saving..." : "Save Handicap"}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

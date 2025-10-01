@@ -85,7 +85,9 @@ export default function Leaderboard() {
       const stats = playerStats.get(round.playerId);
       stats.rounds.push(round);
       stats.totalStrokes += round.totalStrokes;
-      stats.totalOverPar += round.overPar;
+      // Coerce overPar to number to prevent string concatenation
+      const overParValue = typeof round.overPar === 'string' ? parseFloat(round.overPar) : round.overPar;
+      stats.totalOverPar += isNaN(overParValue) ? 0 : overParValue;
     });
 
     // Convert to leaderboard format and sort
@@ -116,8 +118,10 @@ export default function Leaderboard() {
 
   const formatOverPar = (overPar: number | null | undefined) => {
     if (overPar == null) return "N/A";
-    if (overPar === 0) return "E";
-    return overPar > 0 ? `+${overPar.toFixed(1)}` : overPar.toFixed(1);
+    const numOverPar = typeof overPar === 'string' ? parseFloat(overPar) : overPar;
+    if (isNaN(numOverPar)) return "N/A";
+    if (numOverPar === 0) return "E";
+    return numOverPar > 0 ? `+${numOverPar.toFixed(1)}` : numOverPar.toFixed(1);
   };
 
   if (!currentOrganization) {
