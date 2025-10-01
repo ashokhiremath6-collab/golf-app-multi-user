@@ -228,26 +228,27 @@ export default function Leaderboard() {
   const monthlyStats = calculateMonthlyStats(monthlyData);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="max-w-6xl mx-auto space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900" data-testid="text-leaderboard-title">
+            <h1 className="text-2xl font-bold text-gray-900" data-testid="text-leaderboard-title">
               Leaderboard
             </h1>
-            <p className="text-sm text-gray-600 mt-1" data-testid="text-season-label">
+            <p className="text-xs text-gray-600 mt-0.5" data-testid="text-season-label">
               {getSeasonLabel()}
             </p>
           </div>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => setLocation(`/${currentOrganization.slug}/history`)}
-            className="gap-2"
+            className="gap-1 text-xs"
             data-testid="button-view-history"
           >
-            <History className="h-4 w-4" />
-            View History
+            <History className="h-3 w-3" />
+            History
           </Button>
         </div>
 
@@ -265,37 +266,37 @@ export default function Leaderboard() {
           </TabsList>
 
           {/* Season Total Tab */}
-          <TabsContent value="season" className="space-y-6 mt-6">
+          <TabsContent value="season" className="space-y-3 mt-3">
             {/* Stats Summary */}
-            <div className="grid grid-cols-4 gap-3">
-              <Card className="p-3 text-center">
-                <div className="text-xl font-bold text-gray-900" data-testid="stat-total-rounds">
+            <div className="grid grid-cols-4 gap-2">
+              <Card className="p-2 text-center">
+                <div className="text-lg font-bold text-gray-900" data-testid="stat-total-rounds">
                   {seasonStats.totalRounds}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Total Rounds</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Total Rounds</div>
               </Card>
-              <Card className="p-3 text-center">
-                <div className="text-xl font-bold text-blue-600" data-testid="stat-avg-net">
+              <Card className="p-2 text-center">
+                <div className="text-lg font-bold text-blue-600" data-testid="stat-avg-net">
                   {seasonStats.avgNet.toFixed(1)}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Avg Net</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Avg Net</div>
               </Card>
-              <Card className="p-3 text-center">
-                <div className="text-xl font-bold text-yellow-600" data-testid="stat-avg-over">
+              <Card className="p-2 text-center">
+                <div className="text-lg font-bold text-yellow-600" data-testid="stat-avg-over">
                   {formatOverPar(seasonStats.avgOver)}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Avg Over</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Avg Over</div>
               </Card>
-              <Card className="p-3 text-center">
-                <div className={`text-xl font-bold ${getDTHColor(seasonStats.avgDTH)}`} data-testid="stat-avg-dth">
+              <Card className="p-2 text-center">
+                <div className={`text-lg font-bold ${getDTHColor(seasonStats.avgDTH)}`} data-testid="stat-avg-dth">
                   {formatDTH(seasonStats.avgDTH)}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Avg DTH</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Avg DTH</div>
               </Card>
             </div>
 
             {/* Season End Date */}
-            <div className="text-right text-sm text-gray-600" data-testid="text-season-end">
+            <div className="text-right text-xs text-gray-600" data-testid="text-season-end">
               Cumulative season standings<br />Ends {getSeasonEndDate()}
             </div>
 
@@ -318,51 +319,51 @@ export default function Leaderboard() {
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b">
                       <tr>
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rounds</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Net</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg DTH</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HCP</th>
+                        <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
+                        <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg DTH</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">HCP</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {displayData.map((entry: any, index) => (
                         <tr key={entry.playerId} className="hover:bg-gray-50" data-testid={`leaderboard-row-${entry.playerId}`}>
-                          <td className="px-2 py-3 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900" data-testid={`rank-${index + 1}`}>
+                          <td className="px-1 py-2 whitespace-nowrap">
+                            <div className="text-xs font-medium text-gray-900" data-testid={`rank-${index + 1}`}>
                               {index + 1}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-900" data-testid={`player-name-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-medium text-gray-900" data-testid={`player-name-${entry.playerId}`}>
                                 {entry.playerName}
                               </span>
                               {currentPlayer?.id === entry.playerId && (
-                                <Badge variant="secondary" className="text-xs px-2 py-0" data-testid="badge-you">
+                                <Badge variant="secondary" className="text-[9px] px-1 py-0 leading-tight" data-testid="badge-you">
                                   You
                                 </Badge>
                               )}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap text-right">
-                            <div className="text-sm text-gray-900" data-testid={`rounds-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className="text-xs text-gray-900" data-testid={`rounds-${entry.playerId}`}>
                               {entry.roundsCount || entry.roundsPlayed || 0}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap text-right">
-                            <div className="text-sm font-medium text-blue-600" data-testid={`avg-net-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className="text-xs font-medium text-blue-600" data-testid={`avg-net-${entry.playerId}`}>
                               {formatNet(entry.avgNet)}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap text-right">
-                            <div className={`text-sm ${getDTHColor(entry.avgDTH)}`} data-testid={`avg-dth-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className={`text-xs ${getDTHColor(entry.avgDTH)}`} data-testid={`avg-dth-${entry.playerId}`}>
                               {formatDTH(entry.avgDTH)}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap text-right">
-                            <div className="text-sm text-gray-900" data-testid={`hcp-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className="text-xs text-gray-900" data-testid={`hcp-${entry.playerId}`}>
                               {entry.currentHandicap ?? entry.handicap ?? '-'}
                             </div>
                           </td>
@@ -376,11 +377,11 @@ export default function Leaderboard() {
           </TabsContent>
 
           {/* Monthly Tab */}
-          <TabsContent value="monthly" className="space-y-6 mt-6">
+          <TabsContent value="monthly" className="space-y-3 mt-3">
             {/* Month Selector */}
             <div className="flex items-center justify-between">
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-64" data-testid="select-month">
+                <SelectTrigger className="w-48 text-xs h-8" data-testid="select-month">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -400,24 +401,24 @@ export default function Leaderboard() {
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="p-3 text-center">
-                <div className="text-xl font-bold text-gray-900" data-testid="stat-monthly-rounds">
+            <div className="grid grid-cols-3 gap-2">
+              <Card className="p-2 text-center">
+                <div className="text-lg font-bold text-gray-900" data-testid="stat-monthly-rounds">
                   {monthlyStats.totalRounds}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Total Rounds</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Total Rounds</div>
               </Card>
-              <Card className="p-3 text-center">
-                <div className="text-xl font-bold text-blue-600" data-testid="stat-monthly-net">
+              <Card className="p-2 text-center">
+                <div className="text-lg font-bold text-blue-600" data-testid="stat-monthly-net">
                   {monthlyStats.avgNet.toFixed(1)}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Avg Net</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Avg Net</div>
               </Card>
-              <Card className="p-3 text-center">
-                <div className="text-xl font-bold text-yellow-600" data-testid="stat-monthly-over">
+              <Card className="p-2 text-center">
+                <div className="text-lg font-bold text-yellow-600" data-testid="stat-monthly-over">
                   {formatOverPar(monthlyStats.avgOver)}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Avg Over</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Avg Over</div>
               </Card>
             </div>
 
@@ -442,51 +443,51 @@ export default function Leaderboard() {
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b">
                       <tr>
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rounds</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Net</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Over</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HCP</th>
+                        <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
+                        <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Over</th>
+                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">HCP</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {monthlyData.map((entry, index) => (
                         <tr key={entry.playerId} className="hover:bg-gray-50" data-testid={`monthly-row-${entry.playerId}`}>
-                          <td className="px-2 py-3 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900" data-testid={`monthly-rank-${index + 1}`}>
+                          <td className="px-1 py-2 whitespace-nowrap">
+                            <div className="text-xs font-medium text-gray-900" data-testid={`monthly-rank-${index + 1}`}>
                               {index + 1}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-900" data-testid={`monthly-player-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-medium text-gray-900" data-testid={`monthly-player-${entry.playerId}`}>
                                 {entry.playerName}
                               </span>
                               {currentPlayer?.id === entry.playerId && (
-                                <Badge variant="secondary" className="text-xs px-2 py-0" data-testid="badge-monthly-you">
+                                <Badge variant="secondary" className="text-[9px] px-1 py-0 leading-tight" data-testid="badge-monthly-you">
                                   You
                                 </Badge>
                               )}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap text-right">
-                            <div className="text-sm text-gray-900" data-testid={`monthly-rounds-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className="text-xs text-gray-900" data-testid={`monthly-rounds-${entry.playerId}`}>
                               {entry.roundsCount || 0}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap text-right">
-                            <div className="text-sm font-medium text-blue-600" data-testid={`monthly-net-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className="text-xs font-medium text-blue-600" data-testid={`monthly-net-${entry.playerId}`}>
                               {formatNet(entry.avgNet)}
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap text-right">
-                            <div className="text-sm text-gray-900" data-testid={`monthly-over-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className="text-xs text-gray-900" data-testid={`monthly-over-${entry.playerId}`}>
                               {formatOverPar(entry.avgOverPar)}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
-                            <div className="text-sm text-gray-900" data-testid={`monthly-hcp-${entry.playerId}`}>
+                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                            <div className="text-xs text-gray-900" data-testid={`monthly-hcp-${entry.playerId}`}>
                               {entry.currentHandicap ?? '-'}
                             </div>
                           </td>
