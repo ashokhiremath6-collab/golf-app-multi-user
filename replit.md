@@ -4,6 +4,21 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 1, 2025 - Redesigned History Page UI ✅
+- **New Design**: Completely redesigned history page to match user's screenshot with dropdown-based round selection
+  - **Title**: Changed to "Player History"
+  - **Player Selection**: Dropdown defaulting to "Your History" (current user's rounds)
+  - **Round Selection**: Dropdown showing most recent round by default, formatted as "{Course} (Slope {n}) - {date} (Net {n})"
+  - **Player Info Display**: Shows player name, handicap, and course handicap for selected round
+  - **Round Info Display**: Shows course name and date in top-right corner
+  - **Scorecard Table**: Compact table format showing holes 1-9 (OUT) and 10-18 (IN) with par and scores
+    - Circles par scores, highlights birdies
+    - Fetches actual course-specific par values from holes endpoint
+    - Robust handling of missing scores with "-" placeholders
+  - **Round Statistics**: Displays Round Gross, Round Net (blue), Round Over (yellow), Round DTH (color-coded)
+  - **Season Averages**: Shows Rounds, Avg Gross, Avg Net (blue), Avg Over (yellow), Avg DTH (color-coded)
+  - **Technical**: Fixed TDZ errors, proper score totals calculation, aligned DTH color with formatting
+
 ## October 1, 2025 - Redesigned Leaderboard UI ✅
 - **New Design**: Completely redesigned leaderboard to match modern table-based layout
   - **Header**: Changed from "{Organization} Leaderboard" to "Golf Leaderboards" with dynamic season subtitle (e.g., "2024-25 Season")
