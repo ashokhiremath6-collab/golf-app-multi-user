@@ -230,11 +230,11 @@ export default function NewRound() {
       }
     }
 
+    // Backend will automatically calculate slope-adjusted course handicap
     const roundData = {
       courseId: selectedCourseId,
       rawScores: finalScores,
       playedOn: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-      courseHandicap: currentPlayer?.currentHandicap || 0,
       organizationId: currentOrganization?.id, // Include organization context
     };
 

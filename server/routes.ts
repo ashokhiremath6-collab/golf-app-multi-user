@@ -17,7 +17,7 @@ const createPlayerRoundSchema = z.object({
   courseId: z.string().uuid(),
   playedOn: z.string(), // Date string in YYYY-MM-DD format
   rawScores: z.array(z.number().min(1).max(10)).length(18),
-  courseHandicap: z.number(),
+  courseHandicap: z.number().optional(), // Optional - backend will calculate if not provided
   organizationId: z.string().uuid(), // Required for organization context
   source: z.enum(['app', 'admin', 'import', 'whatsapp']).optional(),
   status: z.enum(['ok', 'needs_review']).optional(),
@@ -26,6 +26,7 @@ const createPlayerRoundSchema = z.object({
 // For admin round submissions (includes playerId)
 const createAdminRoundSchema = insertRoundSchema.extend({
   rawScores: z.array(z.number().min(1).max(10)).length(18),
+  courseHandicap: z.number().optional(), // Optional - backend will calculate if not provided
 });
 
 const importRoundsSchema = z.object({
@@ -1203,11 +1204,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
       
+      // Calculate slope-adjusted course handicap
+      const willingdonHandicap = targetPlayer.currentHandicap;
+      let courseHandicap: number;
+      
+      if (course.slope) {
+        // Adjust handicap based on course slope rating
+        const handicapIndex = (willingdonHandicap * 113) / 110; // Convert Willingdon (slope 110) to Index
+        courseHandicap = Math.round((handicapIndex * parseFloat(course.slope.toString())) / 113);
+      } else {
+        // No slope data, use Willingdon handicap directly
+        courseHandicap = willingdonHandicap;
+      }
+      
       // Calculate round scores
       const scoreCalculation = calculateRoundScores(
         validatedData.rawScores,
         holePars,
-        validatedData.courseHandicap,
+        courseHandicap,
         course.parTotal
       );
 
@@ -1215,6 +1229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const roundData = {
         ...validatedData,
         playerId: validatedData.playerId,
+        courseHandicap, // Use calculated course handicap
         cappedScores: scoreCalculation.cappedScores,
         grossCapped: scoreCalculation.grossCapped,
         net: scoreCalculation.net,
@@ -1382,11 +1397,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
       
+      // Calculate slope-adjusted course handicap
+      const willingdonHandicap = player.currentHandicap;
+      let courseHandicap: number;
+      
+      if (course.slope) {
+        // Adjust handicap based on course slope rating
+        const handicapIndex = (willingdonHandicap * 113) / 110; // Convert Willingdon (slope 110) to Index
+        courseHandicap = Math.round((handicapIndex * parseFloat(course.slope.toString())) / 113);
+      } else {
+        // No slope data, use Willingdon handicap directly
+        courseHandicap = willingdonHandicap;
+      }
+      
       // Calculate round scores
       const scoreCalculation = calculateRoundScores(
         validatedData.rawScores,
         holePars,
-        validatedData.courseHandicap,
+        courseHandicap,
         course.parTotal
       );
 
@@ -1394,6 +1422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const roundData = {
         ...validatedData,
         playerId: player.id, // Always use authenticated player's ID
+        courseHandicap, // Use calculated course handicap
         cappedScores: scoreCalculation.cappedScores,
         grossCapped: scoreCalculation.grossCapped,
         net: scoreCalculation.net,
@@ -1444,11 +1473,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
       
+      // Calculate slope-adjusted course handicap
+      const willingdonHandicap = targetPlayer.currentHandicap;
+      let courseHandicap: number;
+      
+      if (course.slope) {
+        // Adjust handicap based on course slope rating
+        const handicapIndex = (willingdonHandicap * 113) / 110; // Convert Willingdon (slope 110) to Index
+        courseHandicap = Math.round((handicapIndex * parseFloat(course.slope.toString())) / 113);
+      } else {
+        // No slope data, use Willingdon handicap directly
+        courseHandicap = willingdonHandicap;
+      }
+      
       // Calculate round scores
       const scoreCalculation = calculateRoundScores(
         validatedData.rawScores,
         holePars,
-        validatedData.courseHandicap,
+        courseHandicap,
         course.parTotal
       );
 
@@ -1456,6 +1498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const roundData = {
         ...validatedData,
         playerId: validatedData.playerId, // Use the specified playerId for admin test rounds
+        courseHandicap, // Use calculated course handicap
         cappedScores: scoreCalculation.cappedScores,
         grossCapped: scoreCalculation.grossCapped,
         net: scoreCalculation.net,

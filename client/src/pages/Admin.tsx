@@ -225,7 +225,7 @@ export default function Admin() {
   });
 
   const addTestRoundMutation = useMutation({
-    mutationFn: async (roundData: { playerId: string; courseId: string; rawScores: number[]; courseHandicap: number; playedOn: string; source?: string }) => {
+    mutationFn: async (roundData: { playerId: string; courseId: string; rawScores: number[]; playedOn: string; source?: string }) => {
       await apiRequest("POST", `/api/organizations/${currentOrganization?.id}/rounds`, roundData);
     },
     onSuccess: () => {
@@ -281,15 +281,11 @@ export default function Admin() {
       return;
     }
 
-    // Find selected player to get their current handicap
-    const player = players?.find(p => p.id === scorecardPlayer);
-    const courseHandicap = player?.handicap || 0;
-
+    // Backend will automatically calculate slope-adjusted course handicap
     addTestRoundMutation.mutate({
       playerId: scorecardPlayer,
       courseId: scorecardCourse,
       rawScores: holeScores,
-      courseHandicap,
       playedOn: scorecardDate,
       source: 'admin',
     });
