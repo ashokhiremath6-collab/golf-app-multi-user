@@ -58,6 +58,12 @@ export default function NewRound() {
   // Get selected course details
   const selectedCourse = courses?.find(course => course.id === selectedCourseId);
 
+  // Create a map of hole number to par for efficient lookups
+  const holeParMap = holes?.reduce((map, hole) => {
+    map[hole.number] = hole.par;
+    return map;
+  }, {} as Record<number, number>) || {};
+
   // Reset scores when course changes
   useEffect(() => {
     if (selectedCourseId) {
@@ -99,14 +105,34 @@ export default function NewRound() {
   });
 
   const handleScoreChange = (holeIndex: number, value: string) => {
-    const score = parseInt(value) || 0;
+    if (value === '') {
+      // Empty input = 0 (will be treated as par)
+      const newScores = [...scores];
+      newScores[holeIndex] = 0;
+      setScores(newScores);
+      return;
+    }
+    
+    const score = parseInt(value);
+    if (isNaN(score)) return; // Ignore invalid input
+    
+    // Clamp score to valid range [1, 10]
+    const clampedScore = Math.max(1, Math.min(10, score));
     const newScores = [...scores];
-    newScores[holeIndex] = score;
+    newScores[holeIndex] = clampedScore;
     setScores(newScores);
   };
 
   const calculateGross = () => {
-    return scores.reduce((total, score) => total + score, 0);
+    if (!holes || holes.length !== 18) return 0;
+    
+    return scores.reduce((total, score, index) => {
+      const holePar = holeParMap[index + 1];
+      if (holePar == null) return total; // Skip if par not available
+      // If score is 0 (empty), use par
+      const actualScore = score === 0 ? holePar : score;
+      return total + actualScore;
+    }, 0);
   };
 
   const calculateNet = () => {
@@ -116,34 +142,92 @@ export default function NewRound() {
   };
 
   const calculateFront9 = () => {
-    return scores.slice(0, 9).reduce((total, score) => total + score, 0);
+    if (!holes || holes.length !== 18) return 0;
+    
+    return scores.slice(0, 9).reduce((total, score, index) => {
+      const holePar = holeParMap[index + 1];
+      if (holePar == null) return total; // Skip if par not available
+      // If score is 0 (empty), use par
+      const actualScore = score === 0 ? holePar : score;
+      return total + actualScore;
+    }, 0);
   };
 
   const calculateBack9 = () => {
-    return scores.slice(9, 18).reduce((total, score) => total + score, 0);
+    if (!holes || holes.length !== 18) return 0;
+    
+    return scores.slice(9, 18).reduce((total, score, index) => {
+      const holePar = holeParMap[index + 10];
+      if (holePar == null) return total; // Skip if par not available
+      // If score is 0 (empty), use par
+      const actualScore = score === 0 ? holePar : score;
+      return total + actualScore;
+    }, 0);
   };
 
-  const isValidRound = () => {
-    return selectedCourseId && 
-           currentPlayer?.id && 
-           scores.every(score => score > 0) && 
-           calculateGross() > 0;
+  const isValidRound = (): boolean => {
+    return Boolean(selectedCourseId) && 
+           Boolean(currentPlayer?.id) && 
+           !holesLoading && 
+           Array.isArray(holes) && 
+           holes.length === 18;
   };
 
   const handleSubmit = () => {
     if (!isValidRound()) {
+      const message = !currentPlayer?.id
+        ? "No player selected or session expired. Please refresh the page."
+        : holesLoading 
+        ? "Please wait for course data to load before submitting."
+        : !holes || holes.length !== 18
+        ? "Course data is incomplete. Please try selecting the course again."
+        : "Please select a course to submit a round.";
+      
       toast({
-        title: "Invalid Round",
-        description: "Please select a course and enter all hole scores.",
+        title: "Cannot Submit Round",
+        description: message,
         variant: "destructive",
       });
       return;
     }
 
+    // Validate that all par values exist in the map (holes 1-18)
+    for (let i = 1; i <= 18; i++) {
+      if (holeParMap[i] == null) {
+        toast({
+          title: "Invalid Course Data",
+          description: "Course data is invalid or incomplete. Please try selecting the course again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Fill in par scores for any empty holes (score = 0) using the par map
+    const finalScores = scores.map((score, index) => {
+      if (score === 0) {
+        return holeParMap[index + 1];
+      }
+      return score;
+    });
+
+    // Final validation: ensure all scores are valid integers in range [1, 10]
+    for (let i = 0; i < finalScores.length; i++) {
+      const score = finalScores[i];
+      if (!Number.isInteger(score) || score < 1 || score > 10) {
+        toast({
+          title: "Invalid Scores",
+          description: `Invalid score detected for hole ${i + 1}. All scores must be between 1 and 10.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const roundData = {
       playerId: currentPlayer?.id,
       courseId: selectedCourseId,
-      scores: scores,
+      scores: finalScores,
       playedAt: new Date().toISOString(),
     };
 
