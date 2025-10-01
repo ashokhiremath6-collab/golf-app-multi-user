@@ -4,6 +4,21 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 1, 2025 - Redesigned Leaderboard UI ✅
+- **New Design**: Completely redesigned leaderboard to match modern table-based layout
+  - **Header**: Changed from "{Organization} Leaderboard" to "Golf Leaderboards" with dynamic season subtitle (e.g., "2024-25 Season")
+  - **View History Button**: Added button in top-right to navigate to history page
+  - **Simplified Tabs**: Reduced to 2 tabs - "Season Total" (Trophy icon) and "Monthly" (Calendar icon)
+  - **Summary Stats Cards**: 
+    - Season Total: 4 cards showing Total Rounds, Avg Net (blue), Avg Over (yellow), Avg DTH (colored)
+    - Monthly: 3 cards showing Total Rounds, Avg Net (blue), Avg Over (yellow)
+  - **Clean Table Layout**: 
+    - Season: RANK | PLAYER | ROUNDS | AVG NET | AVG DTH | HCP
+    - Monthly: RANK | PLAYER | ROUNDS | AVG NET | AVG OVER | HCP
+  - **Color Coding**: AVG NET in blue, AVG DTH conditionally colored (green for negative/under, orange for positive/over)
+  - **"You" Badge**: Added badge next to current user's entry in both leaderboards
+  - **Loading States**: Proper skeleton loading for both season and monthly data
+
 ## October 1, 2025 - Automatic Slope-Adjusted Course Handicap ✅
 - **Feature**: Backend now automatically calculates slope-adjusted course handicaps when rounds are created
   - **Formula**: Handicap Index = (Willingdon Handicap × 113) / 110, then Course Handicap = round(Handicap Index × Course Slope / 113)
