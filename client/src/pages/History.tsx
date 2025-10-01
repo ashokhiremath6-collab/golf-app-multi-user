@@ -302,6 +302,7 @@ export default function History() {
                         }
                         const isPar = score === par;
                         const isBirdie = score === par - 1;
+                        const isDoubleBogey = score === par + 2;
                         return (
                           <td key={i} className="text-center py-2 px-2">
                             {isPar ? (
@@ -310,6 +311,10 @@ export default function History() {
                               </span>
                             ) : isBirdie ? (
                               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-400 font-bold bg-green-50">
+                                {score}
+                              </span>
+                            ) : isDoubleBogey ? (
+                              <span className="inline-flex items-center justify-center w-6 h-6 font-bold bg-red-500 text-white rounded">
                                 {score}
                               </span>
                             ) : (
@@ -354,6 +359,7 @@ export default function History() {
                         }
                         const isPar = score === par;
                         const isBirdie = score === par - 1;
+                        const isDoubleBogey = score === par + 2;
                         return (
                           <td key={i + 9} className="text-center py-2 px-2">
                             {isPar ? (
@@ -362,6 +368,10 @@ export default function History() {
                               </span>
                             ) : isBirdie ? (
                               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-400 font-bold bg-green-50">
+                                {score}
+                              </span>
+                            ) : isDoubleBogey ? (
+                              <span className="inline-flex items-center justify-center w-6 h-6 font-bold bg-red-500 text-white rounded">
                                 {score}
                               </span>
                             ) : (
