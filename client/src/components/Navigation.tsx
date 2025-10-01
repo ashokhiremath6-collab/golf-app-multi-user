@@ -139,12 +139,12 @@ export default function Navigation() {
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 sm:hidden z-50" data-testid="nav-mobile">
-        <div className="flex justify-around py-2">
+        <div className="flex justify-around py-2 px-2">
           {navItems.filter(item => !item.path.includes('/admin')).map((item) => (
             <button
               key={item.path}
               onClick={() => handleNavigation(item.path)}
-              className={`flex flex-col items-center py-2 px-4 ${
+              className={`flex flex-col items-center py-2 px-2 ${
                 isActivePath(item.path) ? 'text-golf-green font-bold' : 'text-gray-700 font-semibold'
               }`}
               data-testid={`nav-mobile-${item.path.replace('/', '') || 'home'}`}
