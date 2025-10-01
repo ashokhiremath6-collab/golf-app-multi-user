@@ -81,19 +81,25 @@ export default function NewRound() {
         setIsSubmitting(false);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/handicaps`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/players`] });
+    onSuccess: async () => {
+      // Invalidate and refetch all related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/handicaps`], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/players`], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ["/api/players"], refetchType: 'all' }),
+      ]);
       
       toast({
         title: "Round Saved!",
         description: "Your golf round has been successfully recorded.",
       });
       
-      // Navigate back to organization home
-      setLocation(`/${currentOrganization?.slug}`);
+      // Small delay to ensure cache has updated before navigation
+      setTimeout(() => {
+        setLocation(`/${currentOrganization?.slug}`);
+      }, 100);
     },
     onError: (error: any) => {
       toast({
