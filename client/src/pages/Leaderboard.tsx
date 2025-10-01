@@ -321,10 +321,10 @@ export default function Leaderboard() {
                       <tr>
                         <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
                         <th className="pl-1 pr-0 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
-                        <th className="pl-0 pr-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg DTH</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">HCP</th>
+                        <th className="pl-0 pr-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg DTH</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">HCP</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -347,22 +347,22 @@ export default function Leaderboard() {
                               )}
                             </div>
                           </td>
-                          <td className="pl-0 pr-1 py-2 whitespace-nowrap text-right">
+                          <td className="pl-0 pr-1 py-2 whitespace-nowrap text-center">
                             <div className="text-xs text-gray-900" data-testid={`rounds-${entry.playerId}`}>
                               {entry.roundsCount || entry.roundsPlayed || 0}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="px-1 py-2 whitespace-nowrap text-center">
                             <div className="text-xs font-medium text-blue-600" data-testid={`avg-net-${entry.playerId}`}>
                               {formatNet(entry.avgNet)}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="px-1 py-2 whitespace-nowrap text-center">
                             <div className={`text-xs ${getDTHColor(entry.avgDTH)}`} data-testid={`avg-dth-${entry.playerId}`}>
                               {formatDTH(entry.avgDTH)}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="px-1 py-2 whitespace-nowrap text-center">
                             <div className="text-xs text-gray-900" data-testid={`hcp-${entry.playerId}`}>
                               {entry.currentHandicap ?? entry.handicap ?? '-'}
                             </div>
@@ -445,10 +445,10 @@ export default function Leaderboard() {
                       <tr>
                         <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
                         <th className="pl-1 pr-0 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
-                        <th className="pl-0 pr-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Over</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">HCP</th>
+                        <th className="pl-0 pr-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Over</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">HCP</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -471,22 +471,22 @@ export default function Leaderboard() {
                               )}
                             </div>
                           </td>
-                          <td className="pl-0 pr-1 py-2 whitespace-nowrap text-right">
+                          <td className="pl-0 pr-1 py-2 whitespace-nowrap text-center">
                             <div className="text-xs text-gray-900" data-testid={`monthly-rounds-${entry.playerId}`}>
                               {entry.roundsCount || 0}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="px-1 py-2 whitespace-nowrap text-center">
                             <div className="text-xs font-medium text-blue-600" data-testid={`monthly-net-${entry.playerId}`}>
                               {formatNet(entry.avgNet)}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="px-1 py-2 whitespace-nowrap text-center">
                             <div className="text-xs text-gray-900" data-testid={`monthly-over-${entry.playerId}`}>
                               {formatOverPar(entry.avgOverPar)}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="px-1 py-2 whitespace-nowrap text-center">
                             <div className="text-xs text-gray-900" data-testid={`monthly-hcp-${entry.playerId}`}>
                               {entry.currentHandicap ?? '-'}
                             </div>
