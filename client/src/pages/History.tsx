@@ -198,18 +198,18 @@ export default function History() {
   const scoreIn = selectedRound?.cappedScores?.slice(9, 18).reduce((sum, s) => sum + (s ?? 0), 0) || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="max-w-4xl mx-auto space-y-2">
         {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900" data-testid="text-history-title">
+        <h1 className="text-xl font-bold text-gray-900" data-testid="text-history-title">
           Player History
         </h1>
 
         {/* Player Selection */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">Select Player</label>
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700">Select Player</label>
           <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-            <SelectTrigger className="w-full bg-white" data-testid="select-player">
+            <SelectTrigger className="w-full bg-white text-xs h-8" data-testid="select-player">
               <SelectValue placeholder="Select a player" />
             </SelectTrigger>
             <SelectContent>
@@ -229,10 +229,10 @@ export default function History() {
 
         {/* Round Selection */}
         {selectedPlayerId && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Select Round</label>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-gray-700">Select Round</label>
             <Select value={selectedRoundId} onValueChange={setSelectedRoundId}>
-              <SelectTrigger className="w-full bg-white" data-testid="select-round">
+              <SelectTrigger className="w-full bg-white text-xs h-8" data-testid="select-round">
                 <SelectValue placeholder="Select a round" />
               </SelectTrigger>
               <SelectContent>
@@ -248,23 +248,23 @@ export default function History() {
 
         {/* Round Details */}
         {selectedRound && selectedPlayer && (
-          <Card className="p-6 space-y-6">
+          <Card className="p-3 space-y-3">
             {/* Player Info and Round Info */}
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900" data-testid="text-player-name">
+                <h2 className="text-base font-bold text-gray-900" data-testid="text-player-name">
                   {selectedPlayer.name}
                 </h2>
-                <p className="text-sm text-gray-600" data-testid="text-player-handicap">
+                <p className="text-xs text-gray-600" data-testid="text-player-handicap">
                   Handicap: {selectedPlayer.handicap ?? 'N/A'} | Course Hcp: {selectedRound.courseHandicap}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600" data-testid="text-selected-round">Selected Round</p>
-                <p className="font-semibold text-gray-900" data-testid="text-round-course">
+                <p className="text-[10px] text-gray-600" data-testid="text-selected-round">Selected Round</p>
+                <p className="text-xs font-semibold text-gray-900" data-testid="text-round-course">
                   {selectedRound.courseName || selectedRound.course?.name}
                 </p>
-                <p className="text-sm text-gray-600" data-testid="text-round-date">
+                <p className="text-[10px] text-gray-600" data-testid="text-round-date">
                   {format(new Date(selectedRound.playedOn || selectedRound.playedAt), 'dd/MM/yyyy')}
                 </p>
               </div>
@@ -288,23 +288,23 @@ export default function History() {
                 </colgroup>
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-1 font-medium text-gray-600">Hole</th>
+                    <th className="text-left py-1 px-1 font-medium text-gray-600">Hole</th>
                     {Array.from({length: 9}, (_, i) => (
-                      <th key={i} className="text-center py-2 px-1 font-medium text-gray-600">{i + 1}</th>
+                      <th key={i} className="text-center py-1 px-1 font-medium text-gray-600">{i + 1}</th>
                     ))}
-                    <th className="text-center py-2 px-1 font-medium text-gray-600">OUT</th>
+                    <th className="text-center py-1 px-1 font-medium text-gray-600">OUT</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b bg-gray-50">
-                    <td className="py-2 px-1 font-medium text-gray-600">Par</td>
+                    <td className="py-1 px-1 font-medium text-gray-600">Par</td>
                     {pars.slice(0, 9).map((par, i) => (
-                      <td key={i} className="text-center py-2 px-1 font-medium whitespace-nowrap">{par}</td>
+                      <td key={i} className="text-center py-1 px-1 font-medium whitespace-nowrap">{par}</td>
                     ))}
-                    <td className="text-center py-2 px-1 font-bold whitespace-nowrap">{parOut}</td>
+                    <td className="text-center py-1 px-1 font-bold whitespace-nowrap">{parOut}</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-2 px-1 font-medium text-gray-600">Score</td>
+                    <td className="py-1 px-1 font-medium text-gray-600">Score</td>
                     {Array.from({ length: 9 }, (_, i) => {
                       const score = selectedRound.cappedScores?.[i];
                       const par = pars[i];
@@ -315,7 +315,7 @@ export default function History() {
                       const isBirdie = score === par - 1;
                       const isDoubleBogey = score === par + 2;
                       return (
-                        <td key={i} className="text-center py-2 px-1 whitespace-nowrap">
+                        <td key={i} className="text-center py-1 px-1 whitespace-nowrap">
                           {isPar ? (
                             <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-xs sm:text-sm">
                               {score}
@@ -334,12 +334,12 @@ export default function History() {
                         </td>
                       );
                     })}
-                    <td className="text-center py-2 px-1 bg-green-700 text-white font-bold whitespace-nowrap">{scoreOut}</td>
+                    <td className="text-center py-1 px-1 bg-green-700 text-white font-bold whitespace-nowrap">{scoreOut}</td>
                   </tr>
                 </tbody>
               </table>
 
-              <table className="table-fixed w-full text-xs sm:text-sm mt-4">
+              <table className="table-fixed w-full text-xs sm:text-sm mt-2">
                 <colgroup>
                   <col className="w-12" />
                   <col className="w-7" />
@@ -355,23 +355,23 @@ export default function History() {
                 </colgroup>
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-1 font-medium text-gray-600">Hole</th>
+                    <th className="text-left py-1 px-1 font-medium text-gray-600">Hole</th>
                     {Array.from({length: 9}, (_, i) => (
-                      <th key={i + 9} className="text-center py-2 px-1 font-medium text-gray-600">{i + 10}</th>
+                      <th key={i + 9} className="text-center py-1 px-1 font-medium text-gray-600">{i + 10}</th>
                     ))}
-                    <th className="text-center py-2 px-1 font-medium text-gray-600">IN</th>
+                    <th className="text-center py-1 px-1 font-medium text-gray-600">IN</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b bg-gray-50">
-                    <td className="py-2 px-1 font-medium text-gray-600">Par</td>
+                    <td className="py-1 px-1 font-medium text-gray-600">Par</td>
                     {pars.slice(9, 18).map((par, i) => (
-                      <td key={i + 9} className="text-center py-2 px-1 font-medium whitespace-nowrap">{par}</td>
+                      <td key={i + 9} className="text-center py-1 px-1 font-medium whitespace-nowrap">{par}</td>
                     ))}
-                    <td className="text-center py-2 px-1 font-bold whitespace-nowrap">{parIn}</td>
+                    <td className="text-center py-1 px-1 font-bold whitespace-nowrap">{parIn}</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-2 px-1 font-medium text-gray-600">Score</td>
+                    <td className="py-1 px-1 font-medium text-gray-600">Score</td>
                     {Array.from({ length: 9 }, (_, i) => {
                       const score = selectedRound.cappedScores?.[i + 9];
                       const par = pars[i + 9];
@@ -382,7 +382,7 @@ export default function History() {
                       const isBirdie = score === par - 1;
                       const isDoubleBogey = score === par + 2;
                       return (
-                        <td key={i + 9} className="text-center py-2 px-1 whitespace-nowrap">
+                        <td key={i + 9} className="text-center py-1 px-1 whitespace-nowrap">
                           {isPar ? (
                             <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-xs sm:text-sm">
                               {score}
@@ -401,73 +401,73 @@ export default function History() {
                         </td>
                       );
                     })}
-                    <td className="text-center py-2 px-1 bg-green-700 text-white font-bold whitespace-nowrap">{scoreIn}</td>
+                    <td className="text-center py-1 px-1 bg-green-700 text-white font-bold whitespace-nowrap">{scoreIn}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             {/* Round Statistics */}
-            <div className="grid grid-cols-4 gap-3 text-center pt-3 border-t">
+            <div className="grid grid-cols-4 gap-2 text-center pt-2 border-t">
               <div>
-                <div className="text-xl font-bold text-gray-900" data-testid="stat-round-gross">
+                <div className="text-lg font-bold text-gray-900" data-testid="stat-round-gross">
                   {selectedRound.grossCapped}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Round Gross</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Round Gross</div>
               </div>
               <div>
-                <div className="text-xl font-bold text-blue-600" data-testid="stat-round-net">
+                <div className="text-lg font-bold text-blue-600" data-testid="stat-round-net">
                   {selectedRound.net}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Round Net</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Round Net</div>
               </div>
               <div>
-                <div className="text-xl font-bold text-yellow-600" data-testid="stat-round-over">
+                <div className="text-lg font-bold text-yellow-600" data-testid="stat-round-over">
                   {formatOverPar(typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar)}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Round Over</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Round Over</div>
               </div>
               <div>
-                <div className={`text-xl font-bold ${getDTHColor(roundDTH)}`} data-testid="stat-round-dth">
+                <div className={`text-lg font-bold ${getDTHColor(roundDTH)}`} data-testid="stat-round-dth">
                   {formatDTH(roundDTH)}
                 </div>
-                <div className="text-xs text-gray-600 mt-0.5">Round DTH</div>
+                <div className="text-[10px] text-gray-600 leading-tight">Round DTH</div>
               </div>
             </div>
 
             {/* Season Averages */}
-            <div className="pt-3 border-t">
-              <h3 className="text-xs font-medium text-gray-700 mb-2">Season Averages</h3>
+            <div className="pt-2 border-t">
+              <h3 className="text-[10px] font-medium text-gray-700 mb-1">Season Averages</h3>
               <div className="grid grid-cols-5 gap-2 text-center">
                 <div>
-                  <div className="text-xl font-bold text-gray-900" data-testid="stat-season-rounds">
+                  <div className="text-base font-bold text-gray-900" data-testid="stat-season-rounds">
                     {seasonAverages.rounds}
                   </div>
-                  <div className="text-xs text-gray-600 mt-0.5">Rounds</div>
+                  <div className="text-[9px] text-gray-600 leading-tight">Rounds</div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-gray-900" data-testid="stat-season-gross">
+                  <div className="text-base font-bold text-gray-900" data-testid="stat-season-gross">
                     {seasonAverages.avgGross.toFixed(0)}
                   </div>
-                  <div className="text-xs text-gray-600 mt-0.5">Avg Gross</div>
+                  <div className="text-[9px] text-gray-600 leading-tight">Avg Gross</div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-blue-600" data-testid="stat-season-net">
+                  <div className="text-base font-bold text-blue-600" data-testid="stat-season-net">
                     {seasonAverages.avgNet.toFixed(0)}
                   </div>
-                  <div className="text-xs text-gray-600 mt-0.5">Avg Net</div>
+                  <div className="text-[9px] text-gray-600 leading-tight">Avg Net</div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-yellow-600" data-testid="stat-season-over">
+                  <div className="text-base font-bold text-yellow-600" data-testid="stat-season-over">
                     {formatOverPar(seasonAverages.avgOver)}
                   </div>
-                  <div className="text-xs text-gray-600 mt-0.5">Avg Over</div>
+                  <div className="text-[9px] text-gray-600 leading-tight">Avg Over</div>
                 </div>
                 <div>
-                  <div className={`text-xl font-bold ${getDTHColor(seasonAverages.avgDTH)}`} data-testid="stat-season-dth">
+                  <div className={`text-base font-bold ${getDTHColor(seasonAverages.avgDTH)}`} data-testid="stat-season-dth">
                     {formatDTH(seasonAverages.avgDTH)}
                   </div>
-                  <div className="text-xs text-gray-600 mt-0.5">Avg DTH</div>
+                  <div className="text-[9px] text-gray-600 leading-tight">Avg DTH</div>
                 </div>
               </div>
             </div>
