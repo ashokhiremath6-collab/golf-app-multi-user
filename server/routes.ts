@@ -18,6 +18,7 @@ const createPlayerRoundSchema = z.object({
   playedOn: z.string(), // Date string in YYYY-MM-DD format
   rawScores: z.array(z.number().min(1).max(10)).length(18),
   courseHandicap: z.number(),
+  organizationId: z.string().uuid(), // Required for organization context
   source: z.enum(['app', 'admin', 'import', 'whatsapp']).optional(),
   status: z.enum(['ok', 'needs_review']).optional(),
 });
@@ -1287,13 +1288,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createPlayerRoundSchema.parse(req.body);
       console.log('✅ Validation passed:', JSON.stringify(validatedData, null, 2));
       
-      // Get the authenticated user's linked player
-      const userEmail = req.user.claims.email;
-      const authenticatedPlayer = await storage.getPlayerByEmail(userEmail || '');
+      // Require organizationId to be sent from frontend
+      const { organizationId } = req.body;
+      if (!organizationId) {
+        return res.status(400).json({ message: "Organization context is required" });
+      }
+      
+      // Get the authenticated user's player profile in this specific organization
+      const userId = req.user.claims.sub;
+      const authenticatedPlayer = await storage.getPlayerByUserIdAndOrganization(userId, organizationId);
       
       if (!authenticatedPlayer) {
         return res.status(404).json({ 
-          message: "Player profile not found. Please contact admin to set up your account." 
+          message: "Player profile not found in this organization. Please contact admin to set up your account." 
         });
       }
       

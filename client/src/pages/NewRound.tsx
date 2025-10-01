@@ -235,6 +235,7 @@ export default function NewRound() {
       rawScores: finalScores,
       playedOn: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
       courseHandicap: currentPlayer?.currentHandicap || 0,
+      organizationId: currentOrganization?.id, // Include organization context
     };
 
     createRoundMutation.mutate(roundData);
