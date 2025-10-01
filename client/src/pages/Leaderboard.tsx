@@ -234,7 +234,7 @@ export default function Leaderboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900" data-testid="text-leaderboard-title">
-              Golf Leaderboards
+              Leaderboard
             </h1>
             <p className="text-sm text-gray-600 mt-1" data-testid="text-season-label">
               {getSeasonLabel()}
@@ -267,30 +267,30 @@ export default function Leaderboard() {
           {/* Season Total Tab */}
           <TabsContent value="season" className="space-y-6 mt-6">
             {/* Stats Summary */}
-            <div className="grid grid-cols-4 gap-4">
-              <Card className="p-4 text-center">
-                <div className="text-2xl font-bold text-gray-900" data-testid="stat-total-rounds">
+            <div className="grid grid-cols-4 gap-3">
+              <Card className="p-3 text-center">
+                <div className="text-xl font-bold text-gray-900" data-testid="stat-total-rounds">
                   {seasonStats.totalRounds}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Total Rounds</div>
+                <div className="text-xs text-gray-600 mt-0.5">Total Rounds</div>
               </Card>
-              <Card className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600" data-testid="stat-avg-net">
+              <Card className="p-3 text-center">
+                <div className="text-xl font-bold text-blue-600" data-testid="stat-avg-net">
                   {seasonStats.avgNet.toFixed(1)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Avg Net</div>
+                <div className="text-xs text-gray-600 mt-0.5">Avg Net</div>
               </Card>
-              <Card className="p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600" data-testid="stat-avg-over">
+              <Card className="p-3 text-center">
+                <div className="text-xl font-bold text-yellow-600" data-testid="stat-avg-over">
                   {formatOverPar(seasonStats.avgOver)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Avg Over</div>
+                <div className="text-xs text-gray-600 mt-0.5">Avg Over</div>
               </Card>
-              <Card className="p-4 text-center">
-                <div className={`text-2xl font-bold ${getDTHColor(seasonStats.avgDTH)}`} data-testid="stat-avg-dth">
+              <Card className="p-3 text-center">
+                <div className={`text-xl font-bold ${getDTHColor(seasonStats.avgDTH)}`} data-testid="stat-avg-dth">
                   {formatDTH(seasonStats.avgDTH)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Avg DTH</div>
+                <div className="text-xs text-gray-600 mt-0.5">Avg DTH</div>
               </Card>
             </div>
 
@@ -318,23 +318,23 @@ export default function Leaderboard() {
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rounds</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Net</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg DTH</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HCP</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rounds</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Net</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg DTH</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HCP</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {displayData.map((entry: any, index) => (
                         <tr key={entry.playerId} className="hover:bg-gray-50" data-testid={`leaderboard-row-${entry.playerId}`}>
-                          <td className="px-4 py-4 whitespace-nowrap">
+                          <td className="px-2 py-3 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900" data-testid={`rank-${index + 1}`}>
                               {index + 1}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
+                          <td className="px-2 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-gray-900" data-testid={`player-name-${entry.playerId}`}>
                                 {entry.playerName}
@@ -346,22 +346,22 @@ export default function Leaderboard() {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-2 py-3 whitespace-nowrap text-right">
                             <div className="text-sm text-gray-900" data-testid={`rounds-${entry.playerId}`}>
                               {entry.roundsCount || entry.roundsPlayed || 0}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-2 py-3 whitespace-nowrap text-right">
                             <div className="text-sm font-medium text-blue-600" data-testid={`avg-net-${entry.playerId}`}>
                               {formatNet(entry.avgNet)}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-2 py-3 whitespace-nowrap text-right">
                             <div className={`text-sm ${getDTHColor(entry.avgDTH)}`} data-testid={`avg-dth-${entry.playerId}`}>
                               {formatDTH(entry.avgDTH)}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-2 py-3 whitespace-nowrap text-right">
                             <div className="text-sm text-gray-900" data-testid={`hcp-${entry.playerId}`}>
                               {entry.currentHandicap ?? entry.handicap ?? '-'}
                             </div>
@@ -400,24 +400,24 @@ export default function Leaderboard() {
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="p-4 text-center">
-                <div className="text-2xl font-bold text-gray-900" data-testid="stat-monthly-rounds">
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="p-3 text-center">
+                <div className="text-xl font-bold text-gray-900" data-testid="stat-monthly-rounds">
                   {monthlyStats.totalRounds}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Total Rounds</div>
+                <div className="text-xs text-gray-600 mt-0.5">Total Rounds</div>
               </Card>
-              <Card className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600" data-testid="stat-monthly-net">
+              <Card className="p-3 text-center">
+                <div className="text-xl font-bold text-blue-600" data-testid="stat-monthly-net">
                   {monthlyStats.avgNet.toFixed(1)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Avg Net</div>
+                <div className="text-xs text-gray-600 mt-0.5">Avg Net</div>
               </Card>
-              <Card className="p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600" data-testid="stat-monthly-over">
+              <Card className="p-3 text-center">
+                <div className="text-xl font-bold text-yellow-600" data-testid="stat-monthly-over">
                   {formatOverPar(monthlyStats.avgOver)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Avg Over</div>
+                <div className="text-xs text-gray-600 mt-0.5">Avg Over</div>
               </Card>
             </div>
 
@@ -442,23 +442,23 @@ export default function Leaderboard() {
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rounds</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Net</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Over</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HCP</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rounds</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Net</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Over</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HCP</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {monthlyData.map((entry, index) => (
                         <tr key={entry.playerId} className="hover:bg-gray-50" data-testid={`monthly-row-${entry.playerId}`}>
-                          <td className="px-4 py-4 whitespace-nowrap">
+                          <td className="px-2 py-3 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900" data-testid={`monthly-rank-${index + 1}`}>
                               {index + 1}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
+                          <td className="px-2 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-gray-900" data-testid={`monthly-player-${entry.playerId}`}>
                                 {entry.playerName}
@@ -470,17 +470,17 @@ export default function Leaderboard() {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-2 py-3 whitespace-nowrap text-right">
                             <div className="text-sm text-gray-900" data-testid={`monthly-rounds-${entry.playerId}`}>
                               {entry.roundsCount || 0}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-2 py-3 whitespace-nowrap text-right">
                             <div className="text-sm font-medium text-blue-600" data-testid={`monthly-net-${entry.playerId}`}>
                               {formatNet(entry.avgNet)}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-2 py-3 whitespace-nowrap text-right">
                             <div className="text-sm text-gray-900" data-testid={`monthly-over-${entry.playerId}`}>
                               {formatOverPar(entry.avgOverPar)}
                             </div>
