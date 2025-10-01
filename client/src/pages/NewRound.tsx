@@ -5,7 +5,6 @@ import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -158,22 +157,16 @@ export default function NewRound() {
   // Show loading state while organization loads
   if (!currentOrganization || coursesLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="animate-pulse">
-            <div className="bg-white rounded-xl h-96"></div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="animate-pulse">
+          <div className="bg-white rounded-xl h-96"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+    <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Course Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -331,6 +324,5 @@ export default function NewRound() {
           </Card>
         )}
       </main>
-    </div>
   );
 }
