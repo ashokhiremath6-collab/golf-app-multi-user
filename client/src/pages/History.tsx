@@ -408,66 +408,66 @@ export default function History() {
             </div>
 
             {/* Round Statistics */}
-            <div className="grid grid-cols-4 gap-4 text-center pt-4 border-t">
+            <div className="grid grid-cols-4 gap-3 text-center pt-3 border-t">
               <div>
-                <div className="text-2xl font-bold text-gray-900" data-testid="stat-round-gross">
+                <div className="text-xl font-bold text-gray-900" data-testid="stat-round-gross">
                   {selectedRound.grossCapped}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Round Gross</div>
+                <div className="text-xs text-gray-600 mt-0.5">Round Gross</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600" data-testid="stat-round-net">
+                <div className="text-xl font-bold text-blue-600" data-testid="stat-round-net">
                   {selectedRound.net}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Round Net</div>
+                <div className="text-xs text-gray-600 mt-0.5">Round Net</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-yellow-600" data-testid="stat-round-over">
+                <div className="text-xl font-bold text-yellow-600" data-testid="stat-round-over">
                   {formatOverPar(typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Round Over</div>
+                <div className="text-xs text-gray-600 mt-0.5">Round Over</div>
               </div>
               <div>
-                <div className={`text-2xl font-bold ${getDTHColor(roundDTH)}`} data-testid="stat-round-dth">
+                <div className={`text-xl font-bold ${getDTHColor(roundDTH)}`} data-testid="stat-round-dth">
                   {formatDTH(roundDTH)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Round DTH</div>
+                <div className="text-xs text-gray-600 mt-0.5">Round DTH</div>
               </div>
             </div>
 
             {/* Season Averages */}
-            <div className="pt-4 border-t">
-              <h3 className="text-sm font-medium text-gray-700 mb-4">Season Averages</h3>
-              <div className="grid grid-cols-5 gap-4 text-center">
+            <div className="pt-3 border-t">
+              <h3 className="text-xs font-medium text-gray-700 mb-2">Season Averages</h3>
+              <div className="grid grid-cols-5 gap-2 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900" data-testid="stat-season-rounds">
+                  <div className="text-xl font-bold text-gray-900" data-testid="stat-season-rounds">
                     {seasonAverages.rounds}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Rounds</div>
+                  <div className="text-xs text-gray-600 mt-0.5">Rounds</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900" data-testid="stat-season-gross">
+                  <div className="text-xl font-bold text-gray-900" data-testid="stat-season-gross">
                     {seasonAverages.avgGross.toFixed(0)}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Avg Gross</div>
+                  <div className="text-xs text-gray-600 mt-0.5">Avg Gross</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-blue-600" data-testid="stat-season-net">
+                  <div className="text-xl font-bold text-blue-600" data-testid="stat-season-net">
                     {seasonAverages.avgNet.toFixed(0)}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Avg Net</div>
+                  <div className="text-xs text-gray-600 mt-0.5">Avg Net</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-yellow-600" data-testid="stat-season-over">
+                  <div className="text-xl font-bold text-yellow-600" data-testid="stat-season-over">
                     {formatOverPar(seasonAverages.avgOver)}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Avg Over</div>
+                  <div className="text-xs text-gray-600 mt-0.5">Avg Over</div>
                 </div>
                 <div>
-                  <div className={`text-2xl font-bold ${getDTHColor(seasonAverages.avgDTH)}`} data-testid="stat-season-dth">
+                  <div className={`text-xl font-bold ${getDTHColor(seasonAverages.avgDTH)}`} data-testid="stat-season-dth">
                     {formatDTH(seasonAverages.avgDTH)}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Avg DTH</div>
+                  <div className="text-xs text-gray-600 mt-0.5">Avg DTH</div>
                 </div>
               </div>
             </div>
