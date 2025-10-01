@@ -874,9 +874,9 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 {playersLoading ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {[...Array(5)].map((_, i) => (
-                      <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
+                      <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
                     ))}
                   </div>
                 ) : players?.length === 0 ? (
@@ -884,21 +884,21 @@ export default function Admin() {
                     <p className="text-gray-600">No players with handicaps yet.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {players?.map((player) => (
                       <div
                         key={player.id}
-                        className="flex items-center justify-between p-4 bg-white rounded-lg border"
+                        className="flex items-center justify-between py-2 px-3 bg-white rounded-lg border"
                         data-testid={`handicap-admin-${player.id}`}
                       >
                         <div>
-                          <h3 className="font-semibold text-gray-900">{player.name}</h3>
-                          <p className="text-sm text-gray-600">{player.email}</p>
+                          <h3 className="font-semibold text-sm text-gray-900">{player.name}</h3>
+                          <p className="text-xs text-gray-600">{player.email}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge 
                             variant={player.handicap ? "default" : "outline"}
-                            className="text-lg px-3 py-1"
+                            className="text-sm px-2 py-0.5"
                             data-testid={`badge-handicap-value-${player.id}`}
                           >
                             HCP: {player.handicap !== null ? player.handicap : 'N/A'}
