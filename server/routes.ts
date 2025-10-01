@@ -12,7 +12,15 @@ import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
 // Validation schemas
-const createRoundSchema = insertRoundSchema.extend({
+// For player round submissions (playerId set from authenticated user)
+const createPlayerRoundSchema = insertRoundSchema.extend({
+  rawScores: z.array(z.number().min(1).max(10)).length(18),
+}).omit({
+  playerId: true, // Will be set from authenticated user
+});
+
+// For admin round submissions (includes playerId)
+const createAdminRoundSchema = insertRoundSchema.extend({
   rawScores: z.array(z.number().min(1).max(10)).length(18),
 });
 
@@ -1105,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Organization admin access required" });
       }
 
-      const validatedData = createRoundSchema.parse(req.body);
+      const validatedData = createAdminRoundSchema.parse(req.body);
       
       // Verify player belongs to this organization
       const targetPlayer = await storage.getPlayer(validatedData.playerId);
@@ -1272,7 +1280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/rounds', isAuthenticated, async (req: any, res) => {
     try {
-      const validatedData = createRoundSchema.parse(req.body);
+      const validatedData = createPlayerRoundSchema.parse(req.body);
       
       // Get the authenticated user's linked player
       const userEmail = req.user.claims.email;
@@ -1339,7 +1347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const validatedData = createRoundSchema.parse(req.body);
+      const validatedData = createAdminRoundSchema.parse(req.body);
       
       // For admin test rounds, use the provided playerId instead of authenticated user
       const targetPlayer = await storage.getPlayer(validatedData.playerId);
