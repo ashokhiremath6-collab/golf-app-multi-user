@@ -76,7 +76,7 @@ export default function NewRound() {
     mutationFn: async (roundData: any) => {
       setIsSubmitting(true);
       try {
-        await apiRequest("POST", `/api/organizations/${currentOrganization?.id}/rounds`, roundData);
+        await apiRequest("POST", "/api/rounds", roundData);
       } finally {
         setIsSubmitting(false);
       }
@@ -225,10 +225,10 @@ export default function NewRound() {
     }
 
     const roundData = {
-      playerId: currentPlayer?.id,
       courseId: selectedCourseId,
-      scores: finalScores,
-      playedAt: new Date().toISOString(),
+      rawScores: finalScores,
+      playedOn: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+      courseHandicap: currentPlayer?.currentHandicap || 0,
     };
 
     createRoundMutation.mutate(roundData);
