@@ -320,8 +320,8 @@ export default function Leaderboard() {
                     <thead className="bg-gray-50 border-b">
                       <tr>
                         <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
-                        <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
+                        <th className="pl-1 pr-0 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
+                        <th className="pl-0 pr-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
                         <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
                         <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg DTH</th>
                         <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">HCP</th>
@@ -335,7 +335,7 @@ export default function Leaderboard() {
                               {index + 1}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap">
+                          <td className="pl-1 pr-0 py-2 whitespace-nowrap">
                             <div className="flex items-center gap-1">
                               <span className="text-xs font-medium text-gray-900" data-testid={`player-name-${entry.playerId}`}>
                                 {entry.playerName}
@@ -347,7 +347,7 @@ export default function Leaderboard() {
                               )}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="pl-0 pr-1 py-2 whitespace-nowrap text-right">
                             <div className="text-xs text-gray-900" data-testid={`rounds-${entry.playerId}`}>
                               {entry.roundsCount || entry.roundsPlayed || 0}
                             </div>
@@ -444,8 +444,8 @@ export default function Leaderboard() {
                     <thead className="bg-gray-50 border-b">
                       <tr>
                         <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
-                        <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
-                        <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
+                        <th className="pl-1 pr-0 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
+                        <th className="pl-0 pr-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
                         <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
                         <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">Avg Over</th>
                         <th className="px-1 py-1.5 text-right text-[10px] font-medium text-gray-500 uppercase">HCP</th>
@@ -459,7 +459,7 @@ export default function Leaderboard() {
                               {index + 1}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap">
+                          <td className="pl-1 pr-0 py-2 whitespace-nowrap">
                             <div className="flex items-center gap-1">
                               <span className="text-xs font-medium text-gray-900" data-testid={`monthly-player-${entry.playerId}`}>
                                 {entry.playerName}
@@ -471,7 +471,7 @@ export default function Leaderboard() {
                               )}
                             </div>
                           </td>
-                          <td className="px-1 py-2 whitespace-nowrap text-right">
+                          <td className="pl-0 pr-1 py-2 whitespace-nowrap text-right">
                             <div className="text-xs text-gray-900" data-testid={`monthly-rounds-${entry.playerId}`}>
                               {entry.roundsCount || 0}
                             </div>
