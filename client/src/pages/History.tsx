@@ -80,6 +80,12 @@ export default function History() {
   // Get selected round
   const selectedRound = playerRounds.find(r => r.id === selectedRoundId);
 
+  // Fetch holes for the selected round's course
+  const { data: holes } = useQuery<{ id: string; courseId: string; number: number; par: number; distance: number; }[]>({
+    queryKey: ['/api/courses', selectedRound?.courseId, 'holes'],
+    enabled: !!selectedRound?.courseId,
+  });
+
   // Get selected player
   const selectedPlayer = players?.find(p => p.id === selectedPlayerId);
 
@@ -125,23 +131,34 @@ export default function History() {
   };
 
   const formatDTH = (dth: number) => {
-    if (dth === 0) return "E";
-    return dth > 0 ? `+${dth.toFixed(0)}` : dth.toFixed(0);
+    const rounded = Math.round(dth);
+    if (rounded === 0) return "E";
+    return rounded > 0 ? `+${rounded}` : `${rounded}`;
   };
 
   const formatOverPar = (overPar: number) => {
-    if (overPar === 0) return "E";
-    return overPar > 0 ? `+${overPar.toFixed(0)}` : overPar.toFixed(0);
+    const rounded = Math.round(overPar);
+    if (rounded === 0) return "E";
+    return rounded > 0 ? `+${rounded}` : `${rounded}`;
   };
 
   const getDTHColor = (dth: number) => {
-    if (dth < 0) return "text-green-600";
-    if (dth > 0) return "text-orange-600";
+    const rounded = Math.round(dth);
+    if (rounded < 0) return "text-green-600";
+    if (rounded > 0) return "text-orange-600";
     return "text-gray-600";
   };
 
-  // Par values for the course
-  const pars = [5, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 5, 3, 4, 4, 3];
+  // Get par values from holes data, sorted by hole number
+  const pars = useMemo(() => {
+    if (!holes || holes.length !== 18) {
+      // Fallback to default par values if holes data is not available
+      return [5, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 5, 3, 4, 4, 3];
+    }
+    const sortedHoles = [...holes].sort((a, b) => a.number - b.number);
+    return sortedHoles.map(hole => hole.par);
+  }, [holes]);
+
   const parOut = pars.slice(0, 9).reduce((sum, p) => sum + p, 0);
   const parIn = pars.slice(9, 18).reduce((sum, p) => sum + p, 0);
 
@@ -177,8 +194,8 @@ export default function History() {
     ? (typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar) - selectedRound.courseHandicap
     : 0;
 
-  const scoreOut = selectedRound?.cappedScores?.slice(0, 9).reduce((sum, s) => sum + s, 0) || 0;
-  const scoreIn = selectedRound?.cappedScores?.slice(9, 18).reduce((sum, s) => sum + s, 0) || 0;
+  const scoreOut = selectedRound?.cappedScores?.slice(0, 9).reduce((sum, s) => sum + (s ?? 0), 0) || 0;
+  const scoreIn = selectedRound?.cappedScores?.slice(9, 18).reduce((sum, s) => sum + (s ?? 0), 0) || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -277,11 +294,14 @@ export default function History() {
                     </tr>
                     <tr className="border-b">
                       <td className="py-2 px-2 font-medium text-gray-600">Score</td>
-                      {selectedRound.cappedScores?.slice(0, 9).map((score, i) => {
+                      {Array.from({ length: 9 }, (_, i) => {
+                        const score = selectedRound.cappedScores?.[i];
                         const par = pars[i];
+                        if (score === undefined || score === null) {
+                          return <td key={i} className="text-center py-2 px-2 text-gray-400">-</td>;
+                        }
                         const isPar = score === par;
                         const isBirdie = score === par - 1;
-                        const isBogie = score === par + 1;
                         return (
                           <td key={i} className="text-center py-2 px-2">
                             {isPar ? (
@@ -326,8 +346,12 @@ export default function History() {
                     </tr>
                     <tr className="border-b">
                       <td className="py-2 px-2 font-medium text-gray-600">Score</td>
-                      {selectedRound.cappedScores?.slice(9, 18).map((score, i) => {
+                      {Array.from({ length: 9 }, (_, i) => {
+                        const score = selectedRound.cappedScores?.[i + 9];
                         const par = pars[i + 9];
+                        if (score === undefined || score === null) {
+                          return <td key={i + 9} className="text-center py-2 px-2 text-gray-400">-</td>;
+                        }
                         const isPar = score === par;
                         const isBirdie = score === par - 1;
                         return (
