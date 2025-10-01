@@ -415,37 +415,37 @@ export default function Admin() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600" data-testid="text-total-players">
+            <CardContent className="p-3 text-center">
+              <div className="text-xl font-bold text-blue-600" data-testid="text-total-players">
                 {players?.length || 0}
               </div>
-              <div className="text-sm text-gray-600">Total Players</div>
+              <div className="text-xs text-gray-600">Total Players</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600" data-testid="text-total-courses">
+            <CardContent className="p-3 text-center">
+              <div className="text-xl font-bold text-green-600" data-testid="text-total-courses">
                 {courses?.length || 0}
               </div>
-              <div className="text-sm text-gray-600">Courses</div>
+              <div className="text-xs text-gray-600">Courses</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600" data-testid="text-total-rounds">
+            <CardContent className="p-3 text-center">
+              <div className="text-xl font-bold text-purple-600" data-testid="text-total-rounds">
                 {totalRounds}
               </div>
-              <div className="text-sm text-gray-600">Rounds Played</div>
+              <div className="text-xs text-gray-600">Rounds Played</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-orange-600" data-testid="text-total-admins">
+            <CardContent className="p-3 text-center">
+              <div className="text-xl font-bold text-orange-600" data-testid="text-total-admins">
                 {adminPlayers.length}
               </div>
-              <div className="text-sm text-gray-600">Admins</div>
+              <div className="text-xs text-gray-600">Admins</div>
             </CardContent>
           </Card>
         </div>
