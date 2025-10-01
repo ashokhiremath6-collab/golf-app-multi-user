@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
-import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,12 +42,9 @@ export default function Handicaps() {
 
   if (isLoading || playersLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="animate-pulse">
-            <div className="bg-white rounded-xl h-96"></div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="animate-pulse">
+          <div className="bg-white rounded-xl h-96"></div>
         </div>
       </div>
     );
@@ -58,8 +54,6 @@ export default function Handicaps() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Card data-testid="card-handicaps">
           <CardHeader>
