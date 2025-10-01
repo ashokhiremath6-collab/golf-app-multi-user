@@ -272,18 +272,18 @@ export default function History() {
 
             {/* Scorecard Table */}
             <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <table className="table-fixed w-full text-xs sm:text-sm">
+              <table className="table-fixed text-xs sm:text-sm" style={{width: '310px'}}>
                 <colgroup>
                   <col className="w-8" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
                   <col className="w-8" />
                 </colgroup>
                 <thead>
@@ -339,18 +339,18 @@ export default function History() {
                 </tbody>
               </table>
 
-              <table className="table-fixed w-full text-xs sm:text-sm mt-2">
+              <table className="table-fixed text-xs sm:text-sm mt-2" style={{width: '310px'}}>
                 <colgroup>
                   <col className="w-8" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
                   <col className="w-8" />
                 </colgroup>
                 <thead>
