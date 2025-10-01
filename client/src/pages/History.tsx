@@ -16,7 +16,7 @@ interface Round {
   courseId: string;
   courseName: string;
   courseTees: string;
-  playedAt: string;
+  playedOn: string; // Changed from playedAt to match API response
   totalStrokes: number;
   overPar: number;
   grossScore: number;
@@ -62,15 +62,15 @@ export default function History() {
     if (selectedPlayer !== 'all' && round.playerId !== selectedPlayer) return false;
     if (selectedCourse !== 'all' && round.courseId !== selectedCourse) return false;
     return true;
-  }).sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()) || [];
+  }).sort((a, b) => new Date(b.playedOn).getTime() - new Date(a.playedOn).getTime()) || [];
 
   // Get recent rounds (last 30 days)
   const recentRounds = rounds?.filter(round => {
-    const roundDate = new Date(round.playedAt);
+    const roundDate = new Date(round.playedOn);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return roundDate >= thirtyDaysAgo;
-  }).sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()) || [];
+  }).sort((a, b) => new Date(b.playedOn).getTime() - new Date(a.playedOn).getTime()) || [];
 
   const getScoreBadgeVariant = (overPar: number) => {
     if (overPar < 0) return "default"; // Under par
@@ -105,7 +105,7 @@ export default function History() {
               {round.courseName} - {round.courseTees}
             </p>
             <p className="text-xs text-gray-500" data-testid={`text-played-date-${round.id}`}>
-              {format(new Date(round.playedAt), 'MMMM d, yyyy')}
+              {format(new Date(round.playedOn), 'MMMM d, yyyy')}
             </p>
           </div>
           <div className="text-right">
@@ -176,7 +176,7 @@ export default function History() {
           {round.totalStrokes} strokes
         </p>
         <p className="text-sm text-gray-600" data-testid={`list-date-${round.id}`}>
-          {format(new Date(round.playedAt), 'MMM d, yyyy')}
+          {format(new Date(round.playedOn), 'MMM d, yyyy')}
         </p>
       </div>
     </div>
