@@ -4,6 +4,15 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 1, 2025 - Automatic Slope-Adjusted Course Handicap ✅
+- **Feature**: Backend now automatically calculates slope-adjusted course handicaps when rounds are created
+  - **Formula**: Handicap Index = (Willingdon Handicap × 113) / 110, then Course Handicap = round(Handicap Index × Course Slope / 113)
+  - **Example**: Player with Willingdon handicap 16 playing slope 120 course gets course handicap 17
+  - **Implementation**: All 3 round creation endpoints (organization-scoped, player, admin) auto-calculate courseHandicap before score calculations
+  - **Frontend**: Removed courseHandicap parameter from Admin.tsx and NewRound.tsx - backend handles calculation automatically
+  - **Admin Override**: Round update endpoint still allows manual courseHandicap adjustment for historical data corrections
+  - **Note**: Uses slope-only adjustment model (not full USGA WHS which includes Course Rating - Par); sufficient for current use case
+
 ## October 1, 2025 - DTH Calculation Fix ✅
 - **Critical Bug Fix**: Fixed avgDTH (Average Difference To Handicap) calculation to use historical handicaps
   - **Problem**: avgDTH was incorrectly using player's current handicap, causing historical DTH values to change when handicaps were updated
