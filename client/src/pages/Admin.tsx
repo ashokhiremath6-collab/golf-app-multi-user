@@ -218,7 +218,7 @@ export default function Admin() {
   });
 
   const addTestRoundMutation = useMutation({
-    mutationFn: async (roundData: { playerId: string; courseId: string; rawScores: number[]; courseHandicap: number; date: string }) => {
+    mutationFn: async (roundData: { playerId: string; courseId: string; rawScores: number[]; courseHandicap: number; playedOn: string; source?: string }) => {
       await apiRequest("POST", `/api/organizations/${currentOrganization?.id}/rounds`, roundData);
     },
     onSuccess: () => {
@@ -253,15 +253,17 @@ export default function Admin() {
     // Generate random course handicap (0-18 range for realism)
     const courseHandicap = Math.floor(Math.random() * 19);
     
-    // Use today's date
-    const date = new Date().toISOString();
+    // Use today's date in YYYY-MM-DD format
+    const today = new Date();
+    const playedOn = today.toISOString().split('T')[0];
     
     addTestRoundMutation.mutate({
       playerId: randomPlayer.id,
       courseId: randomCourse.id,
       rawScores,
       courseHandicap,
-      date,
+      playedOn,
+      source: 'admin',
     });
   };
 
