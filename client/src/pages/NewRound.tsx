@@ -253,7 +253,7 @@ export default function NewRound() {
                           value={scores[index] || ''}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
                           className="w-full text-center h-10 text-lg font-bold mb-2"
-                          placeholder="-"
+                          placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
                         <div className="text-xs text-gray-400">{holeDistance}y</div>
@@ -289,7 +289,7 @@ export default function NewRound() {
                           value={scores[index + 9] || ''}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
                           className="w-full text-center h-10 text-lg font-bold mb-2"
-                          placeholder="-"
+                          placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
                         <div className="text-xs text-gray-400">{holeDistance}y</div>
