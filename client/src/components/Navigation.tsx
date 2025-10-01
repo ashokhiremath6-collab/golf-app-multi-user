@@ -29,6 +29,18 @@ export default function Navigation() {
 
   const currentPlayer = players?.find((p: any) => p.email === (user as any)?.email);
 
+  // TEMP DEBUG: Check what's actually happening
+  console.log('🔍 DEBUG STATE:', {
+    hasUser: !!user,
+    userEmail: (user as any)?.email,
+    hasPlayers: !!players,
+    playersCount: players?.length,
+    currentPlayerEmail: currentPlayer?.email,
+    currentPlayerIsAdmin: currentPlayer?.isAdmin,
+    orgSlug,
+    hasOrgSlug: !!orgSlug
+  });
+
   const handleLogout = () => {
     window.location.href = '/api/logout';
   };
@@ -50,6 +62,14 @@ export default function Navigation() {
         { path: `/${orgSlug}/handicaps`, label: 'Handicaps', icon: 'fas fa-users' },
         ...(currentPlayer?.isAdmin ? [{ path: `/${orgSlug}/admin`, label: 'Admin', icon: 'fas fa-cog' }] : []),
       ];
+
+  // TEMP DEBUG: Check navItems
+  console.log('🔍 DEBUG NAVITEMS:', {
+    navItemsCount: navItems.length,
+    navItemsLabels: navItems.map(i => i.label),
+    isGlobalContext,
+    includesAdmin: navItems.some(i => i.label === 'Admin')
+  });
 
   const handleNavigation = (path: string) => {
     try {
