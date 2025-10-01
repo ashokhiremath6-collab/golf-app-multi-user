@@ -39,6 +39,16 @@ const handicapRecalcSchema = z.object({
   month: z.string().optional(),
 });
 
+// Helper to map player data for API responses (currentHandicap -> handicap)
+const mapPlayerForAPI = (player: any) => {
+  const { currentHandicap, ...rest } = player;
+  return {
+    ...rest,
+    handicap: currentHandicap,
+    currentHandicap, // Keep both for backwards compatibility
+  };
+};
+
 // Preview mode middleware to block write operations (except admin operations)
 const isPreviewWriteBlocked = (req: any, res: any, next: any) => {
   if (isPreviewMode() && req.method !== 'GET') {
@@ -611,9 +621,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const players = await storage.getAllPlayers(organizationId);
       
+      // Map currentHandicap to handicap for frontend compatibility
+      const mappedPlayers = players.map(mapPlayerForAPI);
+      
       // Return player data - all authenticated org members can see players
       // (needed for leaderboards, handicaps, and golf functionality)
-      res.json(createPreviewResponse(players));
+      res.json(createPreviewResponse(mappedPlayers));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch players" });
     }
@@ -677,11 +690,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Player does not belong to this organization" });
       }
 
+      // Map 'handicap' field to 'currentHandicap' for database compatibility
+      const requestData = { ...req.body };
+      if ('handicap' in requestData) {
+        requestData.currentHandicap = requestData.handicap;
+        delete requestData.handicap;
+      }
+      
       // Parse and validate request body (allow partial updates, exclude organizationId)
-      const validatedData = insertPlayerSchema.omit({ organizationId: true }).partial().parse(req.body);
+      const validatedData = insertPlayerSchema.omit({ organizationId: true }).partial().parse(requestData);
       
       const updatedPlayer = await storage.updatePlayer(playerId, validatedData);
-      res.json(createPreviewResponse(updatedPlayer));
+      
+      // Map currentHandicap to handicap for frontend compatibility
+      const mappedPlayer = mapPlayerForAPI(updatedPlayer);
+      
+      res.json(createPreviewResponse(mappedPlayer));
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
