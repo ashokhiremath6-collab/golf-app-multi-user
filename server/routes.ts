@@ -1211,7 +1211,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (course.slope) {
         // Adjust handicap based on course slope rating
         const handicapIndex = (willingdonHandicap * 113) / 110; // Convert Willingdon (slope 110) to Index
-        courseHandicap = Math.round((handicapIndex * parseFloat(course.slope.toString())) / 113);
+        const slopeValue = parseFloat(course.slope.toString());
+        courseHandicap = Math.round((handicapIndex * slopeValue) / 113);
+        console.log(`🏌️ ORG COURSE HANDICAP CALC:`, {
+          player: targetPlayer.name,
+          willingdonHandicap,
+          courseSlope: slopeValue,
+          handicapIndex,
+          calculation: `round((${handicapIndex} * ${slopeValue}) / 113)`,
+          beforeRound: (handicapIndex * slopeValue) / 113,
+          result: courseHandicap
+        });
       } else {
         // No slope data, use Willingdon handicap directly
         courseHandicap = willingdonHandicap;
@@ -1404,7 +1414,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (course.slope) {
         // Adjust handicap based on course slope rating
         const handicapIndex = (willingdonHandicap * 113) / 110; // Convert Willingdon (slope 110) to Index
-        courseHandicap = Math.round((handicapIndex * parseFloat(course.slope.toString())) / 113);
+        const slopeValue = parseFloat(course.slope.toString());
+        courseHandicap = Math.round((handicapIndex * slopeValue) / 113);
+        console.log(`🏌️ PLAYER COURSE HANDICAP CALC:`, {
+          player: player.name,
+          willingdonHandicap,
+          courseSlope: slopeValue,
+          handicapIndex,
+          calculation: `round((${handicapIndex} * ${slopeValue}) / 113)`,
+          beforeRound: (handicapIndex * slopeValue) / 113,
+          result: courseHandicap
+        });
       } else {
         // No slope data, use Willingdon handicap directly
         courseHandicap = willingdonHandicap;
@@ -1480,7 +1500,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (course.slope) {
         // Adjust handicap based on course slope rating
         const handicapIndex = (willingdonHandicap * 113) / 110; // Convert Willingdon (slope 110) to Index
-        courseHandicap = Math.round((handicapIndex * parseFloat(course.slope.toString())) / 113);
+        const slopeValue = parseFloat(course.slope.toString());
+        courseHandicap = Math.round((handicapIndex * slopeValue) / 113);
+        console.log(`🏌️ ADMIN COURSE HANDICAP CALC:`, {
+          player: targetPlayer.name,
+          willingdonHandicap,
+          courseSlope: slopeValue,
+          handicapIndex,
+          calculation: `round((${handicapIndex} * ${slopeValue}) / 113)`,
+          beforeRound: (handicapIndex * slopeValue) / 113,
+          result: courseHandicap
+        });
       } else {
         // No slope data, use Willingdon handicap directly
         courseHandicap = willingdonHandicap;
