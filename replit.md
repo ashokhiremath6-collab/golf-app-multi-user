@@ -4,6 +4,15 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 1, 2025 - Test Round Scorecard Entry ✅
+- **Scorecard Dialog**: Replaced automatic test round generation with interactive scorecard form
+  - Opens dialog with player selection, course selection, and date picker
+  - 18-hole score entry grid with real-time total strokes calculation
+  - Comprehensive validation: ensures 18 holes, scores 1-10, all fields required
+  - Dialog closes only on successful submission, stays open on errors
+  - Submit button disabled during creation to prevent duplicate submissions
+  - Full data-testid coverage for testing: select-scorecard-player, select-scorecard-course, input-scorecard-date, input-hole-1 through input-hole-18, text-total-strokes, button-submit-scorecard, button-cancel-scorecard
+
 ## October 1, 2025 - Leaderboard & Admin Enhancements ✅
 - **Leaderboard Fix**: Fixed critical "overPar.toFixed is not a function" error caused by API returning Decimal values as strings
   - Added type coercion in formatOverPar() function to safely handle string/number values
