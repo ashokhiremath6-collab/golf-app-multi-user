@@ -272,11 +272,19 @@ export default function History() {
 
             {/* Scorecard Table */}
             <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <table className="table-fixed min-w-[800px] w-full text-xs sm:text-sm">
+              <table className="table-fixed w-full text-xs sm:text-sm">
                 <colgroup>
-                  <col className="w-16" />
-                  {Array.from({length: 9}, () => <col key={Math.random()} className="w-10" />)}
                   <col className="w-12" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-10" />
                 </colgroup>
                 <thead>
                   <tr className="border-b">
@@ -309,15 +317,15 @@ export default function History() {
                       return (
                         <td key={i} className="text-center py-2 px-1 whitespace-nowrap">
                           {isPar ? (
-                            <span className="inline-flex items-center justify-center size-7 sm:size-8 rounded-full bg-white ring-2 ring-gray-400 font-semibold">
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : isBirdie ? (
-                            <span className="inline-flex items-center justify-center size-7 sm:size-8 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold">
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : isDoubleBogey ? (
-                            <span className="inline-flex items-center justify-center size-7 sm:size-8 rounded-full bg-red-500 text-white font-semibold">
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-red-500 text-white font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : (
@@ -331,11 +339,19 @@ export default function History() {
                 </tbody>
               </table>
 
-              <table className="table-fixed min-w-[800px] w-full text-xs sm:text-sm mt-4">
+              <table className="table-fixed w-full text-xs sm:text-sm mt-4">
                 <colgroup>
-                  <col className="w-16" />
-                  {Array.from({length: 9}, () => <col key={Math.random()} className="w-10" />)}
                   <col className="w-12" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-8" />
+                  <col className="w-10" />
                 </colgroup>
                 <thead>
                   <tr className="border-b">
@@ -368,15 +384,15 @@ export default function History() {
                       return (
                         <td key={i + 9} className="text-center py-2 px-1 whitespace-nowrap">
                           {isPar ? (
-                            <span className="inline-flex items-center justify-center size-7 sm:size-8 rounded-full bg-white ring-2 ring-gray-400 font-semibold">
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : isBirdie ? (
-                            <span className="inline-flex items-center justify-center size-7 sm:size-8 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold">
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : isDoubleBogey ? (
-                            <span className="inline-flex items-center justify-center size-7 sm:size-8 rounded-full bg-red-500 text-white font-semibold">
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-red-500 text-white font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : (
