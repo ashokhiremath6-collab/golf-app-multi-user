@@ -13,10 +13,13 @@ import type { Request, Response, NextFunction } from "express";
 
 // Validation schemas
 // For player round submissions (playerId set from authenticated user)
-const createPlayerRoundSchema = insertRoundSchema.omit({
-  playerId: true, // Will be set from authenticated user
-}).extend({
+const createPlayerRoundSchema = z.object({
+  courseId: z.string().uuid(),
+  playedOn: z.string(), // Date string in YYYY-MM-DD format
   rawScores: z.array(z.number().min(1).max(10)).length(18),
+  courseHandicap: z.number(),
+  source: z.enum(['app', 'admin', 'import', 'whatsapp']).optional(),
+  status: z.enum(['ok', 'needs_review']).optional(),
 });
 
 // For admin round submissions (includes playerId)
