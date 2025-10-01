@@ -643,7 +643,7 @@ export default function Admin() {
                             <tr key={round.id} className="border-b hover:bg-gray-50" data-testid={`round-row-${round.id}`}>
                               <td className="py-3 px-4">{player?.name || 'Unknown'}</td>
                               <td className="py-3 px-4">{course?.name || 'Unknown Course'}</td>
-                              <td className="py-3 px-4">{new Date(round.date).toLocaleDateString()}</td>
+                              <td className="py-3 px-4">{new Date(round.playedOn).toLocaleDateString()}</td>
                               <td className="text-center py-3 px-4 font-semibold">{round.totalStrokes || round.grossCapped}</td>
                               <td className="text-center py-3 px-4 font-semibold text-blue-600">{round.net}</td>
                               <td className="text-center py-3 px-4 font-semibold text-yellow-600">{overParDisplay}</td>
