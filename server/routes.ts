@@ -1280,7 +1280,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/rounds', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('📝 POST /api/rounds - Request body:', JSON.stringify(req.body, null, 2));
       const validatedData = createPlayerRoundSchema.parse(req.body);
+      console.log('✅ Validation passed:', JSON.stringify(validatedData, null, 2));
       
       // Get the authenticated user's linked player
       const userEmail = req.user.claims.email;
@@ -1330,8 +1332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(newRound);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('❌ Validation error:', JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
+      console.error('❌ Server error creating round:', error);
       res.status(500).json({ message: "Failed to create round" });
     }
   });
