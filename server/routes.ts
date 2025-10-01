@@ -653,6 +653,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization-scoped player update endpoint
+  app.patch('/api/organizations/:organizationId/players/:playerId', enhancedAuth, async (req: any, res) => {
+    try {
+      const { organizationId, playerId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Organization admin access required" });
+      }
+
+      // Get the player to verify it belongs to this organization
+      const player = await storage.getPlayer(playerId);
+      if (!player) {
+        return res.status(404).json({ message: "Player not found" });
+      }
+      
+      if (player.organizationId !== organizationId) {
+        return res.status(403).json({ message: "Player does not belong to this organization" });
+      }
+
+      // Parse and validate request body (allow partial updates, exclude organizationId)
+      const validatedData = insertPlayerSchema.omit({ organizationId: true }).partial().parse(req.body);
+      
+      const updatedPlayer = await storage.updatePlayer(playerId, validatedData);
+      res.json(createPreviewResponse(updatedPlayer));
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating player:", error);
+      res.status(500).json({ message: "Failed to update player" });
+    }
+  });
+
   app.get('/api/players/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
