@@ -274,17 +274,17 @@ export default function History() {
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <table className="table-fixed w-full text-xs sm:text-sm">
                 <colgroup>
+                  <col className="w-12" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
                   <col className="w-10" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-9" />
                 </colgroup>
                 <thead>
                   <tr className="border-b">
@@ -341,17 +341,17 @@ export default function History() {
 
               <table className="table-fixed w-full text-xs sm:text-sm mt-2">
                 <colgroup>
+                  <col className="w-12" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
+                  <col className="w-7" />
                   <col className="w-10" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-7" />
-                  <col className="w-9" />
                 </colgroup>
                 <thead>
                   <tr className="border-b">
