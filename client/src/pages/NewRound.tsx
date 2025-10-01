@@ -243,16 +243,16 @@ export default function NewRound() {
                     const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
-                        <div className="text-xs font-medium text-gray-700 mb-2">Par {holePar}</div>
+                      <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200">
+                        <div className="text-xs text-gray-500">Hole {holeNumber}</div>
+                        <div className="text-xs font-medium text-gray-700 mb-1">Par {holePar}</div>
                         <Input
                           type="number"
                           min="1"
                           max="10"
                           value={scores[index] || ''}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
-                          className="w-full text-center h-10 text-lg font-bold mb-2"
+                          className="w-full text-center h-8 text-lg font-bold mb-1"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
@@ -279,16 +279,16 @@ export default function NewRound() {
                     const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
-                        <div className="text-xs font-medium text-gray-700 mb-2">Par {holePar}</div>
+                      <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200">
+                        <div className="text-xs text-gray-500">Hole {holeNumber}</div>
+                        <div className="text-xs font-medium text-gray-700 mb-1">Par {holePar}</div>
                         <Input
                           type="number"
                           min="1"
                           max="10"
                           value={scores[index + 9] || ''}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          className="w-full text-center h-10 text-lg font-bold mb-2"
+                          className="w-full text-center h-8 text-lg font-bold mb-1"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
