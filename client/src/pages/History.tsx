@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOrganization } from "@/hooks/useOrganization";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, TrendingUp, TrendingDown, Minus, Eye, BarChart3, History as HistoryIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 
 interface Round {
   id: string;
@@ -49,6 +49,7 @@ export default function History() {
   const [selectedPlayer, setSelectedPlayer] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
 
   // Organization-scoped data queries
   const { data: rounds, isLoading: roundsLoading } = useQuery<Round[]>({
@@ -66,6 +67,19 @@ export default function History() {
     enabled: !!currentOrganization?.id,
   });
 
+  // Get available months from rounds data
+  const availableMonths = useMemo(() => {
+    if (!rounds || rounds.length === 0) return [];
+    
+    const monthsSet = new Set<string>();
+    rounds.forEach(round => {
+      const month = format(new Date(round.playedOn), 'yyyy-MM');
+      monthsSet.add(month);
+    });
+    
+    return Array.from(monthsSet).sort().reverse();
+  }, [rounds]);
+
   // Filter rounds based on selected criteria
   const filteredRounds = rounds?.filter(round => {
     if (selectedPlayer !== 'all' && round.playerId !== selectedPlayer) return false;
@@ -73,12 +87,11 @@ export default function History() {
     return true;
   }).sort((a, b) => new Date(b.playedOn).getTime() - new Date(a.playedOn).getTime()) || [];
 
-  // Get recent rounds (last 30 days)
-  const recentRounds = rounds?.filter(round => {
+  // Get this month's rounds
+  const thisMonthRounds = rounds?.filter(round => {
     const roundDate = new Date(round.playedOn);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return roundDate >= thirtyDaysAgo;
+    const roundMonth = format(roundDate, 'yyyy-MM');
+    return roundMonth === selectedMonth;
   }).sort((a, b) => new Date(b.playedOn).getTime() - new Date(a.playedOn).getTime()) || [];
 
   const getScoreBadgeVariant = (overPar: number) => {
@@ -373,7 +386,7 @@ export default function History() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="all" data-testid="tab-all-rounds">All Rounds</TabsTrigger>
-            <TabsTrigger value="recent" data-testid="tab-recent-rounds">Recent (30 days)</TabsTrigger>
+            <TabsTrigger value="recent" data-testid="tab-recent-rounds">This Month</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -415,10 +428,29 @@ export default function History() {
           <TabsContent value="recent" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Recent Rounds ({recentRounds.length})
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    This Month's Rounds ({thisMonthRounds.length})
+                  </CardTitle>
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="w-48" data-testid="select-month">
+                      <SelectValue placeholder="Select month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMonths.map((month) => (
+                        <SelectItem key={month} value={month} data-testid={`option-month-${month}`}>
+                          {format(new Date(month + '-01'), 'MMMM yyyy')}
+                        </SelectItem>
+                      ))}
+                      {availableMonths.length === 0 && (
+                        <SelectItem value={format(new Date(), 'yyyy-MM')} data-testid="option-current-month">
+                          {format(new Date(), 'MMMM yyyy')}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 {roundsLoading ? (
@@ -427,15 +459,15 @@ export default function History() {
                       <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
                     ))}
                   </div>
-                ) : recentRounds.length === 0 ? (
+                ) : thisMonthRounds.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-gray-600" data-testid="text-no-recent-rounds">
-                      No rounds played in the last 30 days.
+                      No rounds found for {format(new Date(selectedMonth + '-01'), 'MMMM yyyy')}.
                     </p>
                   </div>
                 ) : (
                   <div className={viewMode === 'grid' ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
-                    {recentRounds.map((round) => 
+                    {thisMonthRounds.map((round) => 
                       viewMode === 'grid' ? (
                         <RoundCard key={round.id} round={round} />
                       ) : (
