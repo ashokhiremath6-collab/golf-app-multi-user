@@ -12,18 +12,27 @@ import { format } from "date-fns";
 interface Round {
   id: string;
   playerId: string;
-  playerName: string;
   courseId: string;
-  courseName: string;
-  courseTees: string;
-  playedOn: string; // Changed from playedAt to match API response
-  totalStrokes: number;
+  playedOn: string;
+  rawScores: number[];
+  cappedScores: number[];
+  grossCapped: number;
+  courseHandicap: number;
+  net: number;
   overPar: number;
-  grossScore: number;
-  netScore: number | null;
-  handicapAtTime: number | null;
-  scores: number[];
-  courseParTotal: number;
+  source?: string;
+  status?: string;
+  createdAt?: string;
+  courseName: string;
+  course?: {
+    name: string;
+    tees: string;
+    slope?: number;
+  };
+  slopeAdjustedCourseHandicap?: number;
+  slopeAdjustedDTH?: number;
+  handicapIndex?: number;
+  normalizedOverPar?: number;
 }
 
 interface Player {
@@ -90,65 +99,164 @@ export default function History() {
     return overPar > 0 ? `+${overPar}` : `${overPar}`;
   };
 
-  const RoundCard = ({ round }: { round: Round }) => (
-    <Card className="hover:shadow-md transition-shadow" data-testid={`round-card-${round.id}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-gray-900" data-testid={`text-player-name-${round.id}`}>
-                {round.playerName}
+  const RoundCard = ({ round }: { round: Round }) => {
+    const correctPars = [4, 3, 4, 4, 4, 3, 5, 3, 4, 3, 4, 3, 3, 3, 4, 3, 5, 3];
+    const pars = correctPars;
+
+    return (
+      <Card className="hover:shadow-md transition-shadow" data-testid={`round-card-${round.id}`}>
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900" data-testid={`text-course-name-${round.id}`}>
+                {round.courseName}
               </h3>
-              {getTrendIcon(round.overPar)}
-            </div>
-            <p className="text-sm text-gray-600" data-testid={`text-course-name-${round.id}`}>
-              {round.courseName} - {round.courseTees}
-            </p>
-            <p className="text-xs text-gray-500" data-testid={`text-played-date-${round.id}`}>
-              {format(new Date(round.playedOn), 'MMMM d, yyyy')}
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant={getScoreBadgeVariant(round.overPar)} data-testid={`badge-score-${round.id}`}>
-                {formatScore(round.overPar)}
-              </Badge>
-            </div>
-            <p className="text-sm text-gray-600" data-testid={`text-total-strokes-${round.id}`}>
-              {round.totalStrokes} strokes
-            </p>
-            {round.handicapAtTime && (
-              <p className="text-xs text-gray-500" data-testid={`text-handicap-${round.id}`}>
-                HCP: {round.handicapAtTime}
+              <p className="text-sm text-gray-600" data-testid={`text-played-date-${round.id}`}>
+                {format(new Date(round.playedOn), 'MMMM d, yyyy')}
               </p>
-            )}
+              {round.course?.slope && (
+                <p className="text-xs text-gray-500">
+                  Slope: {round.course.slope}
+                  {round.slopeAdjustedCourseHandicap !== undefined && round.slopeAdjustedCourseHandicap !== round.courseHandicap && (
+                    <> | Course Hcp: {round.slopeAdjustedCourseHandicap}</>
+                  )}
+                </p>
+              )}
+            </div>
+            <Badge variant="outline">Blue Tees</Badge>
           </div>
-        </div>
-        <div className="grid grid-cols-9 gap-1 text-xs">
-          {round.scores.map((score, index) => {
-            const holeNumber = index + 1;
-            const holePar = Math.floor(round.courseParTotal / 18); // Simplified par calculation
-            const overUnder = score - holePar;
-            return (
-              <div
-                key={holeNumber}
-                className={`text-center p-1 rounded ${
-                  overUnder < 0 ? 'bg-green-100 text-green-800' :
-                  overUnder === 0 ? 'bg-gray-100 text-gray-800' :
-                  overUnder === 1 ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }`}
-                data-testid={`hole-score-${round.id}-${holeNumber}`}
-              >
-                <div className="text-[10px] text-gray-500">{holeNumber}</div>
-                <div className="font-semibold">{score}</div>
+
+          {/* Full Scorecard Display */}
+          <div className="mb-4">
+            <div className="text-sm text-gray-600 mb-3 text-center">Full Scorecard:</div>
+            
+            {/* Front 9 */}
+            <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
+              <div className="text-2xs text-gray-600 py-1">Hole</div>
+              {Array.from({length: 9}, (_, i) => (
+                <div key={i} className="text-2xs text-gray-600 py-1">{i + 1}</div>
+              ))}
+              <div className="text-2xs text-gray-600 py-1">OUT</div>
+            </div>
+            
+            <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
+              <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
+              {pars.slice(0, 9).map((par, index) => (
+                <div key={index} className="bg-gray-100 rounded px-0.5 py-1 border">
+                  <div className="font-medium text-xs">{par}</div>
+                </div>
+              ))}
+              <div className="bg-gray-100 rounded px-0.5 py-1 border font-medium">
+                <div className="font-medium text-xs">{pars.slice(0, 9).reduce((sum, par) => sum + par, 0)}</div>
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
+            </div>
+            
+            <div className="grid gap-0.5 text-center text-xs font-mono mb-2" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
+              <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
+              {round.cappedScores?.slice(0, 9).map((score, index) => {
+                const par = pars[index];
+                const isOver = score > par;
+                const isUnder = score < par;
+                const isOneOver = score === par + 1;
+                const isPar = score === par;
+                return (
+                  <div key={index} className={`rounded px-0.5 py-0.5 border ${
+                    isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
+                  }`}>
+                    {isPar ? (
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                        {score}
+                      </span>
+                    ) : (
+                      <div className="font-bold text-xs">{score}</div>
+                    )}
+                  </div>
+                );
+              })}
+              <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold">
+                <div className="font-bold text-xs">{round.cappedScores?.slice(0, 9).reduce((sum, score) => sum + score, 0)}</div>
+              </div>
+            </div>
+
+            {/* Back 9 */}
+            <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
+              <div className="text-2xs text-gray-600 py-1">Hole</div>
+              {Array.from({length: 9}, (_, i) => (
+                <div key={i + 9} className="text-2xs text-gray-600 py-1">{i + 10}</div>
+              ))}
+              <div className="text-2xs text-gray-600 py-1">IN</div>
+            </div>
+            
+            <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
+              <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
+              {pars.slice(9, 18).map((par, index) => (
+                <div key={index + 9} className="bg-gray-100 rounded px-0.5 py-1 border">
+                  <div className="font-medium text-xs">{par}</div>
+                </div>
+              ))}
+              <div className="bg-gray-100 rounded px-0.5 py-1 border font-medium">
+                <div className="font-medium text-xs">{pars.slice(9, 18).reduce((sum, par) => sum + par, 0)}</div>
+              </div>
+            </div>
+            
+            <div className="grid gap-0.5 text-center text-xs font-mono mb-4" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
+              <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
+              {round.cappedScores?.slice(9, 18).map((score, index) => {
+                const par = pars[index + 9];
+                const isOver = score > par;
+                const isUnder = score < par;
+                const isOneOver = score === par + 1;
+                const isPar = score === par;
+                return (
+                  <div key={index + 9} className={`rounded px-0.5 py-0.5 border ${
+                    isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
+                  }`}>
+                    {isPar ? (
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                        {score}
+                      </span>
+                    ) : (
+                      <div className="font-bold text-xs">{score}</div>
+                    )}
+                  </div>
+                );
+              })}
+              <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold">
+                <div className="font-bold text-xs">{round.cappedScores?.slice(9, 18).reduce((sum, score) => sum + score, 0)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="grid grid-cols-4 gap-3 text-center">
+            <div>
+              <div className="font-bold text-xl">{round.grossCapped}</div>
+              <div className="text-sm text-gray-600">Gross Score</div>
+            </div>
+            <div>
+              <div className="font-bold text-xl text-golf-blue">{round.net}</div>
+              <div className="text-sm text-gray-600">Net Score</div>
+            </div>
+            <div>
+              <div className="font-bold text-xl text-golf-gold">+{parseFloat(round.overPar.toString()).toFixed(0)}</div>
+              <div className="text-sm text-gray-600">Over Par</div>
+            </div>
+            <div>
+              <div className="font-bold text-xl text-purple-600">
+                {(() => {
+                  const dth = round.slopeAdjustedDTH !== undefined 
+                    ? round.slopeAdjustedDTH 
+                    : parseFloat(round.overPar.toString()) - round.courseHandicap;
+                  return (dth >= 0 ? '+' : '') + dth.toFixed(0);
+                })()}
+              </div>
+              <div className="text-sm text-gray-600">DTH</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const RoundListItem = ({ round }: { round: Round }) => (
     <div 
@@ -157,23 +265,23 @@ export default function History() {
     >
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          {getTrendIcon(round.overPar)}
-          <Badge variant={getScoreBadgeVariant(round.overPar)} data-testid={`list-badge-${round.id}`}>
-            {formatScore(round.overPar)}
+          {getTrendIcon(parseFloat(round.overPar.toString()))}
+          <Badge variant={getScoreBadgeVariant(parseFloat(round.overPar.toString()))} data-testid={`list-badge-${round.id}`}>
+            {formatScore(parseFloat(round.overPar.toString()))}
           </Badge>
         </div>
         <div>
-          <h3 className="font-semibold text-gray-900" data-testid={`list-player-${round.id}`}>
-            {round.playerName}
+          <h3 className="font-semibold text-gray-900" data-testid={`list-course-${round.id}`}>
+            {round.courseName}
           </h3>
-          <p className="text-sm text-gray-600" data-testid={`list-course-${round.id}`}>
-            {round.courseName} - {round.courseTees}
+          <p className="text-sm text-gray-600">
+            {round.course?.tees || 'Blue Tees'}
           </p>
         </div>
       </div>
       <div className="text-right">
         <p className="font-semibold text-gray-900" data-testid={`list-strokes-${round.id}`}>
-          {round.totalStrokes} strokes
+          {round.grossCapped} strokes
         </p>
         <p className="text-sm text-gray-600" data-testid={`list-date-${round.id}`}>
           {format(new Date(round.playedOn), 'MMM d, yyyy')}
