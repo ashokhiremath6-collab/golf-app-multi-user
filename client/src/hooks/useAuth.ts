@@ -43,6 +43,7 @@ interface Player {
 }
 
 // Helper hook to get current player using linked player data
+// This is deprecated - use useOrganizationPlayer instead for organization-specific player data
 export function useCurrentPlayer() {
   const { user, linkedPlayer, isLinkedToPlayer, isLoading, isPreviewMode, isSuperAdmin } = useAuth();
 

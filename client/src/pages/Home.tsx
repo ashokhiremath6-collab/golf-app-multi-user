@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useCurrentPlayer } from "@/hooks/useAuth";
+import { useOrganizationPlayer } from "@/hooks/useOrganizationPlayer";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -13,7 +13,7 @@ import { useLocation } from "wouter";
 
 export default function Home() {
   const { toast } = useToast();
-  const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useCurrentPlayer();
+  const { currentPlayer, isAuthenticated, isLoading, isPreviewMode } = useOrganizationPlayer();
   const { currentOrganization } = useOrganization();
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(() => {

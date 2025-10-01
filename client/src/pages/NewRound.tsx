@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useOrganization } from "@/hooks/useOrganization";
-import { useCurrentPlayer } from "@/hooks/useAuth";
+import { useOrganizationPlayer } from "@/hooks/useOrganizationPlayer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -38,7 +38,7 @@ interface Player {
 export default function NewRound() {
   const { toast } = useToast();
   const { currentOrganization } = useOrganization();
-  const { currentPlayer } = useCurrentPlayer();
+  const { currentPlayer } = useOrganizationPlayer();
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
