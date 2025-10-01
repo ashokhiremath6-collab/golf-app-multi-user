@@ -117,12 +117,12 @@ export default function Navigation() {
       {/* Desktop Tab Navigation */}
       <div className="bg-white border-b border-gray-200 hidden sm:block" data-testid="nav-tabs">
         <div className="max-w-7xl mx-auto px-4">
-          <nav className="flex space-x-8 overflow-x-auto">
+          <nav className="flex flex-wrap justify-center gap-2 py-2">
             {navItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
-                className={`py-4 px-2 border-b-2 font-medium whitespace-nowrap ${
+                className={`py-2 px-4 border-b-2 font-medium whitespace-nowrap ${
                   isActivePath(item.path)
                     ? 'border-golf-green text-golf-green font-bold'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
