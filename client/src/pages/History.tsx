@@ -272,60 +272,60 @@ export default function History() {
 
             {/* Scorecard Table */}
             <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <table className="table-fixed w-full text-xs sm:text-sm">
+              <table className="table-fixed w-auto sm:w-full text-[10px] sm:text-xs">
                 <colgroup>
-                  <col className="w-12" />
+                  <col className="w-9" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
                   <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-10" />
                 </colgroup>
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-1 font-medium text-gray-600">Hole</th>
+                    <th className="text-left py-1 px-0.5 font-medium text-gray-600">Hole</th>
                     {Array.from({length: 9}, (_, i) => (
-                      <th key={i} className="text-center py-2 px-1 font-medium text-gray-600">{i + 1}</th>
+                      <th key={i} className="text-center py-1 px-0.5 font-medium text-gray-600">{i + 1}</th>
                     ))}
-                    <th className="text-center py-2 px-1 font-medium text-gray-600">OUT</th>
+                    <th className="text-center py-1 px-0.5 font-medium text-gray-600">OUT</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b bg-gray-50">
-                    <td className="py-2 px-1 font-medium text-gray-600">Par</td>
+                    <td className="py-1 px-0.5 font-medium text-gray-600">Par</td>
                     {pars.slice(0, 9).map((par, i) => (
-                      <td key={i} className="text-center py-2 px-1 font-medium whitespace-nowrap">{par}</td>
+                      <td key={i} className="text-center py-1 px-0.5 font-medium whitespace-nowrap">{par}</td>
                     ))}
-                    <td className="text-center py-2 px-1 font-bold whitespace-nowrap">{parOut}</td>
+                    <td className="text-center py-1 px-0.5 font-bold whitespace-nowrap">{parOut}</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-2 px-1 font-medium text-gray-600">Score</td>
+                    <td className="py-1 px-0.5 font-medium text-gray-600">Score</td>
                     {Array.from({ length: 9 }, (_, i) => {
                       const score = selectedRound.cappedScores?.[i];
                       const par = pars[i];
                       if (score === undefined || score === null) {
-                        return <td key={i} className="text-center py-2 px-1 text-gray-400">-</td>;
+                        return <td key={i} className="text-center py-1 px-0.5 text-gray-400">-</td>;
                       }
                       const isPar = score === par;
                       const isBirdie = score === par - 1;
                       const isDoubleBogey = score === par + 2;
                       return (
-                        <td key={i} className="text-center py-2 px-1 whitespace-nowrap">
+                        <td key={i} className="text-center py-1 px-0.5 whitespace-nowrap">
                           {isPar ? (
-                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-xs sm:text-sm">
+                            <span className="inline-flex items-center justify-center size-5 sm:size-6 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-[10px] sm:text-xs">
                               {score}
                             </span>
                           ) : isBirdie ? (
-                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-xs sm:text-sm">
+                            <span className="inline-flex items-center justify-center size-5 sm:size-6 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-[10px] sm:text-xs">
                               {score}
                             </span>
                           ) : isDoubleBogey ? (
-                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-red-500 text-white font-semibold text-xs sm:text-sm">
+                            <span className="inline-flex items-center justify-center size-5 sm:size-6 rounded-full bg-red-500 text-white font-semibold text-[10px] sm:text-xs">
                               {score}
                             </span>
                           ) : (
@@ -334,65 +334,65 @@ export default function History() {
                         </td>
                       );
                     })}
-                    <td className="text-center py-2 px-1 bg-green-700 text-white font-bold whitespace-nowrap">{scoreOut}</td>
+                    <td className="text-center py-1 px-0.5 bg-green-700 text-white font-bold whitespace-nowrap">{scoreOut}</td>
                   </tr>
                 </tbody>
               </table>
 
-              <table className="table-fixed w-full text-xs sm:text-sm mt-4">
+              <table className="table-fixed w-auto sm:w-full text-[10px] sm:text-xs mt-4">
                 <colgroup>
-                  <col className="w-12" />
+                  <col className="w-9" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
+                  <col className="w-6" />
                   <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-8" />
-                  <col className="w-10" />
                 </colgroup>
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-1 font-medium text-gray-600">Hole</th>
+                    <th className="text-left py-1 px-0.5 font-medium text-gray-600">Hole</th>
                     {Array.from({length: 9}, (_, i) => (
-                      <th key={i + 9} className="text-center py-2 px-1 font-medium text-gray-600">{i + 10}</th>
+                      <th key={i + 9} className="text-center py-1 px-0.5 font-medium text-gray-600">{i + 10}</th>
                     ))}
-                    <th className="text-center py-2 px-1 font-medium text-gray-600">IN</th>
+                    <th className="text-center py-1 px-0.5 font-medium text-gray-600">IN</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b bg-gray-50">
-                    <td className="py-2 px-1 font-medium text-gray-600">Par</td>
+                    <td className="py-1 px-0.5 font-medium text-gray-600">Par</td>
                     {pars.slice(9, 18).map((par, i) => (
-                      <td key={i + 9} className="text-center py-2 px-1 font-medium whitespace-nowrap">{par}</td>
+                      <td key={i + 9} className="text-center py-1 px-0.5 font-medium whitespace-nowrap">{par}</td>
                     ))}
-                    <td className="text-center py-2 px-1 font-bold whitespace-nowrap">{parIn}</td>
+                    <td className="text-center py-1 px-0.5 font-bold whitespace-nowrap">{parIn}</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-2 px-1 font-medium text-gray-600">Score</td>
+                    <td className="py-1 px-0.5 font-medium text-gray-600">Score</td>
                     {Array.from({ length: 9 }, (_, i) => {
                       const score = selectedRound.cappedScores?.[i + 9];
                       const par = pars[i + 9];
                       if (score === undefined || score === null) {
-                        return <td key={i + 9} className="text-center py-2 px-1 text-gray-400">-</td>;
+                        return <td key={i + 9} className="text-center py-1 px-0.5 text-gray-400">-</td>;
                       }
                       const isPar = score === par;
                       const isBirdie = score === par - 1;
                       const isDoubleBogey = score === par + 2;
                       return (
-                        <td key={i + 9} className="text-center py-2 px-1 whitespace-nowrap">
+                        <td key={i + 9} className="text-center py-1 px-0.5 whitespace-nowrap">
                           {isPar ? (
-                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-xs sm:text-sm">
+                            <span className="inline-flex items-center justify-center size-5 sm:size-6 rounded-full bg-white ring-2 ring-gray-400 font-semibold text-[10px] sm:text-xs">
                               {score}
                             </span>
                           ) : isBirdie ? (
-                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-xs sm:text-sm">
+                            <span className="inline-flex items-center justify-center size-5 sm:size-6 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-[10px] sm:text-xs">
                               {score}
                             </span>
                           ) : isDoubleBogey ? (
-                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-red-500 text-white font-semibold text-xs sm:text-sm">
+                            <span className="inline-flex items-center justify-center size-5 sm:size-6 rounded-full bg-red-500 text-white font-semibold text-[10px] sm:text-xs">
                               {score}
                             </span>
                           ) : (
@@ -401,7 +401,7 @@ export default function History() {
                         </td>
                       );
                     })}
-                    <td className="text-center py-2 px-1 bg-green-700 text-white font-bold whitespace-nowrap">{scoreIn}</td>
+                    <td className="text-center py-1 px-0.5 bg-green-700 text-white font-bold whitespace-nowrap">{scoreIn}</td>
                   </tr>
                 </tbody>
               </table>
