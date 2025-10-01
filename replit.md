@@ -4,6 +4,17 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 1, 2025 - Leaderboard & Admin Enhancements ✅
+- **Leaderboard Fix**: Fixed critical "overPar.toFixed is not a function" error caused by API returning Decimal values as strings
+  - Added type coercion in formatOverPar() function to safely handle string/number values
+  - Fixed monthly leaderboard aggregation bug that caused string concatenation instead of numeric addition
+  - Monthly averages now calculate correctly using proper arithmetic
+- **Admin Handicap Editing**: Added ability for admins to manually set and edit player handicaps
+  - New Edit button in Handicaps tab opens dialog for handicap entry
+  - Validation enforces 0-54 range or blank (null) values
+  - Uses organization-scoped PATCH endpoint with proper cache invalidation
+  - Dialog includes data-testid attributes for testing
+
 ## September 25, 2025 - Organization Tabs Fixed ✅
 - **Issue**: Organization tabs (Leaderboard, History, Handicaps, New Round, Admin) were showing blank screens due to calling incorrect API endpoints. Player name displayed user's name instead of organization player name. Super Admin tab appeared inappropriately in organization context.
 - **Resolution**: Comprehensive frontend fixes to use organization-scoped endpoints throughout the application
