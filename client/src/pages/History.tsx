@@ -271,8 +271,8 @@ export default function History() {
             </div>
 
             {/* Scorecard Table */}
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <table className="table-fixed text-xs sm:text-sm" style={{width: '310px'}}>
+            <div className="overflow-x-auto -mx-4 sm:mx-0 flex justify-center">
+              <table className="table-fixed text-xs sm:text-sm" style={{width: '330px'}}>
                 <colgroup>
                   <col className="w-8" />
                   <col className="w-6" />
@@ -339,7 +339,7 @@ export default function History() {
                 </tbody>
               </table>
 
-              <table className="table-fixed text-xs sm:text-sm mt-2" style={{width: '310px'}}>
+              <table className="table-fixed text-xs sm:text-sm mt-2 mx-auto" style={{width: '330px'}}>
                 <colgroup>
                   <col className="w-8" />
                   <col className="w-6" />
