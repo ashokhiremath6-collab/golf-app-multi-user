@@ -13,6 +13,7 @@ interface LeaderboardEntry {
   position: number;
   roundsPlayed: number;
   avgOverPar: number;
+  avgDTH?: number; // Average Difference To Handicap (only in season leaderboard)
   handicap: number | null;
   totalStrokes: number;
   bestRound: number | null;
@@ -200,16 +201,16 @@ export default function Leaderboard() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900" data-testid={`text-avg-over-par-${entry.playerId}`}>
-                            {formatOverPar(entry.avgOverPar)}
+                          <div className="text-lg font-bold text-gray-900" data-testid={`text-avg-dth-${entry.playerId}`}>
+                            {formatOverPar(entry.avgDTH !== undefined ? entry.avgDTH : entry.avgOverPar)}
                           </div>
+                          <p className="text-xs text-gray-500">{entry.avgDTH !== undefined ? 'vs handicap' : 'over par'}</p>
                           {entry.handicap && (
                             <Badge variant="outline" className="text-xs" data-testid={`badge-handicap-${entry.playerId}`}>
                               HCP {entry.handicap}
                             </Badge>
                           )}
-                        </div>
-                      </div>
+                        </div>                      </div>
                     ))}
                   </div>
                 )}
