@@ -1,19 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOrganization } from "@/hooks/useOrganization";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useOrganizationPlayer } from "@/hooks/useOrganizationPlayer";
+import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, TrendingUp, TrendingDown, Minus, Eye, BarChart3, History as HistoryIcon } from "lucide-react";
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 interface Round {
   id: string;
   playerId: string;
+  playerName: string;
   courseId: string;
   playedOn: string;
+  playedAt: string;
   rawScores: number[];
   cappedScores: number[];
   grossCapped: number;
@@ -21,18 +20,13 @@ interface Round {
   net: number;
   overPar: number;
   source?: string;
-  status?: string;
-  createdAt?: string;
   courseName: string;
   course?: {
     name: string;
     tees: string;
     slope?: number;
   };
-  slopeAdjustedCourseHandicap?: number;
-  slopeAdjustedDTH?: number;
-  handicapIndex?: number;
-  normalizedOverPar?: number;
+  currentHandicap?: number;
 }
 
 interface Player {
@@ -45,441 +39,395 @@ interface Player {
 
 export default function History() {
   const { currentOrganization } = useOrganization();
-  const [activeTab, setActiveTab] = useState('all');
-  const [selectedPlayer, setSelectedPlayer] = useState<string>('all');
-  const [selectedCourse, setSelectedCourse] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  const { currentPlayer } = useOrganizationPlayer();
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
+  const [selectedRoundId, setSelectedRoundId] = useState<string>('');
 
-  // Organization-scoped data queries
   const { data: rounds, isLoading: roundsLoading } = useQuery<Round[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`],
     enabled: !!currentOrganization?.id,
   });
 
-  const { data: players, isLoading: playersLoading } = useQuery<Player[]>({
+  const { data: players } = useQuery<Player[]>({
     queryKey: [`/api/organizations/${currentOrganization?.id}/players`],
     enabled: !!currentOrganization?.id,
   });
 
-  const { data: courses } = useQuery<any[]>({
-    queryKey: [`/api/organizations/${currentOrganization?.id}/courses`],
-    enabled: !!currentOrganization?.id,
-  });
+  // Set default player to current user when data loads
+  useEffect(() => {
+    if (currentPlayer && !selectedPlayerId) {
+      setSelectedPlayerId(currentPlayer.id);
+    }
+  }, [currentPlayer, selectedPlayerId]);
 
-  // Get available months from rounds data
-  const availableMonths = useMemo(() => {
-    if (!rounds || rounds.length === 0) return [];
-    
-    const monthsSet = new Set<string>();
-    rounds.forEach(round => {
-      const month = format(new Date(round.playedOn), 'yyyy-MM');
-      monthsSet.add(month);
-    });
-    
-    return Array.from(monthsSet).sort().reverse();
-  }, [rounds]);
+  // Filter rounds by selected player
+  const playerRounds = useMemo(() => {
+    if (!rounds || !selectedPlayerId) return [];
+    return rounds
+      .filter(round => round.playerId === selectedPlayerId)
+      .sort((a, b) => new Date(b.playedOn || b.playedAt).getTime() - new Date(a.playedOn || a.playedAt).getTime());
+  }, [rounds, selectedPlayerId]);
 
-  // Filter rounds based on selected criteria
-  const filteredRounds = rounds?.filter(round => {
-    if (selectedPlayer !== 'all' && round.playerId !== selectedPlayer) return false;
-    if (selectedCourse !== 'all' && round.courseId !== selectedCourse) return false;
-    return true;
-  }).sort((a, b) => new Date(b.playedOn).getTime() - new Date(a.playedOn).getTime()) || [];
+  // Set default round to most recent when player changes
+  useEffect(() => {
+    if (playerRounds.length > 0 && !selectedRoundId) {
+      setSelectedRoundId(playerRounds[0].id);
+    } else if (playerRounds.length > 0 && !playerRounds.find(r => r.id === selectedRoundId)) {
+      setSelectedRoundId(playerRounds[0].id);
+    }
+  }, [playerRounds, selectedRoundId]);
 
-  // Get this month's rounds
-  const thisMonthRounds = rounds?.filter(round => {
-    const roundDate = new Date(round.playedOn);
-    const roundMonth = format(roundDate, 'yyyy-MM');
-    return roundMonth === selectedMonth;
-  }).sort((a, b) => new Date(b.playedOn).getTime() - new Date(a.playedOn).getTime()) || [];
+  // Get selected round
+  const selectedRound = playerRounds.find(r => r.id === selectedRoundId);
 
-  const getScoreBadgeVariant = (overPar: number) => {
-    if (overPar < 0) return "default"; // Under par
-    if (overPar === 0) return "secondary"; // Par
-    if (overPar <= 5) return "outline"; // Slightly over
-    return "destructive"; // Way over par
+  // Get selected player
+  const selectedPlayer = players?.find(p => p.id === selectedPlayerId);
+
+  // Calculate season averages for selected player
+  const seasonAverages = useMemo(() => {
+    if (!playerRounds || playerRounds.length === 0) {
+      return {
+        rounds: 0,
+        avgGross: 0,
+        avgNet: 0,
+        avgOver: 0,
+        avgDTH: 0,
+      };
+    }
+
+    const totalGross = playerRounds.reduce((sum, r) => sum + r.grossCapped, 0);
+    const totalNet = playerRounds.reduce((sum, r) => sum + r.net, 0);
+    const totalOver = playerRounds.reduce((sum, r) => {
+      const over = typeof r.overPar === 'string' ? parseFloat(r.overPar) : r.overPar;
+      return sum + (isNaN(over) ? 0 : over);
+    }, 0);
+    const totalDTH = playerRounds.reduce((sum, r) => {
+      const over = typeof r.overPar === 'string' ? parseFloat(r.overPar) : r.overPar;
+      const dth = (isNaN(over) ? 0 : over) - r.courseHandicap;
+      return sum + dth;
+    }, 0);
+
+    return {
+      rounds: playerRounds.length,
+      avgGross: totalGross / playerRounds.length,
+      avgNet: totalNet / playerRounds.length,
+      avgOver: totalOver / playerRounds.length,
+      avgDTH: totalDTH / playerRounds.length,
+    };
+  }, [playerRounds]);
+
+  const formatRoundOption = (round: Round) => {
+    const courseName = round.courseName || round.course?.name || 'Unknown Course';
+    const slope = round.course?.slope;
+    const date = format(new Date(round.playedOn || round.playedAt), 'dd/MM/yyyy');
+    const net = round.net;
+    return `${courseName}${slope ? ` (Slope ${slope})` : ''} - ${date} (Net ${net})`;
   };
 
-  const getTrendIcon = (overPar: number) => {
-    if (overPar < 0) return <TrendingDown className="h-4 w-4 text-green-600" />;
-    if (overPar === 0) return <Minus className="h-4 w-4 text-gray-500" />;
-    return <TrendingUp className="h-4 w-4 text-red-500" />;
+  const formatDTH = (dth: number) => {
+    if (dth === 0) return "E";
+    return dth > 0 ? `+${dth.toFixed(0)}` : dth.toFixed(0);
   };
 
-  const formatScore = (overPar: number) => {
+  const formatOverPar = (overPar: number) => {
     if (overPar === 0) return "E";
-    return overPar > 0 ? `+${overPar}` : `${overPar}`;
+    return overPar > 0 ? `+${overPar.toFixed(0)}` : overPar.toFixed(0);
   };
 
-  const RoundCard = ({ round }: { round: Round }) => {
-    const correctPars = [4, 3, 4, 4, 4, 3, 5, 3, 4, 3, 4, 3, 3, 3, 4, 3, 5, 3];
-    const pars = correctPars;
-
-    return (
-      <Card className="hover:shadow-md transition-shadow" data-testid={`round-card-${round.id}`}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900" data-testid={`text-course-name-${round.id}`}>
-                {round.courseName}
-              </h3>
-              <p className="text-sm text-gray-600" data-testid={`text-played-date-${round.id}`}>
-                {format(new Date(round.playedOn), 'MMMM d, yyyy')}
-              </p>
-              {round.course?.slope && (
-                <p className="text-xs text-gray-500">
-                  Slope: {round.course.slope}
-                  {round.slopeAdjustedCourseHandicap !== undefined && round.slopeAdjustedCourseHandicap !== round.courseHandicap && (
-                    <> | Course Hcp: {round.slopeAdjustedCourseHandicap}</>
-                  )}
-                </p>
-              )}
-            </div>
-            <Badge variant="outline">Blue Tees</Badge>
-          </div>
-
-          {/* Full Scorecard Display */}
-          <div className="mb-4">
-            <div className="text-sm text-gray-600 mb-3 text-center">Full Scorecard:</div>
-            
-            {/* Front 9 */}
-            <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-              <div className="text-2xs text-gray-600 py-1">Hole</div>
-              {Array.from({length: 9}, (_, i) => (
-                <div key={i} className="text-2xs text-gray-600 py-1">{i + 1}</div>
-              ))}
-              <div className="text-2xs text-gray-600 py-1">OUT</div>
-            </div>
-            
-            <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-              <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
-              {pars.slice(0, 9).map((par, index) => (
-                <div key={index} className="bg-gray-100 rounded px-0.5 py-1 border">
-                  <div className="font-medium text-xs">{par}</div>
-                </div>
-              ))}
-              <div className="bg-gray-100 rounded px-0.5 py-1 border font-medium">
-                <div className="font-medium text-xs">{pars.slice(0, 9).reduce((sum, par) => sum + par, 0)}</div>
-              </div>
-            </div>
-            
-            <div className="grid gap-0.5 text-center text-xs font-mono mb-2" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-              <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
-              {round.cappedScores?.slice(0, 9).map((score, index) => {
-                const par = pars[index];
-                const isOver = score > par;
-                const isUnder = score < par;
-                const isOneOver = score === par + 1;
-                const isPar = score === par;
-                return (
-                  <div key={index} className={`rounded px-0.5 py-0.5 border ${
-                    isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
-                  }`}>
-                    {isPar ? (
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 font-bold text-xs leading-none mx-auto -translate-y-0.5">
-                        {score}
-                      </span>
-                    ) : (
-                      <div className="font-bold text-xs">{score}</div>
-                    )}
-                  </div>
-                );
-              })}
-              <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold">
-                <div className="font-bold text-xs">{round.cappedScores?.slice(0, 9).reduce((sum, score) => sum + score, 0)}</div>
-              </div>
-            </div>
-
-            {/* Back 9 */}
-            <div className="grid gap-0.5 text-center text-xs font-mono mb-1" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-              <div className="text-2xs text-gray-600 py-1">Hole</div>
-              {Array.from({length: 9}, (_, i) => (
-                <div key={i + 9} className="text-2xs text-gray-600 py-1">{i + 10}</div>
-              ))}
-              <div className="text-2xs text-gray-600 py-1">IN</div>
-            </div>
-            
-            <div className="grid gap-0.5 text-center text-xs font-mono mb-0.5" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-              <div className="bg-gray-100 rounded px-0.5 py-1 border text-2xs text-gray-600">Par</div>
-              {pars.slice(9, 18).map((par, index) => (
-                <div key={index + 9} className="bg-gray-100 rounded px-0.5 py-1 border">
-                  <div className="font-medium text-xs">{par}</div>
-                </div>
-              ))}
-              <div className="bg-gray-100 rounded px-0.5 py-1 border font-medium">
-                <div className="font-medium text-xs">{pars.slice(9, 18).reduce((sum, par) => sum + par, 0)}</div>
-              </div>
-            </div>
-            
-            <div className="grid gap-0.5 text-center text-xs font-mono mb-4" style={{ gridTemplateColumns: '3rem repeat(9, 1.5rem) 2.5rem' }}>
-              <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
-              {round.cappedScores?.slice(9, 18).map((score, index) => {
-                const par = pars[index + 9];
-                const isOver = score > par;
-                const isUnder = score < par;
-                const isOneOver = score === par + 1;
-                const isPar = score === par;
-                return (
-                  <div key={index + 9} className={`rounded px-0.5 py-0.5 border ${
-                    isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
-                  }`}>
-                    {isPar ? (
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 font-bold text-xs leading-none mx-auto -translate-y-0.5">
-                        {score}
-                      </span>
-                    ) : (
-                      <div className="font-bold text-xs">{score}</div>
-                    )}
-                  </div>
-                );
-              })}
-              <div className="bg-golf-green text-white rounded px-0.5 py-1 border font-bold">
-                <div className="font-bold text-xs">{round.cappedScores?.slice(9, 18).reduce((sum, score) => sum + score, 0)}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Summary */}
-          <div className="grid grid-cols-4 gap-3 text-center">
-            <div>
-              <div className="font-bold text-xl">{round.grossCapped}</div>
-              <div className="text-sm text-gray-600">Gross Score</div>
-            </div>
-            <div>
-              <div className="font-bold text-xl text-golf-blue">{round.net}</div>
-              <div className="text-sm text-gray-600">Net Score</div>
-            </div>
-            <div>
-              <div className="font-bold text-xl text-golf-gold">+{parseFloat(round.overPar.toString()).toFixed(0)}</div>
-              <div className="text-sm text-gray-600">Over Par</div>
-            </div>
-            <div>
-              <div className="font-bold text-xl text-purple-600">
-                {(() => {
-                  const dth = round.slopeAdjustedDTH !== undefined 
-                    ? round.slopeAdjustedDTH 
-                    : parseFloat(round.overPar.toString()) - round.courseHandicap;
-                  return (dth >= 0 ? '+' : '') + dth.toFixed(0);
-                })()}
-              </div>
-              <div className="text-sm text-gray-600">DTH</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const getDTHColor = (dth: number) => {
+    if (dth < 0) return "text-green-600";
+    if (dth > 0) return "text-orange-600";
+    return "text-gray-600";
   };
 
-  const RoundListItem = ({ round }: { round: Round }) => (
-    <div 
-      className="flex items-center justify-between p-4 bg-white rounded-lg border hover:shadow-sm transition-shadow"
-      data-testid={`round-list-${round.id}`}
-    >
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          {getTrendIcon(parseFloat(round.overPar.toString()))}
-          <Badge variant={getScoreBadgeVariant(parseFloat(round.overPar.toString()))} data-testid={`list-badge-${round.id}`}>
-            {formatScore(parseFloat(round.overPar.toString()))}
-          </Badge>
-        </div>
-        <div>
-          <h3 className="font-semibold text-gray-900" data-testid={`list-course-${round.id}`}>
-            {round.courseName}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {round.course?.tees || 'Blue Tees'}
-          </p>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className="font-semibold text-gray-900" data-testid={`list-strokes-${round.id}`}>
-          {round.grossCapped} strokes
-        </p>
-        <p className="text-sm text-gray-600" data-testid={`list-date-${round.id}`}>
-          {format(new Date(round.playedOn), 'MMM d, yyyy')}
-        </p>
-      </div>
-    </div>
-  );
+  // Par values for the course
+  const pars = [5, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 5, 3, 4, 4, 3];
+  const parOut = pars.slice(0, 9).reduce((sum, p) => sum + p, 0);
+  const parIn = pars.slice(9, 18).reduce((sum, p) => sum + p, 0);
 
   if (!currentOrganization) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">No Organization Selected</h2>
-              <p className="text-gray-600">Please select an organization to view round history.</p>
-            </div>
-          </CardContent>
+        <Card className="w-full max-w-md p-6">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No Organization Selected</h2>
+            <p className="text-gray-600">Please select an organization to view history.</p>
+          </div>
         </Card>
       </div>
     );
   }
 
+  if (roundsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="h-8 bg-gray-200 rounded animate-pulse w-48" />
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const roundDTH = selectedRound 
+    ? (typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar) - selectedRound.courseHandicap
+    : 0;
+
+  const scoreOut = selectedRound?.cappedScores?.slice(0, 9).reduce((sum, s) => sum + s, 0) || 0;
+  const scoreIn = selectedRound?.cappedScores?.slice(9, 18).reduce((sum, s) => sum + s, 0) || 0;
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900" data-testid="text-history-title">
-            {currentOrganization.name} Round History
-          </h1>
-          <p className="text-gray-600 mt-2" data-testid="text-history-description">
-            Complete record of all rounds played in this organization
-          </p>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-gray-900" data-testid="text-history-title">
+          Player History
+        </h1>
+
+        {/* Player Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">Select Player</label>
+          <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+            <SelectTrigger className="w-full bg-white" data-testid="select-player">
+              <SelectValue placeholder="Select a player" />
+            </SelectTrigger>
+            <SelectContent>
+              {currentPlayer && (
+                <SelectItem value={currentPlayer.id} data-testid="option-your-history">
+                  Your History
+                </SelectItem>
+              )}
+              {players?.filter(p => p.id !== currentPlayer?.id).map((player) => (
+                <SelectItem key={player.id} value={player.id} data-testid={`option-player-${player.id}`}>
+                  {player.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex flex-wrap gap-4 items-center">
-            <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-              <SelectTrigger className="w-48" data-testid="select-player">
-                <SelectValue placeholder="Filter by player" />
+        {/* Round Selection */}
+        {selectedPlayerId && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Select Round</label>
+            <Select value={selectedRoundId} onValueChange={setSelectedRoundId}>
+              <SelectTrigger className="w-full bg-white" data-testid="select-round">
+                <SelectValue placeholder="Select a round" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" data-testid="option-all-players">All Players</SelectItem>
-                {players?.map((player) => (
-                  <SelectItem key={player.id} value={player.id} data-testid={`option-player-${player.id}`}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-              <SelectTrigger className="w-48" data-testid="select-course">
-                <SelectValue placeholder="Filter by course" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" data-testid="option-all-courses">All Courses</SelectItem>
-                {courses?.map((course: any) => (
-                  <SelectItem key={course.id} value={course.id} data-testid={`option-course-${course.id}`}>
-                    {course.name} - {course.tees}
+                {playerRounds.map((round) => (
+                  <SelectItem key={round.id} value={round.id} data-testid={`option-round-${round.id}`}>
+                    {formatRoundOption(round)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+        )}
 
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              data-testid="button-list-view"
-            >
-              <HistoryIcon className="h-4 w-4 mr-1" />
-              List
-            </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              data-testid="button-grid-view"
-            >
-              <BarChart3 className="h-4 w-4 mr-1" />
-              Cards
-            </Button>
-          </div>
-        </div>
+        {/* Round Details */}
+        {selectedRound && selectedPlayer && (
+          <Card className="p-6 space-y-6">
+            {/* Player Info and Round Info */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900" data-testid="text-player-name">
+                  {selectedPlayer.name}
+                </h2>
+                <p className="text-sm text-gray-600" data-testid="text-player-handicap">
+                  Handicap: {selectedPlayer.handicap ?? 'N/A'} | Course Hcp: {selectedRound.courseHandicap}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-600" data-testid="text-selected-round">Selected Round</p>
+                <p className="font-semibold text-gray-900" data-testid="text-round-course">
+                  {selectedRound.courseName || selectedRound.course?.name}
+                </p>
+                <p className="text-sm text-gray-600" data-testid="text-round-date">
+                  {format(new Date(selectedRound.playedOn || selectedRound.playedAt), 'dd/MM/yyyy')}
+                </p>
+              </div>
+            </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all" data-testid="tab-all-rounds">All Rounds</TabsTrigger>
-            <TabsTrigger value="recent" data-testid="tab-recent-rounds">This Month</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HistoryIcon className="h-5 w-5" />
-                  All Rounds ({filteredRounds.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {roundsLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
-                    ))}
-                  </div>
-                ) : filteredRounds.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600" data-testid="text-no-rounds">
-                      No rounds found for the selected criteria.
-                    </p>
-                  </div>
-                ) : (
-                  <div className={viewMode === 'grid' ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
-                    {filteredRounds.map((round) => 
-                      viewMode === 'grid' ? (
-                        <RoundCard key={round.id} round={round} />
-                      ) : (
-                        <RoundListItem key={round.id} round={round} />
-                      )
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="recent" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    This Month's Rounds ({thisMonthRounds.length})
-                  </CardTitle>
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-48" data-testid="select-month">
-                      <SelectValue placeholder="Select month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableMonths.map((month) => (
-                        <SelectItem key={month} value={month} data-testid={`option-month-${month}`}>
-                          {format(new Date(month + '-01'), 'MMMM yyyy')}
-                        </SelectItem>
+            {/* Scorecard Table */}
+            <div className="space-y-4">
+              {/* Front 9 */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2 font-medium text-gray-600">Hole</th>
+                      {Array.from({length: 9}, (_, i) => (
+                        <th key={i} className="text-center py-2 px-2 font-medium text-gray-600">{i + 1}</th>
                       ))}
-                      {availableMonths.length === 0 && (
-                        <SelectItem value={format(new Date(), 'yyyy-MM')} data-testid="option-current-month">
-                          {format(new Date(), 'MMMM yyyy')}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                      <th className="text-center py-2 px-2 font-medium text-gray-600">OUT</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b bg-gray-50">
+                      <td className="py-2 px-2 font-medium text-gray-600">Par</td>
+                      {pars.slice(0, 9).map((par, i) => (
+                        <td key={i} className="text-center py-2 px-2 font-medium">{par}</td>
+                      ))}
+                      <td className="text-center py-2 px-2 font-bold">{parOut}</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2 px-2 font-medium text-gray-600">Score</td>
+                      {selectedRound.cappedScores?.slice(0, 9).map((score, i) => {
+                        const par = pars[i];
+                        const isPar = score === par;
+                        const isBirdie = score === par - 1;
+                        const isBogie = score === par + 1;
+                        return (
+                          <td key={i} className="text-center py-2 px-2">
+                            {isPar ? (
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-400 font-bold">
+                                {score}
+                              </span>
+                            ) : isBirdie ? (
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-400 font-bold bg-green-50">
+                                {score}
+                              </span>
+                            ) : (
+                              <span className="font-bold">{score}</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="text-center py-2 px-2 bg-green-700 text-white font-bold">{scoreOut}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Back 9 */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2 font-medium text-gray-600">Hole</th>
+                      {Array.from({length: 9}, (_, i) => (
+                        <th key={i + 9} className="text-center py-2 px-2 font-medium text-gray-600">{i + 10}</th>
+                      ))}
+                      <th className="text-center py-2 px-2 font-medium text-gray-600">IN</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b bg-gray-50">
+                      <td className="py-2 px-2 font-medium text-gray-600">Par</td>
+                      {pars.slice(9, 18).map((par, i) => (
+                        <td key={i + 9} className="text-center py-2 px-2 font-medium">{par}</td>
+                      ))}
+                      <td className="text-center py-2 px-2 font-bold">{parIn}</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2 px-2 font-medium text-gray-600">Score</td>
+                      {selectedRound.cappedScores?.slice(9, 18).map((score, i) => {
+                        const par = pars[i + 9];
+                        const isPar = score === par;
+                        const isBirdie = score === par - 1;
+                        return (
+                          <td key={i + 9} className="text-center py-2 px-2">
+                            {isPar ? (
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-400 font-bold">
+                                {score}
+                              </span>
+                            ) : isBirdie ? (
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-400 font-bold bg-green-50">
+                                {score}
+                              </span>
+                            ) : (
+                              <span className="font-bold">{score}</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="text-center py-2 px-2 bg-green-700 text-white font-bold">{scoreIn}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Round Statistics */}
+            <div className="grid grid-cols-4 gap-4 text-center pt-4 border-t">
+              <div>
+                <div className="text-2xl font-bold text-gray-900" data-testid="stat-round-gross">
+                  {selectedRound.grossCapped}
                 </div>
-              </CardHeader>
-              <CardContent>
-                {roundsLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
-                    ))}
+                <div className="text-sm text-gray-600 mt-1">Round Gross</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-blue-600" data-testid="stat-round-net">
+                  {selectedRound.net}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Round Net</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-yellow-600" data-testid="stat-round-over">
+                  {formatOverPar(typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar)}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Round Over</div>
+              </div>
+              <div>
+                <div className={`text-2xl font-bold ${getDTHColor(roundDTH)}`} data-testid="stat-round-dth">
+                  {formatDTH(roundDTH)}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Round DTH</div>
+              </div>
+            </div>
+
+            {/* Season Averages */}
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-medium text-gray-700 mb-4">Season Averages</h3>
+              <div className="grid grid-cols-5 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-gray-900" data-testid="stat-season-rounds">
+                    {seasonAverages.rounds}
                   </div>
-                ) : thisMonthRounds.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600" data-testid="text-no-recent-rounds">
-                      No rounds found for {format(new Date(selectedMonth + '-01'), 'MMMM yyyy')}.
-                    </p>
+                  <div className="text-sm text-gray-600 mt-1">Rounds</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900" data-testid="stat-season-gross">
+                    {seasonAverages.avgGross.toFixed(0)}
                   </div>
-                ) : (
-                  <div className={viewMode === 'grid' ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
-                    {thisMonthRounds.map((round) => 
-                      viewMode === 'grid' ? (
-                        <RoundCard key={round.id} round={round} />
-                      ) : (
-                        <RoundListItem key={round.id} round={round} />
-                      )
-                    )}
+                  <div className="text-sm text-gray-600 mt-1">Avg Gross</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-blue-600" data-testid="stat-season-net">
+                    {seasonAverages.avgNet.toFixed(0)}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  <div className="text-sm text-gray-600 mt-1">Avg Net</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-yellow-600" data-testid="stat-season-over">
+                    {formatOverPar(seasonAverages.avgOver)}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">Avg Over</div>
+                </div>
+                <div>
+                  <div className={`text-2xl font-bold ${getDTHColor(seasonAverages.avgDTH)}`} data-testid="stat-season-dth">
+                    {formatDTH(seasonAverages.avgDTH)}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">Avg DTH</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* No Rounds Message */}
+        {selectedPlayerId && playerRounds.length === 0 && (
+          <Card className="p-6">
+            <div className="text-center text-gray-600" data-testid="text-no-rounds">
+              No rounds found for this player.
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
