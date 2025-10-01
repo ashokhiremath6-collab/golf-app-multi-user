@@ -13,10 +13,10 @@ import type { Request, Response, NextFunction } from "express";
 
 // Validation schemas
 // For player round submissions (playerId set from authenticated user)
-const createPlayerRoundSchema = insertRoundSchema.extend({
-  rawScores: z.array(z.number().min(1).max(10)).length(18),
-}).omit({
+const createPlayerRoundSchema = insertRoundSchema.omit({
   playerId: true, // Will be set from authenticated user
+}).extend({
+  rawScores: z.array(z.number().min(1).max(10)).length(18),
 });
 
 // For admin round submissions (includes playerId)
