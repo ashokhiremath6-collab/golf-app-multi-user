@@ -737,12 +737,7 @@ export class DatabaseStorage implements IStorage {
         avgNet: avg(rounds.net),
         avgOverPar: avg(rounds.overPar),
         avgDTH: sql<number>`
-          AVG(CASE 
-            WHEN ${courses.slope} IS NOT NULL THEN 
-              ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
-            ELSE 
-              ${rounds.overPar} - ${rounds.courseHandicap}
-            END)
+          AVG(${rounds.overPar} - ${rounds.courseHandicap})
         `,
         lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
       })
@@ -757,12 +752,7 @@ export class DatabaseStorage implements IStorage {
     const result = await query
       .groupBy(players.id, players.name, players.currentHandicap)
       .orderBy(sql`
-        AVG(CASE 
-          WHEN ${courses.slope} IS NOT NULL THEN 
-            ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
-          ELSE 
-            ${rounds.overPar} - ${rounds.courseHandicap}
-          END) ASC NULLS LAST
+        AVG(${rounds.overPar} - ${rounds.courseHandicap}) ASC NULLS LAST
       `);
 
     return result;
@@ -849,12 +839,7 @@ export class DatabaseStorage implements IStorage {
         avgNet: avg(rounds.net),
         avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
         avgDTH: sql<number>`
-          AVG(CASE 
-            WHEN ${courses.slope} IS NOT NULL THEN 
-              ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
-            ELSE 
-              ${rounds.overPar} - ${rounds.courseHandicap}
-            END)
+          AVG(${rounds.overPar} - ${rounds.courseHandicap})
         `,
         avgGrossCapped: avg(rounds.grossCapped),
         lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
@@ -868,12 +853,7 @@ export class DatabaseStorage implements IStorage {
       .groupBy(players.id, players.name, players.currentHandicap)
       .having(sql`count(${rounds.id}) > 0`)
       .orderBy(sql`
-        AVG(CASE 
-          WHEN ${courses.slope} IS NOT NULL THEN 
-            ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
-          ELSE 
-            ${rounds.overPar} - ${rounds.courseHandicap}
-          END) ASC NULLS LAST
+        AVG(${rounds.overPar} - ${rounds.courseHandicap}) ASC NULLS LAST
       `);
 
     return result;
@@ -889,12 +869,7 @@ export class DatabaseStorage implements IStorage {
         avgNet: avg(rounds.net),
         avgOverPar: avg(sql`CAST(${rounds.overPar} AS NUMERIC)`),
         avgDTH: sql<number>`
-          AVG(CASE 
-            WHEN ${courses.slope} IS NOT NULL THEN 
-              ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
-            ELSE 
-              ${rounds.overPar} - ${rounds.courseHandicap}
-            END)
+          AVG(${rounds.overPar} - ${rounds.courseHandicap})
         `,
         avgGrossCapped: avg(rounds.grossCapped),
         lastRoundDate: sql<string>`MAX(${rounds.playedOn})`,
@@ -905,12 +880,7 @@ export class DatabaseStorage implements IStorage {
       .groupBy(players.id, players.name, players.currentHandicap)
       .having(sql`count(${rounds.id}) > 0`)
       .orderBy(sql`
-        AVG(CASE 
-          WHEN ${courses.slope} IS NOT NULL THEN 
-            ${rounds.overPar} - ROUND((${players.currentHandicap} * 113.0 / 110.0) * ${courses.slope} / 113.0)
-          ELSE 
-            ${rounds.overPar} - ${rounds.courseHandicap}
-          END) ASC NULLS LAST
+        AVG(${rounds.overPar} - ${rounds.courseHandicap}) ASC NULLS LAST
       `);
 
     return result;

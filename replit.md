@@ -4,6 +4,13 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 1, 2025 - DTH Calculation Fix ✅
+- **Critical Bug Fix**: Fixed avgDTH (Average Difference To Handicap) calculation to use historical handicaps
+  - **Problem**: avgDTH was incorrectly using player's current handicap, causing historical DTH values to change when handicaps were updated
+  - **Solution**: Changed calculation to use `rounds.courseHandicap` (the handicap active when round was played) instead of `players.currentHandicap`
+  - **Impact**: DTH values now remain stable - if a player had handicap 16 in August and played +2 over handicap, that +2 DTH remains even if their handicap changes to 17 in September
+  - **Technical**: Simplified avgDTH calculation from complex CASE statement to `AVG(overPar - courseHandicap)` in all leaderboard queries
+
 ## October 1, 2025 - Test Round Scorecard Entry ✅
 - **Scorecard Dialog**: Replaced automatic test round generation with interactive scorecard form
   - Opens dialog with player selection, course selection, and date picker
