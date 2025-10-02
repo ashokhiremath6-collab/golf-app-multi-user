@@ -97,6 +97,16 @@ export default function Navigation() {
 
   return (
     <>
+      {/* TEMP DEBUG DISPLAY */}
+      <div style={{ position: 'fixed', top: '10px', right: '10px', background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '10px', maxWidth: '300px' }}>
+        <div>User Email: {(user as any)?.email || 'NONE'}</div>
+        <div>Players Count: {players?.length || 0}</div>
+        <div>Current Player Email: {currentPlayer?.email || 'NOT FOUND'}</div>
+        <div>Is Admin: {currentPlayer?.isAdmin ? 'YES' : 'NO'}</div>
+        <div>Nav Items: {navItems.map(i => i.label).join(', ')}</div>
+        <div>Players Data: {JSON.stringify(players?.map(p => ({email: p.email, isAdmin: p.isAdmin})))}</div>
+      </div>
+      
       {/* Desktop Navigation */}
       <nav className="relative bg-cover bg-center bg-no-repeat shadow-md border-b border-gray-200 sticky top-0 z-50" 
            style={{ backgroundImage: `url(${augustaBg})` }}
