@@ -886,28 +886,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/courses/:id/holes', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
       const courseId = req.params.id;
       
-      // Get the course to check its organization
-      const course = await storage.getCourse(courseId);
-      if (!course) {
-        return res.status(404).json({ message: "Course not found" });
-      }
-      
-      // Check if user has access to this course's organization
-      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
-      
-      if (!isSuperAdmin) {
-        const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, course.organizationId!);
-        const playerInThisOrg = await storage.getPlayerByUserIdAndOrganization(userId, course.organizationId!);
-        const isPlayerInOrg = !!playerInThisOrg;
-        
-        if (!isOrgAdmin && !isPlayerInOrg) {
-          return res.status(403).json({ message: "Access denied to this course" });
-        }
-      }
-      
+      // Courses are globally shared, so any authenticated user can read hole data
       const holes = await storage.getHolesByCourse(courseId);
       res.json(holes);
     } catch (error) {
