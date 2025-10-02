@@ -4,6 +4,20 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 2, 2025 - Production Player Profile Guardrail ✅
+- **Issue**: Score submission failed in production when authenticated users didn't have player profiles in their organization
+- **Solution**: Added comprehensive player profile validation and helpful error messaging
+  - **Frontend Guardrail**: New Round page now detects missing player profile before submission attempt
+    - Displays clear alert explaining the requirement
+    - Provides differentiated instructions for admins (add yourself via Admin panel) vs regular users (contact admin)
+    - Includes navigation button to Admin panel for convenience
+    - Prevents confusing form interactions when profile is missing
+  - **Backend Enhancement**: Updated POST /api/rounds endpoint to return structured error code `PLAYER_PROFILE_REQUIRED`
+    - Enables consistent client-side error handling
+    - Maintains backward compatibility with existing error message
+  - **Testing**: Full data-testid coverage for alert and navigation button
+- **Impact**: Users now receive immediate, actionable guidance instead of silent submission failures
+
 ## October 1, 2025 - Redesigned History Page UI ✅
 - **New Design**: Completely redesigned history page to match user's screenshot with dropdown-based round selection
   - **Title**: Changed to "Player History"
