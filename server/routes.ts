@@ -163,17 +163,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(null);
     }
     
-    // TEMP DEBUG
-    console.log('🔍 /api/auth/user SESSION DEBUG:', {
-      hasSession: !!req.session,
-      hasPassport: !!req.session?.passport,
-      hasUser: !!req.session?.passport?.user,
-      userClaims: req.session?.passport?.user?.claims,
-      sessionKeys: Object.keys(req.session || {}),
-      passportKeys: Object.keys(req.session?.passport || {}),
-      fullSession: JSON.stringify(req.session).substring(0, 500)
-    });
-    
     // Check for any valid authentication (Replit session or org token)
     const hasReplitSession = checkReplitSession(req);
     const orgToken = req.cookies?.orgToken || req.headers['x-org-token'];
@@ -615,15 +604,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { organizationId } = req.params;
       const userId = req.user.claims.sub;
-      
-      // TEMP DEBUG
-      console.log('🔍 /api/organizations/:orgId/players DEBUG:', {
-        organizationId,
-        userId,
-        hasUser: !!req.user,
-        userEmail: req.user?.claims?.email,
-        sessionData: req.session?.passport?.user
-      });
       
       // Check if user has access to this organization
       const isSuperAdmin = await storage.isUserSuperAdmin(userId);

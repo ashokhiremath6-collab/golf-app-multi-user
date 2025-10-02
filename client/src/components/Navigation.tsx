@@ -4,42 +4,22 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGroupName } from "@/hooks/useGroupName";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
 import augustaBg from "../assets/augusta-national-bg.png";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useOrganizationPlayer } from "@/hooks/useOrganizationPlayer";
 
 export default function Navigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const { isSuperAdmin } = useCurrentPlayer();
   const { currentOrganization } = useOrganization();
+  const { currentPlayer } = useOrganizationPlayer();
   const { groupName } = useGroupName();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Get organization slug for URL building
   const orgSlug = currentOrganization?.slug || '';
-  
-
-  const { data: players } = useQuery<any[]>({
-    queryKey: [`/api/organizations/${currentOrganization?.id}/players`],
-    retry: false,
-    enabled: !!currentOrganization?.id, // Only fetch if we have an organization
-  });
-
-  const currentPlayer = players?.find((p: any) => p.email === (user as any)?.email);
-
-  // TEMP DEBUG: Check what's actually happening
-  console.log('🔍 DEBUG STATE:', {
-    hasUser: !!user,
-    userEmail: (user as any)?.email,
-    hasPlayers: !!players,
-    playersCount: players?.length,
-    currentPlayerEmail: currentPlayer?.email,
-    currentPlayerIsAdmin: currentPlayer?.isAdmin,
-    orgSlug,
-    hasOrgSlug: !!orgSlug
-  });
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
@@ -62,14 +42,6 @@ export default function Navigation() {
         { path: `/${orgSlug}/handicaps`, label: 'Handicaps', icon: 'fas fa-users' },
         ...(currentPlayer?.isAdmin ? [{ path: `/${orgSlug}/admin`, label: 'Admin', icon: 'fas fa-cog' }] : []),
       ];
-
-  // TEMP DEBUG: Check navItems
-  console.log('🔍 DEBUG NAVITEMS:', {
-    navItemsCount: navItems.length,
-    navItemsLabels: navItems.map(i => i.label),
-    isGlobalContext,
-    includesAdmin: navItems.some(i => i.label === 'Admin')
-  });
 
   const handleNavigation = (path: string) => {
     try {
@@ -97,16 +69,6 @@ export default function Navigation() {
 
   return (
     <>
-      {/* TEMP DEBUG DISPLAY */}
-      <div style={{ position: 'fixed', top: '10px', right: '10px', background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '10px', maxWidth: '300px' }}>
-        <div>User Email: {(user as any)?.email || 'NONE'}</div>
-        <div>Players Count: {players?.length || 0}</div>
-        <div>Current Player Email: {currentPlayer?.email || 'NOT FOUND'}</div>
-        <div>Is Admin: {currentPlayer?.isAdmin ? 'YES' : 'NO'}</div>
-        <div>Nav Items: {navItems.map(i => i.label).join(', ')}</div>
-        <div>Players Data: {JSON.stringify(players?.map(p => ({email: p.email, isAdmin: p.isAdmin})))}</div>
-      </div>
-      
       {/* Desktop Navigation */}
       <nav className="relative bg-cover bg-center bg-no-repeat shadow-md border-b border-gray-200 sticky top-0 z-50" 
            style={{ backgroundImage: `url(${augustaBg})` }}
