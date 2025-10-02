@@ -4,6 +4,19 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 2, 2025 - Player Organization Access Fix ✅
+- **Issue**: Players (non-admins) couldn't access organization pages, seeing "No organisation found" error
+- **Root Cause**: GET /api/organizations endpoint only returned organizations to super admins, excluding regular players
+- **Solution**: 
+  - Created new storage method `getUserAccessibleOrganizations()` that returns organizations where user is:
+    1. Super admin → all organizations
+    2. Organization admin → admin organizations
+    3. Player → player organizations
+  - Updated GET /api/organizations to use new method, removing super admin requirement
+  - Players can now access and view organizations they belong to
+- **Impact**: Regular players like Varun and Shivam can now access Young Turks Golf via direct link
+- **Files Modified**: server/storage.ts (new method), server/routes.ts (endpoint update)
+
 ## October 2, 2025 - Production Player Profile Guardrail ✅
 - **Issue**: Score submission failed in production when authenticated users didn't have player profiles in their organization
 - **Solution**: Added comprehensive player profile validation and helpful error messaging

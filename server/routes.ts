@@ -320,17 +320,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Organization management routes (super admin only)
+  // Organization management routes - returns orgs where user is admin or player
   app.get('/api/organizations', nonRedirectingAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
-      
-      if (!isSuperAdmin) {
-        return res.status(403).json({ message: "Super admin access required" });
-      }
-
-      const organizations = await storage.getAllOrganizations();
+      const organizations = await storage.getUserAccessibleOrganizations(userId);
       res.json(organizations);
     } catch (error) {
       console.error("Error fetching organizations:", error);

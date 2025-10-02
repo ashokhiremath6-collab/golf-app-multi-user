@@ -257,6 +257,45 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(organizations.name)) as Organization[];
   }
 
+  async getUserAccessibleOrganizations(userId: string): Promise<Organization[]> {
+    const user = await this.getUser(userId);
+    if (!user) return [];
+
+    // Super admins get all organizations
+    if (user.isSuperAdmin) {
+      return await this.getAllOrganizations();
+    }
+
+    // Get organizations where user is admin
+    const adminOrgs = await this.getUserOrganizations(userId);
+    
+    // Get organizations where user is a player
+    const playerOrgs = await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        slug: organizations.slug,
+        isParent: organizations.isParent,
+        createdById: organizations.createdById,
+        createdAt: organizations.createdAt,
+        updatedAt: organizations.updatedAt,
+      })
+      .from(players)
+      .leftJoin(organizations, eq(players.organizationId, organizations.id))
+      .where(eq(players.email, user.email || ''))
+      .orderBy(asc(organizations.name)) as Organization[];
+
+    // Combine and deduplicate
+    const orgMap = new Map<string, Organization>();
+    [...adminOrgs, ...playerOrgs].forEach(org => {
+      if (org && org.id) {
+        orgMap.set(org.id, org);
+      }
+    });
+    
+    return Array.from(orgMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   async isUserSuperAdmin(userId: string): Promise<boolean> {
     const user = await this.getUser(userId);
     return user?.isSuperAdmin || false;
