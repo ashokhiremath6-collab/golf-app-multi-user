@@ -57,6 +57,17 @@ export default function NewRound() {
     enabled: !!selectedCourseId,
   });
 
+  // DEBUG: Log holes data
+  useEffect(() => {
+    console.log('DEBUG NewRound:', {
+      selectedCourseId,
+      holesLoading,
+      holesCount: holes?.length,
+      holes,
+      currentPlayer,
+    });
+  }, [selectedCourseId, holesLoading, holes, currentPlayer]);
+
   // Get selected course details
   const selectedCourse = courses?.find(course => course.id === selectedCourseId);
 
