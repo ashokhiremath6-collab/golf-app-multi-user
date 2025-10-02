@@ -449,7 +449,8 @@ export default function OrganizationManagement() {
                     onClick={() => openEditDialog(org)}
                     data-testid={`button-edit-${org.id}`}
                   >
-                    <i className="fas fa-edit"></i>
+                    <i className="fas fa-edit mr-2"></i>
+                    Edit
                   </Button>
                   {!org.isParent && (
                     <Button
