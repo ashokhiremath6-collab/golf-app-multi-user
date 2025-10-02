@@ -1387,6 +1387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!authenticatedPlayer) {
         return res.status(404).json({ 
+          code: "PLAYER_PROFILE_REQUIRED",
           message: "Player profile not found in this organization. Please contact admin to set up your account." 
         });
       }

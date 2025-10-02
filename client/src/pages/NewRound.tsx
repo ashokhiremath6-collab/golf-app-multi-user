@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface Hole {
   id: string;
@@ -253,6 +255,38 @@ export default function NewRound() {
           <div className="bg-white rounded-xl h-96"></div>
         </div>
       </div>
+    );
+  }
+
+  // Show alert if user doesn't have a player profile in this organization
+  if (!currentPlayer) {
+    return (
+      <main className="max-w-5xl mx-auto px-4 py-6">
+        <Alert variant="destructive" data-testid="alert-no-player-profile">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Player Profile Required</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>
+              You need to be added as a player in this organization before you can submit rounds.
+            </p>
+            <p className="font-semibold">
+              If you're an admin: Go to the Admin tab → Players → Add Player, and add yourself using your login email.
+            </p>
+            <p>
+              If you're not an admin: Please contact your organization admin to add you as a player.
+            </p>
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setLocation(`/${currentOrganization?.slug}/admin`)}
+                data-testid="button-go-to-admin"
+              >
+                Go to Admin Panel
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </main>
     );
   }
 
