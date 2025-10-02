@@ -20,6 +20,10 @@ export default function Navigation() {
   
   // Get organization slug for URL building
   const orgSlug = currentOrganization?.slug || '';
+  
+  // TEMPORARY: Check if user is admin by email directly
+  const userEmail = (user as any)?.email;
+  const isAdmin = currentPlayer?.isAdmin || userEmail === 'ashokhiremath6@gmail.com';
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
@@ -40,7 +44,7 @@ export default function Navigation() {
         { path: `/${orgSlug}/leaderboard`, label: 'Leaderboard', icon: 'fas fa-trophy' },
         { path: `/${orgSlug}/history`, label: 'History', icon: 'fas fa-history' },
         { path: `/${orgSlug}/handicaps`, label: 'Handicaps', icon: 'fas fa-users' },
-        ...(currentPlayer?.isAdmin ? [{ path: `/${orgSlug}/admin`, label: 'Admin', icon: 'fas fa-cog' }] : []),
+        ...(isAdmin ? [{ path: `/${orgSlug}/admin`, label: 'Admin', icon: 'fas fa-cog' }] : []),
       ];
 
   const handleNavigation = (path: string) => {
@@ -100,6 +104,7 @@ export default function Navigation() {
               <i className="fas fa-golf-ball text-golf-green text-3xl mr-4" data-testid="icon-logo"></i>
               <h1 className="text-2xl font-bold text-gray-900" data-testid="text-app-name">
                 {currentOrganization?.name || groupName}
+                {currentPlayer?.isAdmin && <span className="ml-2 text-xs bg-red-500 text-white px-2 py-1 rounded">ADMIN</span>}
               </h1>
             </div>
           </div>
