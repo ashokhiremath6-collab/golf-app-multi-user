@@ -4,6 +4,30 @@ Blues Golf Challenge is a comprehensive golf scoring and handicap management Pro
 
 # Recent Changes
 
+## October 4, 2025 - Automated Email Notifications ✅
+- **Feature**: Integrated Resend email service for automated monthly handicap notifications
+- **Email Service**: Created professional email service with HTML templates
+  - Beautiful, responsive HTML email design with player stats
+  - Shows old → new handicap with trend indicators (📈📉)
+  - Displays rounds played, handicap change, and personalized messages
+  - Bulk sending with error tracking and reporting
+- **Monthly Integration**: Emails automatically sent when handicaps recalculate on 1st of each month
+  - Filters to only send to players with email addresses
+  - Logs success/failure counts for monitoring
+  - Optional flag to disable emails during testing
+- **Test Endpoint**: Added admin test button in Super Admin dashboard
+  - POST /api/handicaps/test-email endpoint (super admin only)
+  - Sends sample handicap notification to admin's email
+  - Used to verify Resend integration is working
+- **Free Tier**: Using Resend's free tier (3,000 emails/month)
+  - Sufficient for hundreds of players receiving monthly notifications
+  - Can upgrade later if user base grows significantly
+- **Files Modified**: 
+  - server/services/emailService.ts (new)
+  - server/services/handicapService.ts (email integration)
+  - server/routes.ts (test endpoint)
+  - client/src/pages/SuperAdmin.tsx (test button)
+
 ## October 2, 2025 - Player Organization Access Fix ✅
 - **Issue**: Players (non-admins) couldn't access organization pages, seeing "No organisation found" error
 - **Root Cause**: GET /api/organizations endpoint only returned organizations to super admins, excluding regular players
