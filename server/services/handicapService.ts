@@ -1,6 +1,7 @@
 import { storage } from "../storage";
 import { monthlyHandicapUpdate, calculateAverageOverPar } from "./golfCalculations";
 import type { InsertHandicapSnapshot } from "@shared/schema";
+import { emailService, type HandicapChangeEmail } from "./emailService";
 
 /**
  * Monthly handicap recalculation service
@@ -9,10 +10,12 @@ export class HandicapService {
   /**
    * Run handicap recalculation for a specific month or previous month
    */
-  async runMonthlyRecalculation(targetMonth?: string): Promise<{
+  async runMonthlyRecalculation(targetMonth?: string, sendEmails: boolean = true): Promise<{
     month: string;
     playersUpdated: number;
     snapshots: any[];
+    emailsSent?: number;
+    emailsFailed?: number;
   }> {
     const month = targetMonth || this.getPreviousMonth();
     const players = await storage.getAllPlayers();
@@ -73,13 +76,44 @@ export class HandicapService {
       snapshots.push({
         ...createdSnapshot,
         playerName: player.name,
+        playerEmail: player.email,
       });
+    }
+
+    // Send email notifications if enabled
+    let emailsSent = 0;
+    let emailsFailed = 0;
+
+    if (sendEmails && snapshots.length > 0) {
+      console.log(`📧 Sending handicap update emails for ${month}...`);
+      
+      const emailNotifications: HandicapChangeEmail[] = snapshots
+        .filter(s => s.playerEmail) // Only send to players with email addresses
+        .map(s => ({
+          playerName: s.playerName,
+          playerEmail: s.playerEmail!,
+          month,
+          prevHandicap: parseFloat(s.prevHandicap.toString()),
+          newHandicap: parseFloat(s.newHandicap.toString()),
+          delta: parseFloat(s.delta.toString()),
+          roundsPlayed: s.roundsCount,
+        }));
+
+      const emailResult = await emailService.sendBulkHandicapNotifications(emailNotifications);
+      emailsSent = emailResult.sent;
+      emailsFailed = emailResult.failed;
+
+      if (emailResult.errors.length > 0) {
+        console.error('Email errors:', emailResult.errors);
+      }
     }
 
     return {
       month,
       playersUpdated,
       snapshots,
+      emailsSent,
+      emailsFailed,
     };
   }
 

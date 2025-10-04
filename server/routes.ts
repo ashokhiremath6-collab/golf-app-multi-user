@@ -1943,6 +1943,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test email endpoint (admin only)
+  app.post('/api/handicaps/test-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email;
+      
+      // Only super admins can send test emails
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const { emailService } = await import('./services/emailService');
+      
+      // Send a test handicap notification to the admin
+      await emailService.sendHandicapChangeNotification({
+        playerName: 'Test Player',
+        playerEmail: userEmail || 'admin@example.com',
+        month: '2025-01',
+        prevHandicap: 16,
+        newHandicap: 14,
+        delta: -2,
+        roundsPlayed: 5,
+      });
+
+      res.json({ 
+        success: true, 
+        message: `Test email sent to ${userEmail}`,
+        sentTo: userEmail,
+      });
+    } catch (error: any) {
+      console.error('Error sending test email:', error);
+      res.status(500).json({ 
+        message: "Failed to send test email",
+        error: error.message,
+      });
+    }
+  });
+
   // Get all handicap snapshots
   app.get('/api/handicaps/snapshots', isAuthenticated, async (req: any, res) => {
     try {
