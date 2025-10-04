@@ -82,7 +82,7 @@ export default function History() {
 
   // Fetch holes for the selected round's course
   const { data: holes } = useQuery<{ id: string; courseId: string; number: number; par: number; distance: number; }[]>({
-    queryKey: ['/api/courses', selectedRound?.courseId, 'holes'],
+    queryKey: [`/api/courses/${selectedRound?.courseId}/holes`],
     enabled: !!selectedRound?.courseId,
   });
 
