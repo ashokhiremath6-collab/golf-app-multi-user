@@ -81,6 +81,18 @@ export default function Home() {
     retry: false,
   });
 
+  // Get last round from player rounds
+  const playerRounds = (recentRounds as any[])?.filter(
+    (round: any) => round.playerId === currentPlayer?.id
+  ) || [];
+  const lastRound = playerRounds[0];
+
+  // Fetch holes for the last round's course
+  const { data: lastRoundHoles } = useQuery<{ id: string; courseId: string; number: number; par: number; distance: number; }[]>({
+    queryKey: ['/api/courses', lastRound?.courseId, 'holes'],
+    enabled: !!lastRound?.courseId,
+  });
+
   if (isLoading || playersLoading || coursesLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -91,14 +103,6 @@ export default function Home() {
       </div>
     );
   }
-
-  // Filter rounds to show only current player's rounds
-  const playerRounds = (recentRounds as any[])?.filter(
-    (round: any) => round.playerId === currentPlayer?.id
-  ) || [];
-  
-  // Get current player's most recent round
-  const lastRound = playerRounds[0];
   
   // Get the latest handicap snapshot for current player to show previous handicap
   const latestSnapshot = (handicapSnapshots as any[])?.find(
@@ -175,10 +179,12 @@ export default function Home() {
               <div className="mb-4 flex-1 flex flex-col justify-center">
                 <div className="text-sm text-gray-600 mb-3 text-center">Full Scorecard:</div>
                 
-                {/* Use correct par values */}
+                {/* Use actual par values from database */}
                 {(() => {
-                  const correctPars = [4, 3, 4, 4, 4, 3, 5, 3, 4, 3, 4, 3, 3, 3, 4, 3, 5, 3];
-                  const pars = correctPars;
+                  // Fetch actual par values from holes data if available
+                  const pars = lastRoundHoles && lastRoundHoles.length === 18
+                    ? [...lastRoundHoles].sort((a, b) => a.number - b.number).map(hole => hole.par)
+                    : [4, 3, 4, 4, 4, 3, 5, 3, 4, 3, 4, 3, 3, 3, 4, 3, 5, 3]; // Fallback
                   
                   return (
                     <div>
