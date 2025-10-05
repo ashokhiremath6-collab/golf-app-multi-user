@@ -291,10 +291,19 @@ export default function NewRound() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-2 sm:px-4 py-3 pb-20">
+    <main className="max-w-5xl mx-auto px-4 py-6 pb-24">
         {/* Course Selection */}
-        <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Date Played
+          </label>
+          <Input 
+            type="date" 
+            defaultValue={new Date().toISOString().split('T')[0]}
+            className="bg-white mb-4"
+          />
+          
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Select Course
           </label>
           <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
@@ -309,116 +318,139 @@ export default function NewRound() {
               ))}
             </SelectContent>
           </Select>
+          {currentPlayer && (
+            <p className="text-xs text-gray-500 mt-2">
+              Using handicap {currentPlayer.currentHandicap} from previous records
+            </p>
+          )}
         </div>
 
-        {selectedCourse && (
+        {selectedCourse && holes && holes.length === 18 && (
           <>
-            {/* Summary Stats - Compact */}
-            <div className="grid grid-cols-4 gap-2 mb-3">
-              <div className="text-center bg-white rounded p-2">
-                <div className="text-2xl font-bold text-gray-900" data-testid="text-par">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-gray-900" data-testid="text-par">
                   {selectedCourse.parTotal}
                 </div>
-                <div className="text-xs text-gray-600">Par</div>
+                <div className="text-sm text-gray-600">Par</div>
               </div>
-              <div className="text-center bg-white rounded p-2">
-                <div className="text-2xl font-bold text-gray-900" data-testid="text-gross">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-gray-900" data-testid="text-gross">
                   {calculateGross()}
                 </div>
-                <div className="text-xs text-gray-600">Gross</div>
+                <div className="text-sm text-gray-600">Gross</div>
               </div>
-              <div className="text-center bg-white rounded p-2">
-                <div className="text-2xl font-bold text-gray-900" data-testid="text-handicap">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-gray-900" data-testid="text-handicap">
                   {currentPlayer?.currentHandicap || 0}
                 </div>
-                <div className="text-xs text-gray-600">H'cap</div>
+                <div className="text-sm text-gray-600">Handicap</div>
               </div>
-              <div className="text-center bg-white rounded p-2">
-                <div className="text-2xl font-bold text-blue-600" data-testid="text-net">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600" data-testid="text-net">
                   {calculateNet()}
                 </div>
-                <div className="text-xs text-gray-600">Net</div>
+                <div className="text-sm text-gray-600">Net</div>
               </div>
             </div>
 
             {/* Enter Scores Section */}
-            <div>
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Enter Scores</h2>
+
               {/* Front 9 */}
-              <div className="mb-3">
-                <div className="flex justify-between items-center mb-2">
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
                   <h3 className="text-sm font-medium text-gray-700">Front 9</h3>
-                  <div className="text-lg font-bold text-green-600" data-testid="text-front9-total">
+                  <div className="text-2xl font-bold text-green-600" data-testid="text-front9-total">
                     {calculateFront9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-9 gap-1">
+                <div className="grid grid-cols-9 gap-2">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 1;
                     const hole = holes?.find(h => h.number === holeNumber);
                     const holePar = hole?.par || 4;
+                    const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded border border-gray-200 p-1">
-                        <div className="text-[10px] text-gray-500 text-center">H{holeNumber}</div>
-                        <div className="text-[10px] font-medium text-blue-600 text-center mb-0.5">P{holePar}</div>
+                      <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200 text-center">
+                        <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
+                        <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <Input
                           type="number"
                           min="1"
                           max="10"
                           value={scores[index] || ''}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
-                          className="w-full text-center h-9 text-base font-bold p-0 border-gray-300"
+                          className="w-full text-center h-10 text-xl font-bold mb-1"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
+                        <div className="text-xs text-gray-400">{holeDistance}y</div>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
+              {/* Front 9 Total Label */}
+              <div className="text-right mb-4">
+                <span className="text-sm text-gray-600 mr-2">Front 9:</span>
+                <span className="text-2xl font-bold text-green-600">{calculateFront9()}</span>
+              </div>
+
               {/* Back 9 */}
-              <div className="mb-3">
-                <div className="flex justify-between items-center mb-2">
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
                   <h3 className="text-sm font-medium text-gray-700">Back 9</h3>
-                  <div className="text-lg font-bold text-green-600" data-testid="text-back9-total">
+                  <div className="text-2xl font-bold text-green-600" data-testid="text-back9-total">
                     {calculateBack9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-9 gap-1">
+                <div className="grid grid-cols-9 gap-2">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 10;
                     const hole = holes?.find(h => h.number === holeNumber);
                     const holePar = hole?.par || 4;
+                    const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded border border-gray-200 p-1">
-                        <div className="text-[10px] text-gray-500 text-center">H{holeNumber}</div>
-                        <div className="text-[10px] font-medium text-blue-600 text-center mb-0.5">P{holePar}</div>
+                      <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200 text-center">
+                        <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
+                        <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <Input
                           type="number"
                           min="1"
                           max="10"
                           value={scores[index + 9] || ''}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          className="w-full text-center h-9 text-base font-bold p-0 border-gray-300"
+                          className="w-full text-center h-10 text-xl font-bold mb-1"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
+                        <div className="text-xs text-gray-400">{holeDistance}y</div>
                       </div>
                     );
                   })}
                 </div>
               </div>
+
+              {/* Back 9 Total Label */}
+              <div className="text-right">
+                <span className="text-sm text-gray-600 mr-2">Back 9:</span>
+                <span className="text-2xl font-bold text-green-600">{calculateBack9()}</span>
+              </div>
             </div>
 
-            {/* Action Buttons - Fixed at bottom */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 flex gap-3 z-10">
+            {/* Action Buttons */}
+            <div className="flex gap-4 mt-6">
               <Button
                 variant="outline"
                 onClick={handleCancel}
                 disabled={isSubmitting}
-                className="flex-1"
+                className="flex-1 h-12"
                 data-testid="button-cancel"
               >
                 Cancel
@@ -426,13 +458,20 @@ export default function NewRound() {
               <Button
                 onClick={handleSubmit}
                 disabled={!isValidRound() || isSubmitting}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-lg"
                 data-testid="button-submit-score"
               >
                 {isSubmitting ? "Saving..." : "Submit Score"}
               </Button>
             </div>
           </>
+        )}
+
+        {selectedCourseId && holesLoading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">Loading course data...</p>
+          </div>
         )}
 
         {!selectedCourseId && (
