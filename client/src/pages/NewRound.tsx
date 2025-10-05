@@ -379,9 +379,9 @@ export default function NewRound() {
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
                         <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <Input
-                          type="number"
-                          min="1"
-                          max="10"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={scores[index] || ''}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
                           className="w-full text-center h-10 text-xl font-bold mb-1"
@@ -421,9 +421,9 @@ export default function NewRound() {
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
                         <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <Input
-                          type="number"
-                          min="1"
-                          max="10"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={scores[index + 9] || ''}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
                           className="w-full text-center h-10 text-xl font-bold mb-1"
