@@ -78,8 +78,9 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // SPA fallback: serve index.html for all non-API GET requests
+  // Using regex to exclude /api routes
+  app.get(/^(?!\/api).*/, (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
