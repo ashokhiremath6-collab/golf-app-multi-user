@@ -313,7 +313,8 @@ export default function History() {
                       }
                       const isPar = score === par;
                       const isBirdie = score === par - 1;
-                      const isDoubleBogey = score === par + 2;
+                      const isBogey = score === par + 1;
+                      const isDoubleBogey = score >= par + 2;
                       return (
                         <td key={i} className="text-center py-1 px-1 whitespace-nowrap">
                           {isPar ? (
@@ -322,6 +323,10 @@ export default function History() {
                             </span>
                           ) : isBirdie ? (
                             <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-xs sm:text-sm">
+                              {score}
+                            </span>
+                          ) : isBogey ? (
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-pink-200 text-pink-900 font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : isDoubleBogey ? (
@@ -380,7 +385,8 @@ export default function History() {
                       }
                       const isPar = score === par;
                       const isBirdie = score === par - 1;
-                      const isDoubleBogey = score === par + 2;
+                      const isBogey = score === par + 1;
+                      const isDoubleBogey = score >= par + 2;
                       return (
                         <td key={i + 9} className="text-center py-1 px-1 whitespace-nowrap">
                           {isPar ? (
@@ -389,6 +395,10 @@ export default function History() {
                             </span>
                           ) : isBirdie ? (
                             <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-semibold text-xs sm:text-sm">
+                              {score}
+                            </span>
+                          ) : isBogey ? (
+                            <span className="inline-flex items-center justify-center size-6 sm:size-7 rounded-full bg-pink-200 text-pink-900 font-semibold text-xs sm:text-sm">
                               {score}
                             </span>
                           ) : isDoubleBogey ? (
