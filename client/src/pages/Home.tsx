@@ -215,16 +215,26 @@ export default function Home() {
                         <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
                         {lastRound.cappedScores?.slice(0, 9).map((score: number, index: number) => {
                           const par = pars[index];
-                          const isOver = score > par;
-                          const isUnder = score < par;
-                          const isOneOver = score === par + 1;
                           const isPar = score === par;
+                          const isBirdie = score === par - 1;
+                          const isBogey = score === par + 1;
+                          const isDoubleBogey = score >= par + 2;
                           return (
-                            <div key={index} className={`rounded px-0.5 py-0.5 border ${
-                              isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
-                            }`} data-testid={`hole-${index + 1}-score`}>
+                            <div key={index} className="rounded px-0.5 py-0.5 border bg-white" data-testid={`hole-${index + 1}-score`}>
                               {isPar ? (
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 dark:ring-gray-500 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                  {score}
+                                </span>
+                              ) : isBirdie ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                  {score}
+                                </span>
+                              ) : isBogey ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-200 text-pink-900 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                  {score}
+                                </span>
+                              ) : isDoubleBogey ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white font-bold text-xs leading-none mx-auto -translate-y-0.5">
                                   {score}
                                 </span>
                               ) : (
@@ -265,16 +275,26 @@ export default function Home() {
                         <div className="bg-gray-50 rounded px-0.5 py-1 border text-2xs text-gray-600">Score</div>
                         {lastRound.cappedScores?.slice(9, 18).map((score: number, index: number) => {
                           const par = pars[index + 9];
-                          const isOver = score > par;
-                          const isUnder = score < par;
-                          const isOneOver = score === par + 1;
                           const isPar = score === par;
+                          const isBirdie = score === par - 1;
+                          const isBogey = score === par + 1;
+                          const isDoubleBogey = score >= par + 2;
                           return (
-                            <div key={index + 9} className={`rounded px-0.5 py-0.5 border ${
-                              isOneOver ? 'bg-white text-blue-600' : isOver ? 'bg-red-50 text-red-700' : isUnder ? 'bg-green-100 text-green-800' : 'bg-white'
-                            }`} data-testid={`hole-${index + 10}-score`}>
+                            <div key={index + 9} className="rounded px-0.5 py-0.5 border bg-white" data-testid={`hole-${index + 10}-score`}>
                               {isPar ? (
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 dark:ring-gray-500 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-2 ring-gray-400 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                  {score}
+                                </span>
+                              ) : isBirdie ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-300 text-green-900 ring-1 ring-green-500 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                  {score}
+                                </span>
+                              ) : isBogey ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-200 text-pink-900 font-bold text-xs leading-none mx-auto -translate-y-0.5">
+                                  {score}
+                                </span>
+                              ) : isDoubleBogey ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white font-bold text-xs leading-none mx-auto -translate-y-0.5">
                                   {score}
                                 </span>
                               ) : (
