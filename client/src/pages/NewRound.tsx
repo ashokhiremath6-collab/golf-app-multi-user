@@ -113,16 +113,25 @@ export default function NewRound() {
   });
 
   const handleScoreChange = (holeIndex: number, value: string) => {
+    // Allow empty input
     if (value === '') {
-      // Empty input = 0 (will be treated as par)
       const newScores = [...scores];
       newScores[holeIndex] = 0;
       setScores(newScores);
       return;
     }
     
-    const score = parseInt(value);
-    if (isNaN(score)) return; // Ignore invalid input
+    // Only allow numeric input
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (numericValue === '') {
+      const newScores = [...scores];
+      newScores[holeIndex] = 0;
+      setScores(newScores);
+      return;
+    }
+    
+    const score = parseInt(numericValue);
+    if (isNaN(score)) return;
     
     // Clamp score to valid range [1, 10]
     const clampedScore = Math.max(1, Math.min(10, score));
@@ -384,7 +393,7 @@ export default function NewRound() {
                           pattern="[0-9]*"
                           value={scores[index] || ''}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
-                          className="w-full text-center h-10 text-xl font-bold mb-1"
+                          className="w-full text-center h-12 text-2xl font-bold mb-1 touch-manipulation"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
@@ -426,7 +435,7 @@ export default function NewRound() {
                           pattern="[0-9]*"
                           value={scores[index + 9] || ''}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          className="w-full text-center h-10 text-xl font-bold mb-1"
+                          className="w-full text-center h-12 text-2xl font-bold mb-1 touch-manipulation"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                         />
