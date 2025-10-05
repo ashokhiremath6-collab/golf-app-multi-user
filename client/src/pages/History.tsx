@@ -191,7 +191,9 @@ export default function History() {
   }
 
   const roundDTH = selectedRound 
-    ? (typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar) - selectedRound.courseHandicap
+    ? ((selectedRound as any).slopeAdjustedDTH !== undefined && (selectedRound as any).slopeAdjustedDTH !== null
+        ? (selectedRound as any).slopeAdjustedDTH 
+        : (typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar) - selectedRound.courseHandicap)
     : 0;
 
   const scoreOut = selectedRound?.cappedScores?.slice(0, 9).reduce((sum, s) => sum + (s ?? 0), 0) || 0;
