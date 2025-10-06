@@ -1189,6 +1189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Organization-scoped round creation endpoint
   app.post('/api/organizations/:organizationId/rounds', enhancedAuth, async (req: any, res) => {
     try {
+      console.log('🔵 Organization round creation - Start', { organizationId: req.params.organizationId, body: req.body });
       const { organizationId } = req.params;
       const userId = req.user.claims.sub;
       
@@ -1196,11 +1197,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isSuperAdmin = await storage.isUserSuperAdmin(userId);
       const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
       
+      console.log('🔵 Authorization check:', { userId, isSuperAdmin, isOrgAdmin });
+      
       if (!isSuperAdmin && !isOrgAdmin) {
+        console.log('❌ Authorization failed');
         return res.status(403).json({ message: "Organization admin access required" });
       }
 
+      console.log('🔵 Validating data with createAdminRoundSchema...');
       const validatedData = createAdminRoundSchema.parse(req.body);
+      console.log('✅ Data validated:', validatedData);
       
       // Verify player belongs to this organization
       const targetPlayer = await storage.getPlayer(validatedData.playerId);
@@ -1267,14 +1273,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         source: 'admin' as const,
       };
 
+      console.log('🔵 Creating round with data:', roundData);
       const newRound = await storage.createRound(roundData);
+      console.log('✅ Round created successfully:', newRound.id);
       res.status(201).json(createPreviewResponse(newRound));
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('❌ Validation error:', error.errors);
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      console.error("Error creating round:", error);
-      res.status(500).json({ message: "Failed to create round" });
+      console.error("❌ Error creating organization round:", error);
+      console.error("Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({ message: "Failed to create round", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
