@@ -426,10 +426,6 @@ export default function NewRound() {
                           type="tel"
                           value={scores[index + 9] === 0 ? '' : String(scores[index + 9])}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          onInput={(e) => {
-                            console.log('🏌️ onInput fired:', e.currentTarget.value);
-                            handleScoreChange(index + 9, e.currentTarget.value);
-                          }}
                           className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border border-input bg-white text-gray-900 px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
