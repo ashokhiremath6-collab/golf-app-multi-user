@@ -636,6 +636,8 @@ export class DatabaseStorage implements IStorage {
           source: rounds.source,
           status: rounds.status,
           createdAt: rounds.createdAt,
+          playerName: players.name,
+          currentHandicap: players.currentHandicap,
           courseName: courses.name,
           course: {
             name: courses.name,
@@ -644,14 +646,10 @@ export class DatabaseStorage implements IStorage {
           },
         })
         .from(rounds)
-        .leftJoin(courses, eq(rounds.courseId, courses.id));
-        
-      // Only add players join if we need organization filtering
-      if (organizationId) {
-        query = query.leftJoin(players, eq(rounds.playerId, players.id));
-      }
+        .leftJoin(courses, eq(rounds.courseId, courses.id))
+        .leftJoin(players, eq(rounds.playerId, players.id));
       
-      // Only use and() when we have conditions
+      // Apply where conditions
       if (whereConditions.length > 0) {
         query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions));
       }
@@ -675,6 +673,8 @@ export class DatabaseStorage implements IStorage {
         source: rounds.source,
         status: rounds.status,
         createdAt: rounds.createdAt,
+        playerName: players.name,
+        currentHandicap: players.currentHandicap,
         courseName: courses.name,
         course: {
           name: courses.name,
@@ -683,11 +683,11 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .from(rounds)
-      .leftJoin(courses, eq(rounds.courseId, courses.id));
+      .leftJoin(courses, eq(rounds.courseId, courses.id))
+      .leftJoin(players, eq(rounds.playerId, players.id));
 
-    // Only add players join and organization filter if provided
+    // Add organization filter if provided
     if (organizationId) {
-      query = query.leftJoin(players, eq(rounds.playerId, players.id));
       query = query.where(eq(players.organizationId, organizationId));
     }
 
