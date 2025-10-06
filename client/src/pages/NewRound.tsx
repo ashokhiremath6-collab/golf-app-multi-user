@@ -113,31 +113,33 @@ export default function NewRound() {
   });
 
   const handleScoreChange = (holeIndex: number, value: string) => {
+    const newScores = [...scores];
+    
     // Allow empty input
     if (value === '') {
-      const newScores = [...scores];
       newScores[holeIndex] = 0;
       setScores(newScores);
       return;
     }
     
-    // Only allow numeric input
+    // Parse the numeric value - accept any digits typed
     const numericValue = value.replace(/[^0-9]/g, '');
+    
     if (numericValue === '') {
-      const newScores = [...scores];
       newScores[holeIndex] = 0;
       setScores(newScores);
       return;
     }
     
-    const score = parseInt(numericValue);
-    if (isNaN(score)) return;
+    const score = parseInt(numericValue, 10);
     
-    // Clamp score to valid range [1, 10]
-    const clampedScore = Math.max(1, Math.min(10, score));
-    const newScores = [...scores];
-    newScores[holeIndex] = clampedScore;
-    setScores(newScores);
+    // Only clamp if valid number
+    if (!isNaN(score)) {
+      // Clamp score to valid range [1, 10]
+      const clampedScore = Math.max(1, Math.min(10, score));
+      newScores[holeIndex] = clampedScore;
+      setScores(newScores);
+    }
   };
 
   const calculateGross = () => {
@@ -391,11 +393,12 @@ export default function NewRound() {
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          value={scores[index] || ''}
+                          value={scores[index] === 0 ? '' : scores[index]}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
                           className="w-full text-center h-12 text-2xl font-bold mb-1 touch-manipulation"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
+                          autoComplete="off"
                         />
                         <div className="text-xs text-gray-400">{holeDistance}y</div>
                       </div>
@@ -433,11 +436,12 @@ export default function NewRound() {
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          value={scores[index + 9] || ''}
+                          value={scores[index + 9] === 0 ? '' : scores[index + 9]}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
                           className="w-full text-center h-12 text-2xl font-bold mb-1 touch-manipulation"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
+                          autoComplete="off"
                         />
                         <div className="text-xs text-gray-400">{holeDistance}y</div>
                       </div>
