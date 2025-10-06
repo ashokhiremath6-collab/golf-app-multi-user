@@ -101,6 +101,17 @@ export async function setupAuth(app: Express) {
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
+  // Helper function to get the correct strategy name
+  const getStrategyName = (hostname: string) => {
+    const domains = process.env.REPLIT_DOMAINS!.split(",");
+    // Check if hostname is a registered domain
+    if (domains.includes(hostname)) {
+      return `replitauth:${hostname}`;
+    }
+    // Fallback to first domain for localhost/127.0.0.1
+    return `replitauth:${domains[0]}`;
+  };
+
   app.get("/api/login", (req, res, next) => {
     // Store returnTo in session if provided and validated
     if (req.query.returnTo) {
@@ -111,14 +122,14 @@ export async function setupAuth(app: Express) {
       }
     }
     
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    passport.authenticate(getStrategyName(req.hostname), {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    passport.authenticate(getStrategyName(req.hostname), {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);

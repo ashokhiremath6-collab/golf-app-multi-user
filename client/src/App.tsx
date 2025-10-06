@@ -101,23 +101,12 @@ function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // Show loading screen while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-golf-green mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   // If we have any indication of authentication, show the org app
   // This handles the race condition where auth endpoint fails initially but user is actually authenticated
   const hasAnyAuth = isAuthenticated || !!user;
 
   // After successful authentication, check if there's a returnTo path
+  // MUST be called before any conditional returns (Rules of Hooks)
   useEffect(() => {
     if (hasAnyAuth) {
       const returnTo = localStorage.getItem('returnTo');
@@ -132,6 +121,18 @@ function Router() {
       }
     }
   }, [hasAnyAuth, setLocation]);
+
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-golf-green mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Check if user is trying to access an org route without authentication
   const isOrgRoute = location !== '/' && location !== '' && !location.startsWith('/api');
