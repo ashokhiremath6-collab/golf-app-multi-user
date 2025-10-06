@@ -395,13 +395,21 @@ export default function NewRound() {
                         <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <input
                           type="tel"
-                          value={scores[index] === 0 ? '' : scores[index]}
-                          onChange={(e) => handleScoreChange(index, e.target.value)}
+                          defaultValue={scores[index] === 0 ? '' : scores[index]}
+                          onFocus={() => console.log('🏌️ FOCUS on hole', holeNumber)}
+                          onClick={() => console.log('🏌️ CLICK on hole', holeNumber)}
+                          onTouchStart={() => console.log('🏌️ TOUCH on hole', holeNumber)}
+                          onChange={(e) => {
+                            console.log('🏌️ onChange fired:', e.target.value);
+                            handleScoreChange(index, e.target.value);
+                          }}
                           onInput={(e) => {
                             console.log('🏌️ onInput fired:', e.currentTarget.value);
-                            handleScoreChange(index, e.currentTarget.value);
                           }}
+                          onKeyDown={() => console.log('🏌️ KEY DOWN')}
+                          onKeyUp={() => console.log('🏌️ KEY UP')}
                           className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
