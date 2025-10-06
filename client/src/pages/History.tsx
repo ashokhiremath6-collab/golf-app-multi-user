@@ -131,21 +131,20 @@ export default function History() {
   };
 
   const formatDTH = (dth: number) => {
-    const rounded = Math.round(dth);
-    if (rounded === 0) return "E";
-    return rounded > 0 ? `+${rounded}` : `${rounded}`;
+    const formatted = dth.toFixed(1);
+    if (Math.abs(dth) < 0.05) return "E";
+    return dth > 0 ? `+${formatted}` : formatted;
   };
 
   const formatOverPar = (overPar: number) => {
-    const rounded = Math.round(overPar);
-    if (rounded === 0) return "E";
-    return rounded > 0 ? `+${rounded}` : `${rounded}`;
+    const formatted = overPar.toFixed(1);
+    if (Math.abs(overPar) < 0.05) return "E";
+    return overPar > 0 ? `+${formatted}` : formatted;
   };
 
   const getDTHColor = (dth: number) => {
-    const rounded = Math.round(dth);
-    if (rounded < 0) return "text-green-600";
-    if (rounded > 0) return "text-orange-600";
+    if (dth < -0.05) return "text-green-600";
+    if (dth > 0.05) return "text-orange-600";
     return "text-gray-600";
   };
 
@@ -459,13 +458,13 @@ export default function History() {
                 </div>
                 <div>
                   <div className="text-base font-bold text-gray-900" data-testid="stat-season-gross">
-                    {seasonAverages.avgGross.toFixed(0)}
+                    {seasonAverages.avgGross.toFixed(1)}
                   </div>
                   <div className="text-[9px] text-gray-600 leading-tight">Avg Gross</div>
                 </div>
                 <div>
                   <div className="text-base font-bold text-blue-600" data-testid="stat-season-net">
-                    {seasonAverages.avgNet.toFixed(0)}
+                    {seasonAverages.avgNet.toFixed(1)}
                   </div>
                   <div className="text-[9px] text-gray-600 leading-tight">Avg Net</div>
                 </div>

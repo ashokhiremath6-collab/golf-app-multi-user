@@ -69,14 +69,14 @@ export default function Home() {
 
   // Fetch monthly stats
   const { data: monthlyStats, isLoading: monthlyLoading } = useQuery({
-    queryKey: [`/api/players/${currentPlayer?.id}/stats/monthly/${selectedMonth}`, currentOrganization?.id],
+    queryKey: [`/api/players/${currentPlayer?.id}/stats/monthly/${selectedMonth}`],
     enabled: !!currentPlayer && !!currentOrganization?.id,
     retry: false,
   });
 
   // Fetch cumulative stats
   const { data: cumulativeStats, isLoading: cumulativeLoading } = useQuery({
-    queryKey: [`/api/players/${currentPlayer?.id}/stats/cumulative`, currentOrganization?.id],
+    queryKey: [`/api/players/${currentPlayer?.id}/stats/cumulative`],
     enabled: !!currentPlayer && !!currentOrganization?.id,
     retry: false,
   });
@@ -378,22 +378,26 @@ export default function Home() {
                     </div>
                     <div>
                       <div className="text-lg font-black text-golf-green" data-testid="text-cumulative-avg-gross">
-                        {(cumulativeStats as any)?.avgGrossCapped ? Math.round(parseFloat((cumulativeStats as any).avgGrossCapped)) : 
-                          Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / playerRounds.length)}
+                        {(cumulativeStats as any)?.avgGrossCapped ? parseFloat((cumulativeStats as any).avgGrossCapped).toFixed(1) : 
+                          (playerRounds.reduce((sum: number, round: any) => sum + round.grossCapped, 0) / playerRounds.length).toFixed(1)}
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
                     </div>
                     <div>
                       <div className="text-lg font-black text-golf-blue" data-testid="text-cumulative-avg-net">
-                        {(cumulativeStats as any)?.avgNet ? Math.round(parseFloat((cumulativeStats as any).avgNet)) : 
-                          Math.round(playerRounds.reduce((sum: number, round: any) => sum + round.net, 0) / playerRounds.length)}
+                        {(cumulativeStats as any)?.avgNet ? parseFloat((cumulativeStats as any).avgNet).toFixed(1) : 
+                          (playerRounds.reduce((sum: number, round: any) => sum + round.net, 0) / playerRounds.length).toFixed(1)}
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Avg Net</div>
                     </div>
                     <div>
                       <div className="text-lg font-black text-golf-gold" data-testid="text-cumulative-avg-over-par">
-                        +{(cumulativeStats as any)?.avgOverPar ? parseFloat((cumulativeStats as any).avgOverPar).toFixed(1) : 
-                          (playerRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / playerRounds.length).toFixed(1)}
+                        {(cumulativeStats as any)?.avgOverPar ? 
+                          (Number((cumulativeStats as any).avgOverPar) >= 0 ? '+' : '') + parseFloat((cumulativeStats as any).avgOverPar).toFixed(1) : 
+                          (() => {
+                            const avg = playerRounds.reduce((sum: number, round: any) => sum + parseFloat(round.overPar), 0) / playerRounds.length;
+                            return (avg >= 0 ? '+' : '') + avg.toFixed(1);
+                          })()}
                       </div>
                       <div className="text-xs font-semibold text-gray-700">Avg Over</div>
                     </div>
@@ -423,19 +427,19 @@ export default function Home() {
                       </div>
                       <div>
                         <div className="text-lg font-black text-golf-green" data-testid="text-monthly-avg-gross">
-                          {Math.round(parseFloat((monthlyStats as any).avgGrossCapped))}
+                          {parseFloat((monthlyStats as any).avgGrossCapped).toFixed(1)}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Avg Gross</div>
                       </div>
                       <div>
                         <div className="text-lg font-black text-golf-blue" data-testid="text-monthly-avg-net">
-                          {Math.round(parseFloat((monthlyStats as any).avgNet))}
+                          {parseFloat((monthlyStats as any).avgNet).toFixed(1)}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Avg Net</div>
                       </div>
                       <div>
                         <div className="text-lg font-black text-golf-gold" data-testid="text-monthly-avg-over-par">
-                          +{parseFloat((monthlyStats as any).avgOverPar).toFixed(1)}
+                          {(Number((monthlyStats as any).avgOverPar) >= 0 ? '+' : '') + parseFloat((monthlyStats as any).avgOverPar).toFixed(1)}
                         </div>
                         <div className="text-xs font-semibold text-gray-700">Avg Over</div>
                       </div>

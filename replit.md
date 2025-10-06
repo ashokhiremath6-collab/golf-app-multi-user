@@ -2,6 +2,13 @@
 
 Blues Golf Challenge is a comprehensive Progressive Web Application (PWA) for golf scoring and handicap management. It tracks 18-hole golf rounds, automatically calculates handicaps based on official golf rules, and provides live leaderboards. The application features automated monthly handicap recalculations and a focus on providing a seamless experience for golf enthusiasts. The business vision is to provide a reliable and engaging platform for golf clubs and players to manage their scores and handicaps efficiently, fostering competitive and fair play.
 
+# Recent Changes (October 6, 2025)
+
+## Fixed Monthly Statistics Display & Average Formatting
+- **Monthly stats now load correctly**: Fixed queryKey construction in Home.tsx - removed organizationId from array to prevent it from being appended to URL path
+- **Consistent decimal formatting**: Updated both Home and History pages to display all averages with one decimal place (.toFixed(1)) instead of rounding to whole numbers
+- **Formatting updates**: Applied to avg gross, avg net, avg over par, and avg DTH across monthly and cumulative stats
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
