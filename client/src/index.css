@@ -124,12 +124,23 @@
     color: var(--golf-green);
   }
   
-  .score-input {
+  .score-input,
+  .score-input:focus,
+  .score-input:active,
+  .score-input:hover {
     background-color: #ffffff !important;
     color: #000000 !important;
     -webkit-text-fill-color: #000000 !important;
     -webkit-opacity: 1 !important;
     opacity: 1 !important;
+    text-shadow: none !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+  }
+  
+  input.score-input::placeholder {
+    color: #999999 !important;
+    opacity: 0.5 !important;
   }
   
   .text-golf-blue {
