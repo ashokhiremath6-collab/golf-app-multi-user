@@ -384,7 +384,13 @@ export default function NewRound() {
                         <input
                           type="tel"
                           value={scores[index] === 0 ? '' : String(scores[index])}
-                          onChange={(e) => handleScoreChange(index, e.target.value)}
+                          onFocus={() => console.log('✅ FOCUS hole', holeNumber)}
+                          onChange={(e) => {
+                            console.log('✅ CHANGE hole', holeNumber, 'value:', e.target.value);
+                            handleScoreChange(index, e.target.value);
+                          }}
+                          onInput={(e) => console.log('✅ INPUT hole', holeNumber, 'value:', e.currentTarget.value)}
+                          onKeyDown={(e) => console.log('✅ KEYDOWN hole', holeNumber, 'key:', e.key)}
                           className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border border-input bg-white text-gray-900 px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
