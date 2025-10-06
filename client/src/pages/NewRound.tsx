@@ -503,6 +503,17 @@ export default function NewRound() {
           </div>
         )}
 
+        {selectedCourseId && !holesLoading && (!holes || holes.length !== 18) && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Course Data Issue</AlertTitle>
+            <AlertDescription>
+              This course doesn't have complete hole information (18 holes required). 
+              Please contact your admin to configure this course properly or select a different course.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {!selectedCourseId && (
           <Card>
             <CardContent className="pt-6 text-center text-gray-500">
