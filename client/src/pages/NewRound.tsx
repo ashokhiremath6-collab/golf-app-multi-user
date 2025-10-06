@@ -370,7 +370,7 @@ export default function NewRound() {
                     {calculateFront9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-9 gap-2">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 1;
                     const hole = holes?.find(h => h.number === holeNumber);
@@ -378,9 +378,9 @@ export default function NewRound() {
                     const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded-lg p-4 text-center">
+                      <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200 text-center">
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
-                        <div className="text-lg font-bold text-gray-900 mb-3">Par {holePar}</div>
+                        <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <input
                           type="number"
                           inputMode="numeric"
@@ -390,15 +390,15 @@ export default function NewRound() {
                           style={{
                             width: '100%',
                             textAlign: 'center',
-                            height: '56px',
-                            fontSize: '36px',
-                            fontWeight: '600',
-                            marginBottom: '8px',
-                            borderRadius: '8px',
+                            height: '48px',
+                            fontSize: '24px',
+                            fontWeight: '700',
+                            marginBottom: '4px',
+                            borderRadius: '6px',
                             border: 'none',
                             padding: '0',
-                            backgroundColor: '#f3f4f6',
-                            color: '#111827',
+                            backgroundColor: '#ffffff',
+                            color: '#000000',
                           } as React.CSSProperties}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
@@ -425,7 +425,7 @@ export default function NewRound() {
                     {calculateBack9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-9 gap-2">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 10;
                     const hole = holes?.find(h => h.number === holeNumber);
@@ -433,9 +433,9 @@ export default function NewRound() {
                     const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded-lg p-4 text-center">
+                      <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200 text-center">
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
-                        <div className="text-lg font-bold text-gray-900 mb-3">Par {holePar}</div>
+                        <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <input
                           type="number"
                           inputMode="numeric"
@@ -445,15 +445,15 @@ export default function NewRound() {
                           style={{
                             width: '100%',
                             textAlign: 'center',
-                            height: '56px',
-                            fontSize: '36px',
-                            fontWeight: '600',
-                            marginBottom: '8px',
-                            borderRadius: '8px',
+                            height: '48px',
+                            fontSize: '24px',
+                            fontWeight: '700',
+                            marginBottom: '4px',
+                            borderRadius: '6px',
                             border: 'none',
                             padding: '0',
-                            backgroundColor: '#f3f4f6',
-                            color: '#111827',
+                            backgroundColor: '#ffffff',
+                            color: '#000000',
                           } as React.CSSProperties}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
