@@ -113,31 +113,24 @@ export default function NewRound() {
   });
 
   const handleScoreChange = (holeIndex: number, value: string) => {
-    console.log('🔧 handleScoreChange called:', { holeIndex, value, currentScores: scores });
     const newScores = [...scores];
     
     // Allow empty input - set to 0
     if (value === '') {
-      console.log('🔧 Empty value, setting to 0');
       newScores[holeIndex] = 0;
       setScores(newScores);
-      console.log('🔧 New scores:', newScores);
       return;
     }
     
     // Parse the numeric value
     const score = parseInt(value, 10);
-    console.log('🔧 Parsed score:', score, 'isNaN:', isNaN(score));
     
     // Only update if valid number
     if (!isNaN(score)) {
       // Clamp score to valid range [1, 10]
       const clampedScore = Math.max(1, Math.min(10, score));
-      console.log('🔧 Clamped score:', clampedScore);
       newScores[holeIndex] = clampedScore;
       setScores(newScores);
-      console.log('🔧 Updated scores array:', newScores);
-      console.log('🔧 State should now be:', newScores);
     }
   };
 
@@ -391,14 +384,9 @@ export default function NewRound() {
                         <input
                           type="tel"
                           value={scores[index] === 0 ? '' : String(scores[index])}
-                          onFocus={() => console.log('✅ FOCUS hole', holeNumber)}
-                          onChange={(e) => {
-                            console.log('✅ CHANGE hole', holeNumber, 'value:', e.target.value);
-                            handleScoreChange(index, e.target.value);
-                          }}
-                          onInput={(e) => console.log('✅ INPUT hole', holeNumber, 'value:', e.currentTarget.value)}
-                          onKeyDown={(e) => console.log('✅ KEYDOWN hole', holeNumber, 'key:', e.key)}
-                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border border-input bg-white text-gray-900 px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          onChange={(e) => handleScoreChange(index, e.target.value)}
+                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          style={{ backgroundColor: '#ffffff', color: '#000000' }}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
@@ -439,7 +427,8 @@ export default function NewRound() {
                           type="tel"
                           value={scores[index + 9] === 0 ? '' : String(scores[index + 9])}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border border-input bg-white text-gray-900 px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          style={{ backgroundColor: '#ffffff', color: '#000000' }}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
