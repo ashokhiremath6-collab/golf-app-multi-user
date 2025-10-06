@@ -69,14 +69,14 @@ export default function Home() {
 
   // Fetch monthly stats
   const { data: monthlyStats, isLoading: monthlyLoading } = useQuery({
-    queryKey: ["/api/players", currentPlayer?.id, "stats", "monthly", selectedMonth, currentOrganization?.id],
+    queryKey: [`/api/players/${currentPlayer?.id}/stats/monthly/${selectedMonth}`, currentOrganization?.id],
     enabled: !!currentPlayer && !!currentOrganization?.id,
     retry: false,
   });
 
   // Fetch cumulative stats
   const { data: cumulativeStats, isLoading: cumulativeLoading } = useQuery({
-    queryKey: ["/api/players", currentPlayer?.id, "stats", "cumulative", currentOrganization?.id],
+    queryKey: [`/api/players/${currentPlayer?.id}/stats/cumulative`, currentOrganization?.id],
     enabled: !!currentPlayer && !!currentOrganization?.id,
     retry: false,
   });

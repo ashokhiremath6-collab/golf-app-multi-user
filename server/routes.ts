@@ -1845,7 +1845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Player statistics endpoints
-  app.get('/api/players/:playerId/stats/monthly/:month', isAuthenticated, async (req: any, res) => {
+  app.get('/api/players/:playerId/stats/monthly/:month', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { playerId, month } = req.params;
@@ -1876,7 +1876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/players/:playerId/stats/cumulative', isAuthenticated, async (req: any, res) => {
+  app.get('/api/players/:playerId/stats/cumulative', enhancedAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { playerId } = req.params;
