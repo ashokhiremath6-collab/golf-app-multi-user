@@ -911,7 +911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/courses/:id/holes', isAuthenticated, async (req: any, res) => {
+  app.get('/api/courses/:id/holes', enhancedAuth, async (req: any, res) => {
     try {
       const courseId = req.params.id;
       
