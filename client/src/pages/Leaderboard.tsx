@@ -118,7 +118,7 @@ export default function Leaderboard() {
         currentHandicap: stats.currentHandicap,
         bestRound: Math.min(...stats.rounds.map((r: any) => r.totalStrokes)),
       }))
-      .sort((a, b) => a.avgOverPar - b.avgOverPar);
+      .sort((a, b) => a.avgDTH - b.avgDTH);
   };
 
   const formatDTH = (dth: number | null | undefined) => {
