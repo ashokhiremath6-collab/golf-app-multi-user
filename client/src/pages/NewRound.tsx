@@ -370,7 +370,7 @@ export default function NewRound() {
                     {calculateFront9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 1;
                     const hole = holes?.find(h => h.number === holeNumber);
@@ -378,9 +378,9 @@ export default function NewRound() {
                     const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded-xl p-6 border border-gray-200 text-center">
-                        <div className="text-sm text-gray-500 mb-2">Hole {holeNumber}</div>
-                        <div className="text-xl font-bold text-gray-900 mb-4">Par {holePar}</div>
+                      <div key={holeNumber} className="bg-white rounded-lg p-4 text-center">
+                        <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
+                        <div className="text-lg font-bold text-gray-900 mb-3">Par {holePar}</div>
                         <input
                           type="number"
                           inputMode="numeric"
@@ -390,22 +390,21 @@ export default function NewRound() {
                           style={{
                             width: '100%',
                             textAlign: 'center',
-                            height: '64px',
-                            fontSize: '48px',
-                            fontWeight: '700',
-                            marginBottom: '12px',
-                            borderRadius: '12px',
+                            height: '56px',
+                            fontSize: '36px',
+                            fontWeight: '600',
+                            marginBottom: '8px',
+                            borderRadius: '8px',
                             border: 'none',
                             padding: '0',
-                            backgroundColor: '#f9fafb',
-                            color: '#000000',
-                            fontFamily: 'Arial, Helvetica, sans-serif',
+                            backgroundColor: '#f3f4f6',
+                            color: '#111827',
                           } as React.CSSProperties}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
                         />
-                        <div className="text-sm text-gray-400">{holeDistance}y</div>
+                        <div className="text-xs text-gray-400">{holeDistance}y</div>
                       </div>
                     );
                   })}
@@ -426,7 +425,7 @@ export default function NewRound() {
                     {calculateBack9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-9 gap-2">
+                <div className="grid grid-cols-2 gap-4">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 10;
                     const hole = holes?.find(h => h.number === holeNumber);
@@ -434,14 +433,28 @@ export default function NewRound() {
                     const holeDistance = hole?.distance || 0;
                     
                     return (
-                      <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200 text-center">
+                      <div key={holeNumber} className="bg-white rounded-lg p-4 text-center">
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
-                        <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
+                        <div className="text-lg font-bold text-gray-900 mb-3">Par {holePar}</div>
                         <input
-                          type="tel"
+                          type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={scores[index + 9] === 0 ? '' : String(scores[index + 9])}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          className="score-input w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                          style={{
+                            width: '100%',
+                            textAlign: 'center',
+                            height: '56px',
+                            fontSize: '36px',
+                            fontWeight: '600',
+                            marginBottom: '8px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            padding: '0',
+                            backgroundColor: '#f3f4f6',
+                            color: '#111827',
+                          } as React.CSSProperties}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
