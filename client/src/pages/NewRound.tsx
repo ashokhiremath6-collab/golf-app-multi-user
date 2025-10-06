@@ -385,7 +385,19 @@ export default function NewRound() {
                           type="tel"
                           value={scores[index] === 0 ? '' : String(scores[index])}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
-                          className="score-input w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                          style={{
+                            width: '100%',
+                            textAlign: 'center',
+                            height: '48px',
+                            fontSize: '24px',
+                            fontWeight: '700',
+                            marginBottom: '4px',
+                            borderRadius: '6px',
+                            border: '2px solid #d1d5db',
+                            padding: '8px 12px',
+                            backgroundColor: '#ffffff',
+                            color: '#000000',
+                          }}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
