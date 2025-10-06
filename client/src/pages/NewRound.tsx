@@ -113,6 +113,7 @@ export default function NewRound() {
   });
 
   const handleScoreChange = (holeIndex: number, value: string) => {
+    console.log('🏌️ Score change:', { holeIndex, value, type: typeof value });
     const newScores = [...scores];
     
     // Allow empty input
@@ -124,6 +125,7 @@ export default function NewRound() {
     
     // Parse the numeric value - accept any digits typed
     const numericValue = value.replace(/[^0-9]/g, '');
+    console.log('🏌️ Numeric value:', numericValue);
     
     if (numericValue === '') {
       newScores[holeIndex] = 0;
@@ -132,11 +134,13 @@ export default function NewRound() {
     }
     
     const score = parseInt(numericValue, 10);
+    console.log('🏌️ Parsed score:', score);
     
     // Only clamp if valid number
     if (!isNaN(score)) {
       // Clamp score to valid range [1, 10]
       const clampedScore = Math.max(1, Math.min(10, score));
+      console.log('🏌️ Final score:', clampedScore);
       newScores[holeIndex] = clampedScore;
       setScores(newScores);
     }
@@ -389,13 +393,15 @@ export default function NewRound() {
                       <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200 text-center">
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
                         <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
+                        <input
+                          type="tel"
                           value={scores[index] === 0 ? '' : scores[index]}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
-                          className="w-full text-center h-12 text-2xl font-bold mb-1 touch-manipulation"
+                          onInput={(e) => {
+                            console.log('🏌️ onInput fired:', e.currentTarget.value);
+                            handleScoreChange(index, e.currentTarget.value);
+                          }}
+                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
@@ -432,13 +438,15 @@ export default function NewRound() {
                       <div key={holeNumber} className="bg-white rounded-lg p-2 border border-gray-200 text-center">
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
                         <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
+                        <input
+                          type="tel"
                           value={scores[index + 9] === 0 ? '' : scores[index + 9]}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          className="w-full text-center h-12 text-2xl font-bold mb-1 touch-manipulation"
+                          onInput={(e) => {
+                            console.log('🏌️ onInput fired:', e.currentTarget.value);
+                            handleScoreChange(index + 9, e.currentTarget.value);
+                          }}
+                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
