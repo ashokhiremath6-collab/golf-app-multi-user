@@ -88,6 +88,7 @@ export default function Leaderboard() {
           totalStrokes: 0,
           totalOverPar: 0,
           totalNet: 0,
+          totalDTH: 0,
           currentHandicap: round.currentHandicap,
         });
       }
@@ -98,6 +99,12 @@ export default function Leaderboard() {
       const netValue = typeof round.net === 'string' ? parseFloat(round.net) : round.net;
       stats.totalOverPar += isNaN(overParValue) ? 0 : overParValue;
       stats.totalNet += isNaN(netValue) ? 0 : netValue;
+      
+      // Calculate slope-adjusted DTH for this round
+      const slope = round.course?.slope || 113;
+      const slopeAdjustedHandicap = Math.round((round.courseHandicap * slope) / 110.0);
+      const dth = (isNaN(overParValue) ? 0 : overParValue) - slopeAdjustedHandicap;
+      stats.totalDTH += dth;
     });
 
     return Array.from(playerStats.values())
@@ -107,6 +114,7 @@ export default function Leaderboard() {
         roundsCount: stats.rounds.length,
         avgOverPar: stats.totalOverPar / stats.rounds.length,
         avgNet: stats.totalNet / stats.rounds.length,
+        avgDTH: stats.totalDTH / stats.rounds.length,
         currentHandicap: stats.currentHandicap,
         bestRound: Math.min(...stats.rounds.map((r: any) => r.totalStrokes)),
       }))
@@ -322,7 +330,7 @@ export default function Leaderboard() {
                         <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
                         <th className="pl-1 pr-0 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
                         <th className="pl-0 pr-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
-                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Over Par</th>
                         <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg DTH</th>
                         <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">HCP</th>
                       </tr>
@@ -353,8 +361,8 @@ export default function Leaderboard() {
                             </div>
                           </td>
                           <td className="px-1 py-2 whitespace-nowrap text-center">
-                            <div className="text-xs font-medium text-blue-600" data-testid={`avg-net-${entry.playerId}`}>
-                              {formatNet(entry.avgNet)}
+                            <div className="text-xs text-gray-900" data-testid={`avg-over-${entry.playerId}`}>
+                              {formatOverPar(entry.avgOverPar)}
                             </div>
                           </td>
                           <td className="px-1 py-2 whitespace-nowrap text-center">
@@ -446,8 +454,8 @@ export default function Leaderboard() {
                         <th className="px-1 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Rank</th>
                         <th className="pl-1 pr-0 py-1.5 text-left text-[10px] font-medium text-gray-500 uppercase">Player</th>
                         <th className="pl-0 pr-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Rounds</th>
-                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Net</th>
-                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Over</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg Over Par</th>
+                        <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">Avg DTH</th>
                         <th className="px-1 py-1.5 text-center text-[10px] font-medium text-gray-500 uppercase">HCP</th>
                       </tr>
                     </thead>
@@ -477,13 +485,13 @@ export default function Leaderboard() {
                             </div>
                           </td>
                           <td className="px-1 py-2 whitespace-nowrap text-center">
-                            <div className="text-xs font-medium text-blue-600" data-testid={`monthly-net-${entry.playerId}`}>
-                              {formatNet(entry.avgNet)}
+                            <div className="text-xs text-gray-900" data-testid={`monthly-over-${entry.playerId}`}>
+                              {formatOverPar(entry.avgOverPar)}
                             </div>
                           </td>
                           <td className="px-1 py-2 whitespace-nowrap text-center">
-                            <div className="text-xs text-gray-900" data-testid={`monthly-over-${entry.playerId}`}>
-                              {formatOverPar(entry.avgOverPar)}
+                            <div className={`text-xs ${getDTHColor(entry.avgDTH)}`} data-testid={`monthly-dth-${entry.playerId}`}>
+                              {formatDTH(entry.avgDTH)}
                             </div>
                           </td>
                           <td className="px-1 py-2 whitespace-nowrap text-center">
