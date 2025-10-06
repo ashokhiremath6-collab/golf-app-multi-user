@@ -15,6 +15,17 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -158,6 +169,21 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update admin status.", variant: "destructive" });
+    },
+  });
+
+  const deletePlayerMutation = useMutation({
+    mutationFn: async (playerId: string) => {
+      await apiRequest("DELETE", `/api/organizations/${currentOrganization?.id}/players/${playerId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/players`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`] });
+      toast({ title: "Player Deleted", description: "Player and all associated rounds have been removed." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete player.", variant: "destructive" });
     },
   });
 
@@ -568,6 +594,36 @@ export default function Admin() {
                           >
                             {player.isAdmin ? "Remove Admin" : "Make Admin"}
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                data-testid={`button-delete-player-${player.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent data-testid={`dialog-delete-player-${player.id}`}>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Player</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete <strong>{player.name}</strong>? This action cannot be undone and will permanently remove the player and all their associated rounds from this organization.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel data-testid="button-cancel-delete-player">Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deletePlayerMutation.mutate(player.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                  data-testid="button-confirm-delete-player"
+                                >
+                                  Delete Player
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     ))}
