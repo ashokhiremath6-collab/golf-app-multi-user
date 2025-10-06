@@ -370,7 +370,7 @@ export default function NewRound() {
                     {calculateFront9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 1;
                     const hole = holes?.find(h => h.number === holeNumber);
@@ -425,7 +425,7 @@ export default function NewRound() {
                     {calculateBack9()}
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {Array.from({ length: 9 }, (_, index) => {
                     const holeNumber = index + 10;
                     const hole = holes?.find(h => h.number === holeNumber);
