@@ -137,9 +137,9 @@ export class ImportService {
             result.summary.coursesCreated++;
             
             // Create default holes (par 4 for all holes initially)
-            if (course) {
+            if (course?.id) {
               const defaultHoles = Array.from({ length: 18 }, (_, index) => ({
-                courseId: course.id,
+                courseId: course!.id,
                 number: index + 1,
                 par: 4,
                 distance: 400,
