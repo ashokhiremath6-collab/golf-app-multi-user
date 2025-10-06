@@ -710,6 +710,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization-scoped player delete endpoint
+  app.delete('/api/organizations/:organizationId/players/:playerId', enhancedAuth, async (req: any, res) => {
+    try {
+      const { organizationId, playerId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Organization admin access required" });
+      }
+
+      // Get the player to verify it belongs to this organization
+      const player = await storage.getPlayer(playerId);
+      if (!player) {
+        return res.status(404).json({ message: "Player not found" });
+      }
+      
+      if (player.organizationId !== organizationId) {
+        return res.status(403).json({ message: "Player does not belong to this organization" });
+      }
+
+      // Delete the player
+      await storage.deletePlayer(playerId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      res.status(500).json({ message: "Failed to delete player" });
+    }
+  });
+
   app.get('/api/players/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
