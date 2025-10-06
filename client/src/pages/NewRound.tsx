@@ -382,27 +382,23 @@ export default function NewRound() {
                         <div className="text-xs text-gray-500 mb-1">Hole {holeNumber}</div>
                         <div className="text-sm font-semibold text-gray-900 mb-1">Par {holePar}</div>
                         <input
-                          type="tel"
+                          type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={scores[index] === 0 ? '' : String(scores[index])}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
                           style={{
                             width: '100%',
                             textAlign: 'center',
                             height: '48px',
-                            fontSize: '32px',
+                            fontSize: '24px',
                             fontWeight: '700',
                             marginBottom: '4px',
                             borderRadius: '6px',
-                            border: '3px solid #000000',
+                            border: '2px solid #d1d5db',
                             padding: '8px 12px',
-                            backgroundColor: '#ffff00',
-                            color: '#ff0000',
-                            WebkitTextFillColor: '#ff0000',
-                            WebkitAppearance: 'none',
-                            appearance: 'none',
-                            textShadow: '1px 1px 2px black',
-                            opacity: 1,
-                            visibility: 'visible',
+                            backgroundColor: '#ffffff',
+                            color: '#000000',
                             fontFamily: 'Arial, Helvetica, sans-serif',
                           } as React.CSSProperties}
                           placeholder={holePar.toString()}
