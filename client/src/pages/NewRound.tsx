@@ -389,15 +389,22 @@ export default function NewRound() {
                             width: '100%',
                             textAlign: 'center',
                             height: '48px',
-                            fontSize: '24px',
+                            fontSize: '32px',
                             fontWeight: '700',
                             marginBottom: '4px',
                             borderRadius: '6px',
-                            border: '2px solid #d1d5db',
+                            border: '3px solid #000000',
                             padding: '8px 12px',
-                            backgroundColor: '#ffffff',
-                            color: '#000000',
-                          }}
+                            backgroundColor: '#ffff00',
+                            color: '#ff0000',
+                            WebkitTextFillColor: '#ff0000',
+                            WebkitAppearance: 'none',
+                            appearance: 'none',
+                            textShadow: '1px 1px 2px black',
+                            opacity: 1,
+                            visibility: 'visible',
+                            fontFamily: 'Arial, Helvetica, sans-serif',
+                          } as React.CSSProperties}
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
