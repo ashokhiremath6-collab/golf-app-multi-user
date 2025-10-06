@@ -385,8 +385,7 @@ export default function NewRound() {
                           type="tel"
                           value={scores[index] === 0 ? '' : String(scores[index])}
                           onChange={(e) => handleScoreChange(index, e.target.value)}
-                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          style={{ backgroundColor: '#ffffff', color: '#000000' }}
+                          className="score-input w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"
@@ -427,8 +426,7 @@ export default function NewRound() {
                           type="tel"
                           value={scores[index + 9] === 0 ? '' : String(scores[index + 9])}
                           onChange={(e) => handleScoreChange(index + 9, e.target.value)}
-                          className="w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          style={{ backgroundColor: '#ffffff', color: '#000000' }}
+                          className="score-input w-full text-center h-12 text-2xl font-bold mb-1 rounded-md border-2 border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder={holePar.toString()}
                           data-testid={`input-score-${holeNumber}`}
                           autoComplete="off"

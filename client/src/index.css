@@ -124,6 +124,14 @@
     color: var(--golf-green);
   }
   
+  .score-input {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    -webkit-opacity: 1 !important;
+    opacity: 1 !important;
+  }
+  
   .text-golf-blue {
     color: var(--golf-blue);
   }
