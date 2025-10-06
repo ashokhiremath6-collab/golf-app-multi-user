@@ -101,6 +101,12 @@ export default function Admin() {
   const [editRoundHandicap, setEditRoundHandicap] = useState(0);
   const [newCourseRating, setNewCourseRating] = useState('');
   const [newCourseSlope, setNewCourseSlope] = useState('');
+  
+  // Import states
+  const [importCsvData, setImportCsvData] = useState('');
+  const [autoCreatePlayers, setAutoCreatePlayers] = useState(true);
+  const [autoCreateCourses, setAutoCreateCourses] = useState(true);
+  const [importResult, setImportResult] = useState<any>(null);
 
   // Organization-scoped queries
   const { data: players, isLoading: playersLoading } = useQuery<Player[]>({
@@ -261,6 +267,48 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to create test round.", variant: "destructive" });
+    },
+  });
+
+  const importRoundsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/import/rounds", {
+        csvData: importCsvData,
+        autoCreatePlayers,
+        autoCreateCourses,
+      });
+      const result = await response.json();
+      return result;
+    },
+    onSuccess: (data: any) => {
+      setImportResult(data);
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/players`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/courses`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`] });
+      
+      if (data.success) {
+        toast({ 
+          title: "Import Successful", 
+          description: `Imported ${data.summary.roundsImported} rounds successfully.` 
+        });
+      } else {
+        toast({ 
+          title: "Import Completed with Errors", 
+          description: `Imported ${data.summary.roundsImported} rounds, ${data.skipped} skipped.`,
+          variant: "destructive"
+        });
+      }
+      
+      // Reset CSV data after import
+      setImportCsvData('');
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Import Failed", 
+        description: error.message || "Failed to import rounds.",
+        variant: "destructive" 
+      });
     },
   });
 
@@ -882,22 +930,113 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
-                  Import Data
+                  Import Rounds Data
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <Alert>
                     <AlertDescription>
-                      Import functionality allows you to bulk import rounds, players, or course data. This feature is coming soon.
+                      Upload a CSV file with round data. Required columns: player_name, course_name, played_on, scores_1 through scores_18, course_handicap.
                     </AlertDescription>
                   </Alert>
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 mb-4">Import rounds from CSV or Excel files</p>
-                    <Button disabled data-testid="button-import-data">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Import File (Coming Soon)
-                    </Button>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="csv-file">CSV File</Label>
+                      <Input
+                        id="csv-file"
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              const csvText = event.target?.result as string;
+                              setImportCsvData(csvText);
+                            };
+                            reader.readAsText(file);
+                          }
+                        }}
+                        data-testid="input-csv-file"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={autoCreatePlayers}
+                          onChange={(e) => setAutoCreatePlayers(e.target.checked)}
+                          data-testid="checkbox-auto-create-players"
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">Auto-create players if not found</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={autoCreateCourses}
+                          onChange={(e) => setAutoCreateCourses(e.target.checked)}
+                          data-testid="checkbox-auto-create-courses"
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">Auto-create courses if not found</span>
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => importRoundsMutation.mutate()}
+                        disabled={!importCsvData || importRoundsMutation.isPending}
+                        data-testid="button-import-rounds"
+                      >
+                        {importRoundsMutation.isPending ? "Importing..." : "Import Rounds"}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          window.location.href = '/api/import/sample-csv';
+                        }}
+                        data-testid="button-download-sample"
+                      >
+                        Download Sample CSV
+                      </Button>
+                    </div>
+
+                    {importResult && (
+                      <Alert className={importResult.success ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}>
+                        <AlertDescription>
+                          <div className="space-y-2">
+                            <p className="font-semibold">
+                              {importResult.success ? "Import Completed!" : "Import Completed with Errors"}
+                            </p>
+                            <div className="text-sm">
+                              <p>✓ Rounds imported: {importResult.summary.roundsImported}</p>
+                              <p>✓ Players created: {importResult.summary.playersCreated}</p>
+                              <p>✓ Courses created: {importResult.summary.coursesCreated}</p>
+                              <p>⊘ Skipped: {importResult.skipped}</p>
+                            </div>
+                            {importResult.errors && importResult.errors.length > 0 && (
+                              <details className="text-sm mt-2">
+                                <summary className="cursor-pointer font-medium">View Errors ({importResult.errors.length})</summary>
+                                <ul className="list-disc pl-5 mt-1 space-y-1">
+                                  {importResult.errors.slice(0, 10).map((error: string, idx: number) => (
+                                    <li key={idx} className="text-red-700">{error}</li>
+                                  ))}
+                                  {importResult.errors.length > 10 && (
+                                    <li className="text-gray-600">...and {importResult.errors.length - 10} more</li>
+                                  )}
+                                </ul>
+                              </details>
+                            )}
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                 </div>
               </CardContent>

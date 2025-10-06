@@ -137,13 +137,15 @@ export class ImportService {
             result.summary.coursesCreated++;
             
             // Create default holes (par 4 for all holes initially)
-            const defaultHoles = Array.from({ length: 18 }, (_, index) => ({
-              courseId: course.id,
-              number: index + 1,
-              par: 4,
-              distance: 400,
-            }));
-            await storage.createHoles(defaultHoles);
+            if (course) {
+              const defaultHoles = Array.from({ length: 18 }, (_, index) => ({
+                courseId: course.id,
+                number: index + 1,
+                par: 4,
+                distance: 400,
+              }));
+              await storage.createHoles(defaultHoles);
+            }
           } else {
             result.errors.push(`Row ${rowNumber}: Course '${rowData.course_name}' not found`);
             result.skipped++;
