@@ -113,24 +113,31 @@ export default function NewRound() {
   });
 
   const handleScoreChange = (holeIndex: number, value: string) => {
+    console.log('🔧 handleScoreChange called:', { holeIndex, value, currentScores: scores });
     const newScores = [...scores];
     
     // Allow empty input - set to 0
     if (value === '') {
+      console.log('🔧 Empty value, setting to 0');
       newScores[holeIndex] = 0;
       setScores(newScores);
+      console.log('🔧 New scores:', newScores);
       return;
     }
     
     // Parse the numeric value
     const score = parseInt(value, 10);
+    console.log('🔧 Parsed score:', score, 'isNaN:', isNaN(score));
     
     // Only update if valid number
     if (!isNaN(score)) {
       // Clamp score to valid range [1, 10]
       const clampedScore = Math.max(1, Math.min(10, score));
+      console.log('🔧 Clamped score:', clampedScore);
       newScores[holeIndex] = clampedScore;
       setScores(newScores);
+      console.log('🔧 Updated scores array:', newScores);
+      console.log('🔧 State should now be:', newScores);
     }
   };
 
