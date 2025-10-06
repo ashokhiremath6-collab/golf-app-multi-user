@@ -1128,7 +1128,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rounds = await storage.getAllRounds(month as string | undefined);
       }
       
-      res.json(rounds);
+      // Map playedOn to playedAt for frontend compatibility
+      const mappedRounds = rounds.map((round: any) => ({
+        ...round,
+        playedAt: round.playedOn,
+      }));
+      
+      res.json(mappedRounds);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch rounds" });
     }
@@ -1168,7 +1174,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rounds = await storage.getAllRounds(month as string | undefined, organizationId);
       }
       
-      res.json(rounds);
+      // Map playedOn to playedAt for frontend compatibility
+      const mappedRounds = rounds.map((round: any) => ({
+        ...round,
+        playedAt: round.playedOn,
+      }));
+      
+      res.json(mappedRounds);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch rounds" });
     }
