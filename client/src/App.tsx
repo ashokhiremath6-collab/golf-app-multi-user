@@ -122,8 +122,13 @@ function Router() {
     if (hasAnyAuth) {
       const returnTo = localStorage.getItem('returnTo');
       if (returnTo) {
+        // Validate returnTo is a safe relative path
+        const isValidPath = returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.includes('://');
         localStorage.removeItem('returnTo');
-        setLocation(returnTo);
+        
+        if (isValidPath) {
+          setLocation(returnTo);
+        }
       }
     }
   }, [hasAnyAuth, setLocation]);
@@ -134,10 +139,19 @@ function Router() {
   if (!hasAnyAuth) {
     // If user is trying to access an org route, save it and redirect to login
     if (isOrgRoute) {
-      // Save the intended destination
-      localStorage.setItem('returnTo', location);
-      // Redirect to login
-      window.location.href = '/api/login';
+      // Validate location is a relative path
+      const isValidPath = location.startsWith('/') && !location.startsWith('//') && !location.includes('://');
+      
+      if (isValidPath) {
+        // Save the intended destination
+        localStorage.setItem('returnTo', location);
+        // Redirect to login with returnTo parameter
+        window.location.href = `/api/login?returnTo=${encodeURIComponent(location)}`;
+      } else {
+        // Invalid path, just redirect to login
+        window.location.href = '/api/login';
+      }
+      
       // Show loading while redirecting
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">

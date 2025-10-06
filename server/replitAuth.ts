@@ -102,9 +102,13 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    // Store returnTo in session if provided
+    // Store returnTo in session if provided and validated
     if (req.query.returnTo) {
-      req.session.returnTo = req.query.returnTo as string;
+      const returnTo = req.query.returnTo as string;
+      // Validate returnTo is a same-origin path (starts with / but not //)
+      if (returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.includes('://')) {
+        (req.session as any).returnTo = returnTo;
+      }
     }
     
     passport.authenticate(`replitauth:${req.hostname}`, {
