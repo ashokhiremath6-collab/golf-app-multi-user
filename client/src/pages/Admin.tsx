@@ -210,19 +210,6 @@ export default function Admin() {
     },
   });
 
-  const recalculateHandicapsMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("POST", `/api/organizations/${currentOrganization?.id}/handicaps/recalculate`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/handicaps`] });
-      toast({ title: "Handicaps Recalculated", description: "All handicaps have been recalculated." });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to recalculate handicaps.", variant: "destructive" });
-    },
-  });
-
   const editRoundMutation = useMutation({
     mutationFn: async ({ roundId, rawScores, courseHandicap }: { roundId: string; rawScores: number[]; courseHandicap: number }) => {
       await apiRequest("PUT", `/api/organizations/${currentOrganization?.id}/rounds/${roundId}`, { 
@@ -307,6 +294,30 @@ export default function Admin() {
       toast({ 
         title: "Import Failed", 
         description: error.message || "Failed to import rounds.",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const recalculateHandicapsMutation = useMutation({
+    mutationFn: async (playerId: string) => {
+      const response = await apiRequest("POST", `/api/organizations/${currentOrganization?.id}/players/${playerId}/recalculate-handicaps`, {});
+      const result = await response.json();
+      return result;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/rounds`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${currentOrganization?.id}/leaderboard`] });
+      
+      toast({ 
+        title: "Handicaps Recalculated", 
+        description: data.message || `Updated ${data.updatedCount} rounds.` 
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Recalculation Failed", 
+        description: error.message || "Failed to recalculate course handicaps.",
         variant: "destructive" 
       });
     },
@@ -456,6 +467,10 @@ export default function Admin() {
     }
     
     updateHandicapMutation.mutate({ playerId: selectedPlayer.id, handicap: handicapValue });
+  };
+
+  const handleRecalculateHandicaps = (playerId: string) => {
+    recalculateHandicapsMutation.mutate(playerId);
   };
 
   if (!currentOrganization) {
@@ -633,6 +648,16 @@ export default function Admin() {
                               HCP: {player.handicap}
                             </Badge>
                           )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRecalculateHandicaps(player.id)}
+                            disabled={recalculateHandicapsMutation.isPending}
+                            data-testid={`button-recalculate-handicaps-${player.id}`}
+                            title="Recalculate course handicaps for all rounds based on current handicap"
+                          >
+                            <Calculator className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant={player.isAdmin ? "destructive" : "outline"}
                             size="sm"

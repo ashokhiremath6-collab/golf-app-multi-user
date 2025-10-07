@@ -1389,6 +1389,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Recalculate course handicaps for a player's rounds
+  app.post('/api/organizations/:organizationId/players/:playerId/recalculate-handicaps', enhancedAuth, async (req: any, res) => {
+    try {
+      const { organizationId, playerId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin of this organization
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      const isOrgAdmin = await storage.isUserOrganizationAdmin(userId, organizationId);
+      
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ message: "Organization admin access required" });
+      }
+
+      // Get player and verify they belong to this organization
+      const player = await storage.getPlayer(playerId);
+      if (!player) {
+        return res.status(404).json({ message: "Player not found" });
+      }
+      if (player.organizationId !== organizationId) {
+        return res.status(403).json({ message: "Player does not belong to this organization" });
+      }
+
+      // Get all rounds for this player
+      const rounds = await storage.getRoundsByPlayer(playerId);
+      
+      let updatedCount = 0;
+      const results = [];
+
+      for (const round of rounds) {
+        try {
+          // Get course for slope calculation
+          const course = await storage.getCourse(round.courseId);
+          if (!course) {
+            results.push({ roundId: round.id, status: 'error', message: 'Course not found' });
+            continue;
+          }
+
+          // Calculate new course handicap based on current player handicap
+          const willingdonHandicap = player.currentHandicap;
+          let newCourseHandicap: number;
+          
+          if (course.slope) {
+            const handicapIndex = (willingdonHandicap * 113) / 110;
+            const slopeValue = parseFloat(course.slope.toString());
+            newCourseHandicap = Math.round((handicapIndex * slopeValue) / 113);
+          } else {
+            newCourseHandicap = willingdonHandicap;
+          }
+
+          // Only update if course handicap changed
+          if (round.courseHandicap !== newCourseHandicap) {
+            // Get holes for score recalculation
+            const holes = await storage.getHolesByCourse(course.id);
+            if (holes.length !== 18) {
+              results.push({ roundId: round.id, status: 'error', message: 'Course incomplete' });
+              continue;
+            }
+
+            const holePars = holes.sort((a, b) => a.number - b.number).map(h => h.par);
+            
+            // Recalculate scores with new course handicap
+            const scoreCalculation = calculateRoundScores(
+              round.rawScores,
+              holePars,
+              newCourseHandicap,
+              course.parTotal
+            );
+
+            // Update the round
+            await storage.updateRound(round.id, {
+              courseHandicap: newCourseHandicap,
+              cappedScores: scoreCalculation.cappedScores,
+              grossCapped: scoreCalculation.grossCapped,
+              net: scoreCalculation.net,
+              overPar: scoreCalculation.overPar.toString(),
+            } as any);
+
+            updatedCount++;
+            results.push({ 
+              roundId: round.id, 
+              status: 'updated', 
+              oldHandicap: round.courseHandicap, 
+              newHandicap: newCourseHandicap 
+            });
+          } else {
+            results.push({ roundId: round.id, status: 'unchanged' });
+          }
+        } catch (error) {
+          results.push({ roundId: round.id, status: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
+        }
+      }
+
+      res.json({ 
+        message: `Recalculated ${updatedCount} rounds for ${player.name}`,
+        updatedCount,
+        totalRounds: rounds.length,
+        results
+      });
+    } catch (error) {
+      console.error("Error recalculating course handicaps:", error);
+      res.status(500).json({ message: "Failed to recalculate course handicaps" });
+    }
+  });
+
   app.post('/api/rounds', isAuthenticated, async (req: any, res) => {
     try {
       console.log('📝 POST /api/rounds - Request body:', JSON.stringify(req.body, null, 2));
