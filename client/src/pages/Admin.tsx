@@ -1156,21 +1156,6 @@ export default function Admin() {
                   </AlertDescription>
                 </Alert>
 
-                <div className="space-y-4">
-                  <Button
-                    onClick={() => recalculateHandicapsMutation.mutate()}
-                    disabled={recalculateHandicapsMutation.isPending}
-                    className="flex items-center gap-2"
-                    data-testid="button-recalculate-handicaps"
-                  >
-                    <Calculator className="h-4 w-4" />
-                    {recalculateHandicapsMutation.isPending ? "Recalculating..." : "Recalculate All Handicaps"}
-                  </Button>
-                  <p className="text-sm text-gray-600">
-                    This will recalculate handicaps for all players based on their current rounds.
-                  </p>
-                </div>
-
                 {settings && (
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-3">Current Settings</h4>
