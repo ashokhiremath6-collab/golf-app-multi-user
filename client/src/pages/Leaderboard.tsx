@@ -100,10 +100,8 @@ export default function Leaderboard() {
       stats.totalOverPar += isNaN(overParValue) ? 0 : overParValue;
       stats.totalNet += isNaN(netValue) ? 0 : netValue;
       
-      // Calculate slope-adjusted DTH for this round
-      const slope = round.course?.slope || 113;
-      const slopeAdjustedHandicap = Math.round((round.courseHandicap * slope) / 110.0);
-      const dth = (isNaN(overParValue) ? 0 : overParValue) - slopeAdjustedHandicap;
+      // Calculate DTH for this round (courseHandicap is already slope-adjusted from backend)
+      const dth = (isNaN(overParValue) ? 0 : overParValue) - round.courseHandicap;
       stats.totalDTH += dth;
     });
 

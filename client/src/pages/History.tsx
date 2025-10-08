@@ -109,9 +109,8 @@ export default function History() {
     }, 0);
     const totalDTH = playerRounds.reduce((sum, r) => {
       const over = typeof r.overPar === 'string' ? parseFloat(r.overPar) : r.overPar;
-      const slope = r.course?.slope || 113;
-      const slopeAdjustedHandicap = Math.round((r.courseHandicap * slope) / 110.0);
-      const dth = (isNaN(over) ? 0 : over) - slopeAdjustedHandicap;
+      // courseHandicap is already slope-adjusted from the backend
+      const dth = (isNaN(over) ? 0 : over) - r.courseHandicap;
       return sum + dth;
     }, 0);
 
@@ -194,9 +193,8 @@ export default function History() {
   const roundDTH = selectedRound 
     ? (() => {
         const overPar = typeof selectedRound.overPar === 'string' ? parseFloat(selectedRound.overPar) : selectedRound.overPar;
-        const slope = selectedRound.course?.slope || 113;
-        const slopeAdjustedHandicap = Math.round((selectedRound.courseHandicap * slope) / 110.0);
-        return overPar - slopeAdjustedHandicap;
+        // courseHandicap is already slope-adjusted from the backend
+        return overPar - selectedRound.courseHandicap;
       })()
     : 0;
 
