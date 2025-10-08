@@ -2,9 +2,22 @@
 
 Blues Golf Challenge is a comprehensive Progressive Web Application (PWA) for golf scoring and handicap management. It tracks 18-hole golf rounds, automatically calculates handicaps based on official golf rules, and provides live leaderboards. The application features automated monthly handicap recalculations and a focus on providing a seamless experience for golf enthusiasts. The business vision is to provide a reliable and engaging platform for golf clubs and players to manage their scores and handicaps efficiently, fostering competitive and fair play.
 
-# Recent Changes (October 6, 2025)
+# Recent Changes
 
-## Fixed Monthly Statistics Display & Average Formatting
+## October 8, 2025 - Added Force Logout Feature for Super Admin
+- **Super Admin Session Management**: Added new "User Sessions" tab in Super Admin panel to view and manage active user sessions
+- **Force Logout Capability**: Super admins can now force logout users whose authentication tokens have expired, resolving 401 errors
+- **Security Enhancements**:
+  - Explicit super admin authorization on session management endpoints
+  - Session deletion scoped to Replit auth sessions only with pre-validation
+  - Audit logging for all force logout actions
+- **User Experience Improvements**:
+  - Confirmation dialog before forcing user logout with clear warnings
+  - Persistent error UI with retry capability for session loading failures
+  - Clear toast notifications for all success and error states
+- **Authentication Improvements**: Enhanced middleware to automatically clear expired sessions and require re-login
+
+## October 6, 2025 - Fixed Monthly Statistics Display & Average Formatting
 - **Monthly stats now load correctly**: Fixed queryKey construction in Home.tsx - removed organizationId from array to prevent it from being appended to URL path
 - **Consistent decimal formatting**: Updated both Home and History pages to display all averages with one decimal place (.toFixed(1)) instead of rounding to whole numbers
 - **Formatting updates**: Applied to avg gross, avg net, avg over par, and avg DTH across monthly and cumulative stats
