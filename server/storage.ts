@@ -587,29 +587,17 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(rounds.playedOn));
     }
 
-    // Add slope-adjusted calculations to each round
+    // courseHandicap is already slope-adjusted when the round is created
+    // No need to recalculate - just use it directly for DTH
     return rawRounds.map(round => {
-      if (round.course?.slope && round.courseHandicap !== undefined && round.overPar !== undefined) {
-        const slopeAdjustments = calculateSlopeAdjustedRound(
-          parseFloat(round.overPar.toString()),
-          parseFloat(round.courseHandicap.toString()),
-          parseFloat(round.course.slope.toString())
-        );
-        
-        return {
-          ...round,
-          slopeAdjustedCourseHandicap: slopeAdjustments.slopeAdjustedCourseHandicap,
-          slopeAdjustedDTH: slopeAdjustments.slopeAdjustedDTH,
-          handicapIndex: slopeAdjustments.handicapIndex,
-          normalizedOverPar: slopeAdjustments.normalizedOverPar,
-        };
-      }
+      const overPar = round.overPar !== null && round.overPar !== undefined 
+        ? parseFloat(round.overPar.toString()) 
+        : 0;
       
-      // Fallback for rounds without slope data
       return {
         ...round,
         slopeAdjustedCourseHandicap: round.courseHandicap,
-        slopeAdjustedDTH: round.overPar ? parseFloat(round.overPar.toString()) - round.courseHandicap : 0,
+        slopeAdjustedDTH: overPar - round.courseHandicap,
         handicapIndex: null,
         normalizedOverPar: round.overPar,
       };
