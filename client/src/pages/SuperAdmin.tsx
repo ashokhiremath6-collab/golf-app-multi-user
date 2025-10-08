@@ -79,6 +79,36 @@ function UserSessionManagement() {
     );
   }
 
+  // Show persistent error state if sessions failed to load
+  if (sessionsError) {
+    return (
+      <Card data-testid="card-sessions-error">
+        <CardHeader>
+          <CardTitle className="flex items-center text-red-600">
+            <i className="fas fa-exclamation-circle mr-2"></i>
+            Failed to Load Sessions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <i className="fas fa-times-circle text-4xl text-red-500 mb-4"></i>
+            <p className="text-gray-600 mb-4" data-testid="text-error-message">
+              Could not retrieve active user sessions. Please check your permissions and try again.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/users/sessions"] })}
+              data-testid="button-retry-sessions"
+            >
+              <i className="fas fa-refresh mr-2"></i>
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const activeSessions = sessions?.filter((s: any) => s.status === 'active') || [];
   const uniqueUsers = Array.from(
     new Map(
