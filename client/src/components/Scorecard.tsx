@@ -12,7 +12,12 @@ interface ScorecardProps {
     netScore: number;
     overPar: number;
     handicapAtTime?: number;
+    courseHandicap: number;
     courseParTotal: number;
+    course?: {
+      slope?: number;
+    };
+    slopeAdjustedCourseHandicap?: number;
   };
   holes?: {
     number: number;
@@ -48,8 +53,12 @@ export default function Scorecard({ round, holes, playerName, showTitle = true }
   const front9Score = round.rawScores.slice(0, 9).reduce((a, b) => a + b, 0);
   const back9Score = round.rawScores.slice(9, 18).reduce((a, b) => a + b, 0);
 
-  // Calculate DTH (Differential to Handicap)
-  const dth = round.overPar - (round.handicapAtTime || 0);
+  // Calculate DTH (Differential to Handicap) using slope-adjusted course handicap
+  // DTH = Over Par - Course Handicap (slope-adjusted)
+  const courseHcp = round.slopeAdjustedCourseHandicap !== undefined 
+    ? round.slopeAdjustedCourseHandicap 
+    : round.courseHandicap;
+  const dth = round.overPar - courseHcp;
 
   return (
     <Card>
@@ -61,13 +70,14 @@ export default function Scorecard({ round, holes, playerName, showTitle = true }
                 <CardTitle className="text-lg mb-1">{playerName}</CardTitle>
               )}
               <p className="text-sm text-gray-600">
-                Handicap: {round.handicapAtTime || 0} | Course Hcp: 21
+                Handicap: {round.handicapAtTime || 0} | Course Hcp: {courseHcp}
               </p>
             </div>
             <div className="text-right">
               <p className="text-lg font-semibold">{round.courseName}</p>
               <p className="text-sm text-gray-600">
-                Slope: 121 | {new Date(round.playedAt).toLocaleDateString()}
+                {round.course?.slope && <>Slope: {round.course.slope} | </>}
+                {new Date(round.playedAt).toLocaleDateString()}
               </p>
             </div>
           </div>
