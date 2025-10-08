@@ -151,6 +151,8 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {
+    // Clear the session and return 401 to trigger frontend redirect to login
+    req.logout(() => {});
     return res.status(401).json({ message: "Unauthorized" });
   }
 
@@ -161,6 +163,8 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
   const refreshToken = user.refresh_token;
   if (!refreshToken) {
+    // Token expired and no refresh token - clear session
+    req.logout(() => {});
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
@@ -171,6 +175,9 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     updateUserSession(user, tokenResponse);
     return next();
   } catch (error) {
+    console.error("Token refresh failed:", error);
+    // Refresh failed - clear session and require re-login
+    req.logout(() => {});
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
