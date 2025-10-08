@@ -117,6 +117,10 @@ export interface IStorage {
   getSeasonSettings(organizationId?: string): Promise<SeasonSettings>;
   updateSeasonSettings(settings: Partial<SeasonSettings>, organizationId?: string): Promise<SeasonSettings>;
   createSeasonSettingsForOrganization(organizationId: string): Promise<SeasonSettings>;
+  
+  // Session management (super admin only)
+  getActiveSessions(): Promise<any[]>;
+  deleteUserSessions(email: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1098,6 +1102,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(rounds.playerId, playerId));
 
     return result;
+  }
+
+  // Session management (super admin only)
+  async getActiveSessions(): Promise<any[]> {
+    const result = await db.execute(sql`
+      SELECT 
+        sess::jsonb->'passport'->'user'->'claims'->>'email' as email,
+        sess::jsonb->'passport'->'user'->'claims'->>'first_name' as "firstName",
+        sess::jsonb->'passport'->'user'->'claims'->>'last_name' as "lastName",
+        expire,
+        CASE WHEN expire > NOW() THEN 'active' ELSE 'expired' END as status
+      FROM sessions 
+      WHERE sess IS NOT NULL
+        AND sess::jsonb->'passport'->'user'->'claims'->>'email' IS NOT NULL
+      ORDER BY expire DESC
+    `);
+    return result.rows as any[];
+  }
+
+  async deleteUserSessions(email: string): Promise<number> {
+    const result = await db.execute(sql`
+      DELETE FROM sessions 
+      WHERE sess IS NOT NULL
+        AND sess::jsonb->'passport'->'user'->'claims'->>'email' = ${email}
+    `);
+    return result.rowCount || 0;
   }
 }
 

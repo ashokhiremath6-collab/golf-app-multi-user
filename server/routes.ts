@@ -575,6 +575,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // List all users with active sessions (super admin only)
+  app.get('/api/users/sessions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const sessions = await storage.getActiveSessions();
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      res.status(500).json({ message: "Failed to fetch sessions" });
+    }
+  });
+
+  // Force logout user by email (super admin only)
+  app.delete('/api/users/:email/sessions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isSuperAdmin = await storage.isUserSuperAdmin(userId);
+      
+      if (!isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const { email } = req.params;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const deletedCount = await storage.deleteUserSessions(email);
+      res.json({ 
+        message: `Logged out user ${email}`, 
+        deletedSessions: deletedCount 
+      });
+    } catch (error) {
+      console.error("Error deleting user sessions:", error);
+      res.status(500).json({ message: "Failed to force logout user" });
+    }
+  });
+
   // Player routes
   app.get('/api/players', isAuthenticated, async (req: any, res) => {
     try {
