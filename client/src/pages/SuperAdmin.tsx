@@ -2,13 +2,181 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCurrentPlayer } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import Navigation from "@/components/Navigation";
 import OrganizationManagement from "@/components/OrganizationManagement";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { formatDistanceToNow } from "date-fns";
+
+// User Session Management Component
+function UserSessionManagement() {
+  const { toast } = useToast();
+  const [confirmLogout, setConfirmLogout] = useState<{ email: string; name: string } | null>(null);
+
+  // Fetch active sessions
+  const { data: sessions, isLoading, error: sessionsError } = useQuery({
+    queryKey: ["/api/users/sessions"],
+  });
+
+  // Show error if sessions failed to load
+  useEffect(() => {
+    if (sessionsError) {
+      toast({
+        title: "Failed to Load Sessions",
+        description: "Could not retrieve active user sessions. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [sessionsError, toast]);
+
+  // Force logout mutation
+  const forceLogoutMutation = useMutation({
+    mutationFn: (email: string) => 
+      apiRequest("DELETE", `/api/users/${encodeURIComponent(email)}/sessions`),
+    onSuccess: (data: any, email: string) => {
+      toast({
+        title: "User Logged Out",
+        description: `Successfully logged out ${email}. They will need to log in again.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/sessions"] });
+      setConfirmLogout(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Logout Failed",
+        description: error.message || "Failed to force logout user. Please try again.",
+        variant: "destructive",
+      });
+      setConfirmLogout(null);
+    },
+  });
+
+  const handleForceLogout = (email: string, name: string) => {
+    setConfirmLogout({ email, name });
+  };
+
+  const confirmForceLogout = () => {
+    if (confirmLogout) {
+      forceLogoutMutation.mutate(confirmLogout.email);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const activeSessions = sessions?.filter((s: any) => s.status === 'active') || [];
+  const uniqueUsers = Array.from(
+    new Map(
+      activeSessions
+        .filter((s: any) => s.email)
+        .map((s: any) => [s.email, s])
+    ).values()
+  );
+
+  return (
+    <Card data-testid="card-user-sessions">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>
+            <i className="fas fa-users-cog mr-2"></i>
+            Active User Sessions
+          </span>
+          <Badge variant="outline" data-testid="badge-session-count">
+            {uniqueUsers.length} {uniqueUsers.length === 1 ? 'User' : 'Users'}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {uniqueUsers.length === 0 ? (
+          <div className="text-center py-8 text-gray-500" data-testid="text-no-sessions">
+            <i className="fas fa-user-slash text-4xl mb-4"></i>
+            <p>No active user sessions found</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {uniqueUsers.map((session: any, index: number) => (
+              <div
+                key={session.email}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                data-testid={`session-user-${index}`}
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <i className="fas fa-user-circle text-gray-600"></i>
+                    <span className="font-semibold text-gray-900" data-testid={`text-user-name-${index}`}>
+                      {session.firstName} {session.lastName}
+                    </span>
+                    <Badge variant="secondary" data-testid={`badge-user-status-${index}`}>
+                      {session.status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-gray-600 ml-6" data-testid={`text-user-email-${index}`}>
+                    {session.email}
+                  </div>
+                  <div className="text-xs text-gray-500 ml-6 mt-1" data-testid={`text-session-expires-${index}`}>
+                    Session expires {formatDistanceToNow(new Date(session.expire), { addSuffix: true })}
+                  </div>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleForceLogout(session.email, `${session.firstName} ${session.lastName}`)}
+                  disabled={forceLogoutMutation.isPending}
+                  data-testid={`button-force-logout-${index}`}
+                >
+                  <i className="fas fa-sign-out-alt mr-2"></i>
+                  Force Logout
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Confirmation Dialog */}
+        <AlertDialog open={!!confirmLogout} onOpenChange={() => setConfirmLogout(null)}>
+          <AlertDialogContent data-testid="dialog-confirm-logout">
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                <i className="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                Confirm Force Logout
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to force logout <strong>{confirmLogout?.name}</strong> ({confirmLogout?.email})?
+                <br /><br />
+                This will immediately end their session and they will need to log in again. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="button-cancel-logout">Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmForceLogout}
+                className="bg-red-600 hover:bg-red-700"
+                data-testid="button-confirm-logout"
+              >
+                {forceLogoutMutation.isPending ? "Logging out..." : "Yes, Force Logout"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function SuperAdmin() {
   const { toast } = useToast();
@@ -119,14 +287,21 @@ export default function SuperAdmin() {
 
         {/* Super Admin Tabs */}
         <Tabs defaultValue="organizations" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="organizations" data-testid="tab-organizations">
               <i className="fas fa-building mr-2"></i>Organizations
+            </TabsTrigger>
+            <TabsTrigger value="sessions" data-testid="tab-sessions">
+              <i className="fas fa-users-cog mr-2"></i>User Sessions
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="organizations">
             <OrganizationManagement />
+          </TabsContent>
+
+          <TabsContent value="sessions">
+            <UserSessionManagement />
           </TabsContent>
         </Tabs>
       </main>

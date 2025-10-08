@@ -1122,12 +1122,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUserSessions(email: string): Promise<number> {
-    const result = await db.execute(sql`
-      DELETE FROM sessions 
+    // First, verify sessions exist for this email
+    const checkResult = await db.execute(sql`
+      SELECT COUNT(*) as count
+      FROM sessions 
       WHERE sess IS NOT NULL
         AND sess::jsonb->'passport'->'user'->'claims'->>'email' = ${email}
     `);
-    return result.rowCount || 0;
+    
+    const sessionCount = parseInt((checkResult.rows[0] as any).count || '0');
+    if (sessionCount === 0) {
+      return 0; // No sessions to delete
+    }
+
+    // Delete sessions for this specific email (Replit auth sessions only)
+    const deleteResult = await db.execute(sql`
+      DELETE FROM sessions 
+      WHERE sess IS NOT NULL
+        AND sess::jsonb->'passport'->'user'->'claims'->>'email' = ${email}
+        AND sess::jsonb->'passport' IS NOT NULL
+    `);
+    
+    const deletedCount = deleteResult.rowCount || 0;
+    
+    // Log for audit purposes
+    console.log(`Deleted ${deletedCount} session(s) for user: ${email}`);
+    
+    return deletedCount;
   }
 }
 
