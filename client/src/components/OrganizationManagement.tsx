@@ -282,20 +282,31 @@ export default function OrganizationManagement() {
     }
 
     try {
-      // Look up user by email to get the actual user ID (or create if doesn't exist)
+      // Look up user by email to get the actual user ID
       const response = await fetch(`/api/users/lookup?email=${encodeURIComponent(newAdminEmail)}`, {
         credentials: 'include',
       });
       
+      if (response.status === 404) {
+        const errorData = await response.json();
+        toast({
+          title: "User Not Found",
+          description: errorData.message || `The user ${newAdminEmail} must log in to the application at least once before they can be added as an administrator.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       if (!response.ok) {
-        throw new Error(`Failed to lookup/create user: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to lookup user: ${response.status}`);
       }
       
       const userData = await response.json();
       
       addAdminMutation.mutate({
         organizationId: selectedOrg.id,
-        userId: userData.id, // Use the actual user ID
+        userId: userData.id,
       });
     } catch (error: any) {
       toast({
@@ -623,7 +634,7 @@ export default function OrganizationManagement() {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  If the user doesn't exist, a new account will be created automatically.
+                  Note: The user must have logged in to the application at least once before being added as an administrator.
                 </p>
               </div>
             </div>
