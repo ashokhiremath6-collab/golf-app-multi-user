@@ -4,6 +4,16 @@ Blues Golf Challenge is a comprehensive Progressive Web Application (PWA) for go
 
 # Recent Changes
 
+## October 9, 2025 - Fixed "Add Admin" Feature to Prevent Temp User Creation Bug
+- **Root Cause Fix**: Eliminated temporary user creation with mismatched IDs that caused "organization not found" errors
+- **Backend Changes**: 
+  - `/api/users/lookup` endpoint no longer creates placeholder users when user doesn't exist
+  - Returns 404 with clear error message requiring users to log in first
+- **Frontend Improvements**:
+  - Shows helpful error toast when attempting to add non-existent users as admins
+  - Updated help text to clarify users must log in before being added as administrators
+- **Impact**: Prevents authentication issues where admins added before first login couldn't access their organizations
+
 ## October 8, 2025 - Added Force Logout Feature for Super Admin
 - **Super Admin Session Management**: Added new "User Sessions" tab in Super Admin panel to view and manage active user sessions
 - **Force Logout Capability**: Super admins can now force logout users whose authentication tokens have expired, resolving 401 errors
