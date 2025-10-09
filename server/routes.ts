@@ -555,11 +555,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email query parameter is required" });
       }
 
-      let user = await storage.getUserByEmail(email as string);
+      const user = await storage.getUserByEmail(email as string);
       
-      // If user doesn't exist, create a new user
+      // If user doesn't exist, return a helpful error message
       if (!user) {
-        user = await storage.createUserFromEmail(email as string);
+        return res.status(404).json({ 
+          message: "User not found. The user must log in to the application at least once before they can be added as an administrator.",
+          email: email as string
+        });
       }
 
       // Return only safe user data
