@@ -150,33 +150,12 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  // Check if session exists - rely on session cookie expiration (174 days until March 31, 2026)
+  if (!req.isAuthenticated() || !user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    // Token is still valid
-    return next();
-  }
-
-  // Token expired - try to refresh
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    // No refresh token - must re-login
-    req.logout(() => {});
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    console.error("Token refresh failed:", error);
-    // Refresh failed - clear session and require re-login
-    req.logout(() => {});
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+  // Session is valid - user stays authenticated until session cookie expires (March 31, 2026)
+  // No JWT token expiration checks - session-based authentication only
+  return next();
 };
