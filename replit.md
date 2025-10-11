@@ -4,6 +4,12 @@ Blues Golf Challenge is a comprehensive Progressive Web Application (PWA) for go
 
 # Recent Changes
 
+## October 11, 2025 - Fixed Session Expiration Error Handling
+- **User Experience Fix**: Resolved confusing "401 Unauthorized" errors when user sessions expire
+- **Automatic Redirect**: Users with expired sessions are now automatically redirected to login instead of seeing raw error messages
+- **Clear Messaging**: Shows user-friendly "Session expired. Redirecting to login..." message instead of technical error codes
+- **Impact**: Prevents frustration when JWT tokens expire, ensuring smooth re-authentication flow
+
 ## October 9, 2025 - Fixed "Add Admin" Feature to Prevent Temp User Creation Bug
 - **Root Cause Fix**: Eliminated temporary user creation with mismatched IDs that caused "organization not found" errors
 - **Backend Changes**: 
